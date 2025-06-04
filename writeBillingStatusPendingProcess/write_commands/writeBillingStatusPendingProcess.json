@@ -1,0 +1,27 @@
+{
+  "_id": "67267eb259aba5553ed0d1e1",
+  "type": {
+    "_id": "67267eb259aba5553ed0d1e1",
+    "name": "write_command"
+  },
+  "name": "writeBillingStatusPendingProcess",
+  "description": "Escrita da atualização do status",
+  "main_collection": "processing_collection_contributions",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "status": "$.$$.otpBillingStatusPendingProcess.status"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otpBillingStatusPendingProcess._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}
