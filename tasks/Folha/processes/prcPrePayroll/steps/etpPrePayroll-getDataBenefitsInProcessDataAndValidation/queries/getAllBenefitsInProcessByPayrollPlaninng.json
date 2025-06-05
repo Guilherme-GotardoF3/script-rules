@@ -1,0 +1,59 @@
+{
+  "_id": "666856ce510737c8d1b47012",
+  "type": {
+    "_id": "666856cea211d9361a4ce94e",
+    "name": "query"
+  },
+  "name": "getAllBenefitsInProcessByPayrollPlaninng",
+  "description": "Busca os beneficios selecionados para o processo pelo planejamento da folha",
+  "main_collection": "benefits_in_payroll_process",
+  "output_name": "otp_getAllBenefitsInProcessByPayrollPlaninng",
+  "fixed_value": true,
+  "input_parameters": [],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payload.benefit.payrollPlannings._id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$addFields": {
+        "benefitsToProcess": "$.benefits"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefitsToProcess",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$cond": {
+            "if": {
+              "$ifNull": [
+                "$benefitsToProcess",
+                false
+              ]
+            },
+            "then": {
+              "$eq": [
+                "$benefitsToProcess",
+                "$payload.benefit._id"
+              ]
+            },
+            "else": {
+              "$eq": [
+                "$_id",
+                "$_id"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "_id": "66b4f7832523e7c25e302227",
+  "type": {
+    "_id": "66b4f78208c4c09a8fbc8628",
+    "name": "write_command"
+  },
+  "name": "writeUpdateBenefitsInPayrollProcessWithLoans",
+  "description": "Escrita para atualizar o planejamento da folha de pagamento com a lista dos emprestimos das pessoas (aposentados e pensionistas)",
+  "main_collection": "benefits_in_payroll_process",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payload": "$.$$.otp_trf_projectUpdatePayrollPlanningWithLoans.payload"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "payload.benefit._id": "$.$$.otp_trf_projectUpdatePayrollPlanningWithLoans.payload.benefit._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "_id": "65d657d76290120a1bf5e17c",
+  "type": {
+    "_id": "65d65e31386cdab71870ba1b",
+    "name": "write_command"
+  },
+  "name": "writeBenefitsConversionToSinglePayment",
+  "description": "Escreve na collection de benefits",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "paymentMethods": "$.$$.otp_trf_getBenefitConversionToSinglePayment.benefits.paymentMethods",
+          "history": "$.$$.otp_trf_getBenefitConversionToSinglePayment.benefits.history"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_trf_getBenefitConversionToSinglePayment.benefits._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

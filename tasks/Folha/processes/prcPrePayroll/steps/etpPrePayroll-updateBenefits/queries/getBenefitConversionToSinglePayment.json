@@ -1,0 +1,129 @@
+{
+  "_id": "65d657916290120a1bf5e168",
+  "type": {
+    "_id": "65d662772176b25eaf8d6720",
+    "name": "query"
+  },
+  "name": "getBenefitConversionToSinglePayment",
+  "description": "Lista aposentados e pensionistas com valores de saldo inferiores ao minimo, para serem convertidos em pagamento unico",
+  "main_collection": "payroll_plannings",
+  "output_name": "otp_trf_getBenefitConversionToSinglePayment",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_metodo_pagamento_unico",
+      "type": "Parameter",
+      "description": "Identificador para ométodo de pagamento único",
+      "value": "665ccaadd11b2a523e46e23a"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1
+      }
+    },
+    {
+      "$addFields": {
+        "benefits": "$.otp_trf_projectUpdatePayrollPlanningWithPeopleList[0].benefits"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefits"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefits.paymentMethods"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$lte": [
+                "$benefits.accountBalance.value",
+                1000
+              ]
+            },
+            {
+              "$ne": [
+                "$benefits.paymentMethods.method._id",
+                "6452c3efb3f0f7493544e7c2"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "getDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "newHistory": {
+          "optingExemption": false,
+          "immediatePercentage": 0,
+          "quotaImmediateParcelValue": 0,
+          "cashImmediateParcelValue": 0,
+          "accountQuotaBalance": "$benefits.accountBalance.qtdQuotas",
+          "accountCashBalance": "$benefits.accountBalance.value",
+          "monthlyValueInCash": "$benefits.accountBalance.value",
+          "monthlyValueInQuotas": "$benefits.accountBalance.qtdQuotas",
+          "paymentMethods": [
+            {
+              "method": {
+                "_id": "p:64f47ff4a26207cba01ba76c",
+                "name": "Pagamento único"
+              },
+              "value": "$benefits.accountBalance.value",
+              "parcelsQuantity": 1,
+              "percentage": 100
+            }
+          ],
+          "status": "Ativo",
+          "effectiveDate": "$getDate",
+          "expirationDate": null,
+          "updatedBy": "MDR",
+          "statusReason": "Atualização automatica. Saldo inferior ao mínimo"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "benefits.history": {
+          "$concatArrays": [
+            "$benefits.history",
+            [
+              "$newHistory"
+            ]
+          ]
+        },
+        "benefits.paymentMethods": "$newHistory.paymentMethods"
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "benefits": 1
+      }
+    }
+  ]
+}

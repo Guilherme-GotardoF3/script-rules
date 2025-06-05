@@ -1,0 +1,28 @@
+{
+  "_id": "661588a6408dbb08f14ad05f",
+  "type": {
+    "_id": "661574583e8301b5cc059aa0",
+    "name": "write_command"
+  },
+  "name": "writeUpdateFixedValue",
+  "description": "Projeta o valor corrigido das pensões judiciais que são do tipo Valor Fixo",
+  "main_collection": "judicial_pensions",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "value": "$.$$.otp_trf_updateFixedValue.value",
+          "history": "$.$$.otp_trf_updateFixedValue.history"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_trf_updateFixedValue._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

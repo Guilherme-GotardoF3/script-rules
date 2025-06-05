@@ -48,7 +48,7 @@ export async function exportProcess(processName, area) {
                 continue;
             }
 
-            await exportRuleWithFormat(ruleDoc, ruleType, task, path.join(stepDir, ruleType), baseDir, db);
+            await exportRuleWithFormat(ruleDoc, ruleType, task, path.join(stepDir, "tasks", ruleType), baseDir, db);
         }
     }
 }

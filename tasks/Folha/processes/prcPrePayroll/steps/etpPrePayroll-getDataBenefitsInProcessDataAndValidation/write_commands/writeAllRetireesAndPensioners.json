@@ -1,0 +1,27 @@
+{
+  "_id": "66b5001249530462274b6494",
+  "type": {
+    "_id": "66b500126cc14bc4fbecc82b",
+    "name": "write_command"
+  },
+  "name": "writeAllRetireesAndPensioners",
+  "description": "Escreve aposentados e pensionistas para processo da folha",
+  "main_collection": "benefits_in_payroll_process",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payload": "$.$$.otp_trf_getAllRetireesAndPensioners.payload"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "payload.benefit._id": "$.$$.otp_trf_getAllRetireesAndPensioners.payload.benefit._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}
