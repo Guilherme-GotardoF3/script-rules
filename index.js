@@ -1,40 +1,34 @@
 import { exportProcess } from "./src/exportProcess.js";
-import readline from "readline";
+import inquirer from "inquirer";
 
-function ask(question) {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
+const AREAS = {
+  "1": "Arrecadacao",
+  "2": "Relatorios",
+  "3": "Folha"
+};
 
-  return new Promise(resolve =>
-    rl.question(question, answer => {
-      rl.close();
-      resolve(answer.trim());
-    })
-  );
-}
-
-async function main() {
-  let [, , processName] = process.argv;
-
-  if (!processName) {
-    console.log("Exportador de Processos MongoDB\n");
-    console.log(`Conectado no banco ${process.env.DB_NAME}`);
-
-    if (!processName) {
-      processName = await ask("Digite o nome do processo que deseja exportar: ");
+(async () => {
+  const { areaChoice } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "areaChoice",
+      message: "Para qual área deseja exportar o processo?",
+      choices: Object.entries(AREAS).map(([key, value]) => ({
+        name: `${key} - ${value}`,
+        value: value
+      }))
     }
-  }
+  ]);
 
-  try {
-    await exportProcess(processName);
-    console.log("\n Exportação finalizada com sucesso!");
-    process.exit(0)
-  } catch (err) {
-    console.error("\n Erro ao exportar:", err.message);
-    process.exit(1);
-  }
-}
+  const { processName } = await inquirer.prompt([
+    {
+      type: "input",
+      name: "processName",
+      message: "Digite o nome do processo que deseja exportar:"
+    }
+  ]);
 
-main();
+  await exportProcess(processName, areaChoice);
+  console.log("Exportação concluída com sucesso.");
+  process.exit(0);
+})();

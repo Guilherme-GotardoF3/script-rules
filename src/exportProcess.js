@@ -3,16 +3,17 @@ import { saveJson } from "./utils.js";
 import { ObjectId } from "mongodb";
 import path from "path";
 
-export async function exportProcess(processName) {
+export async function exportProcess(processName, area) {
     console.log(`Procurando processo "${processName}"`);
 
+    const baseDir = `${area}`;
     const db = await getDb();
 
     const process = await db.collection("processes").findOne({ name: processName });
     if (!process) throw new Error(`Processo "${processName}" não encontrado`);
 
     const processDir = path.join("processes", process.name);
-    await saveJson(processDir, process.name, process);
+    await saveJson(`${baseDir}/${processDir}`, process.name, process);
 
     const stepIds = process.steps.map(s => s.step);
     const steps = await db.collection("steps").find({ _id: { $in: stepIds } }).toArray();
@@ -21,7 +22,7 @@ export async function exportProcess(processName) {
 
     for (const step of steps) {
         const stepDir = path.join(processDir, "steps", step.name);
-        await saveJson(stepDir, step.name, step);
+        await saveJson(`${baseDir}/${stepDir}`, step.name, step);
 
         const taskIds = (step.actions || [])
             .filter(action => action.type === "tasks" && action.ref)
@@ -47,12 +48,12 @@ export async function exportProcess(processName) {
                 continue;
             }
 
-            await exportRuleWithFormat(ruleDoc, ruleType, task, path.join(stepDir, ruleType));
+            await exportRuleWithFormat(ruleDoc, ruleType, task, path.join(stepDir, ruleType), baseDir);
         }
     }
 }
 
-async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir) {
+async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir) {
     const enrichedBase = {
         _id: task._id,
         type: {
@@ -80,12 +81,12 @@ async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir) {
             output: {},
             Aggregation: typeof ruleDoc.query === "string" ? JSON.parse(ruleDoc.query) : ruleDoc.query
         };
-        await saveJson(outputDir, enriched.name, enriched);
+        await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
     } else {
         const enriched = {
             ...enrichedBase,
             Command: typeof ruleDoc.command === "string" ? JSON.parse(ruleDoc.command) : ruleDoc.command
         };
-        await saveJson(outputDir, enriched.name, enriched);
+        await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
     }
 }
