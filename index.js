@@ -1,4 +1,4 @@
-import { exportProcess } from "./src/exportProcess.js";
+import { exportProcess, updateParameters } from "./src/exportProcess.js";
 import inquirer from "inquirer";
 
 const AREAS = {
@@ -7,6 +7,7 @@ const AREAS = {
   "3": "ocean",
   "4": "institutes",
   "5": "third-portal",
+  "6": "Update Parameters",
   "x": "Sair"
 };
 
@@ -23,9 +24,14 @@ const AREAS = {
     }
   ]);
 
-  // Verifica se o usuário escolheu "Sair"
   if (areaChoice === "Sair") {
     console.log("Encerrando...");
+    process.exit(0);
+  }
+
+  if (areaChoice === "Update Parameters"){
+    console.log(`Iniciando atualização de parâmetros, banco atual ${process.env.DB_NAME}`);
+    await updateParameters();
     process.exit(0);
   }
 

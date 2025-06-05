@@ -36,7 +36,7 @@ export async function exportProcess(processName, area) {
             const ruleId = rule?.ref;
             const ruleType = rule?.type;
 
-            if (!ruleId || !ruleType || !["queries", "write_commands"].includes(ruleType)) {
+            if (!ruleId || !ruleType || !["queries", "write_commands", "ordered_reference_lists", "api_requests", "conditions"].includes(ruleType)) {
                 console.warn(`Task "${task.name}" não possui regra válida (ruleId=${ruleId}, type=${ruleType})`);
                 continue;
             }
@@ -58,43 +58,87 @@ async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir,
         _id: task._id,
         type: {
             _id: ruleDoc._id,
-            name: ruleType === "queries" ? "query" : "write_command"
+            name: ruleType
         },
         name: task.name,
         description: ruleDoc.description || "",
-        main_collection: ruleDoc.table || ruleDoc.collection || ""
     };
 
     if (ruleType === "queries") {
+        const systemInputs = extractSystemActions(JSON.parse(ruleDoc.query));
         const parametersIds = extractParametersIds(JSON.parse(ruleDoc.query));
         const parametersDocs = await db
             .collection("parameters")
             .find({ _id: { $in: parametersIds.map(id => new ObjectId(id)) } })
             .toArray();
 
-        const inputParameters = parametersDocs.map(param => ({
-            name: param.name || "",
-            type: "Parameter",
-            description: param.description,
-            value: param.value
-        }));
+        const inputParameters = [
+            ...parametersDocs.map(param => ({
+                name: param.name || "",
+                type: "Parameter",
+                description: param.description,
+                value: param.value
+            })),
+            ...systemInputs
+        ];
 
         const collections = extractLookupCollections(JSON.parse(ruleDoc.query));
 
         const enriched = {
             ...enrichedBase,
+            main_collection: ruleDoc.table || ruleDoc.collection || "",
             output_name: task.outputName || "",
-            fixed_value: true,
+            fixed_value: systemInputs.length > 0 || parametersIds > 0 ? true : false,
             input_parameters: inputParameters,
             collections: collections,
             output: {},
             Aggregation: typeof ruleDoc.query === "string" ? JSON.parse(ruleDoc.query) : ruleDoc.query
         };
         await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
-    } else {
+    }
+
+    if (ruleType === "write_commands") {
         const enriched = {
             ...enrichedBase,
+            main_collection: ruleDoc.table || ruleDoc.collection || "",
             Command: typeof ruleDoc.command === "string" ? JSON.parse(ruleDoc.command) : ruleDoc.command
+        };
+        await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
+    }
+
+    if (ruleType === "ordered_reference_lists") {
+        const enriched = {
+            ...enrichedBase,
+            outputName: task.outputName,
+            rulePath: ruleDoc.rulePath,
+            referenceListPath: ruleDoc.referenceListPath
+        };
+        await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
+    }
+
+
+    if (ruleType === "api_requests") {
+        const enriched = {
+            ...enrichedBase,
+            method: ruleDoc.method,
+            headers: ruleDoc.headers,
+            pathParameters: ruleDoc.pathParameters,
+            queryParameters: ruleDoc.queryParameters,
+            Url: ruleDoc.url,
+            Body: {
+                type: ruleDoc.body.type,
+                data: typeof ruleDoc.body.data === "string" ? JSON.parse(ruleDoc.body.data) : ruleDoc.body.data
+            }
+        };
+        await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
+    }
+
+
+    if (ruleType === "conditions") {
+        const enriched = {
+            ...enrichedBase,
+            Options: ruleDoc.path,
+            Options: ruleDoc.options
         };
         await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
     }
@@ -144,7 +188,52 @@ function extractLookupCollections(aggregation) {
             }
         }
     }
-    
+
     search(aggregation);
     return [...collections];
+}
+
+function extractSystemActions(aggregation) {
+    const systemActions = new Set();
+
+    function search(value, path = "") {
+        if (typeof value === "string") {
+            if (value.startsWith("$.") && !value.startsWith("$.$$")) {
+                systemActions.add(value);
+                console.log(`Ação do sistema encontrada em ${path}`, value);
+            }
+        } else if (Array.isArray(value)) {
+            value.forEach((item, index) => search(item, `${path}[${index}]`));
+        } else if (typeof value === "object" && value !== null) {
+            for (const [key, val] of Object.entries(value)) {
+                search(val, path ? `${path}.${key}` : key);
+            }
+        }
+    }
+
+    search(aggregation);
+    return [...systemActions].map(action => ({
+        name: action.substring(2),
+        type: "Action System",
+        description: "Variável do sistema usada na agregação"
+    }));
+}
+
+export async function updateParameters() {
+    const db = await getDb();
+    const allParameters = await db.collection("parameters").find().toArray();
+
+    for (const param of allParameters) {
+        const parameter = {
+            _id: param._id,
+            name: param.name,
+            description: param.description,
+            data: {
+                value: param.data?.value,
+                type: param.data?.type,
+                isDefault: param.data?.isDefault
+            }
+        }
+        saveJson("parameters", param.name, parameter);
+    }
 }
