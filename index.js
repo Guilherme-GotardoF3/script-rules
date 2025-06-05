@@ -2,9 +2,12 @@ import { exportProcess } from "./src/exportProcess.js";
 import inquirer from "inquirer";
 
 const AREAS = {
-  "1": "Arrecadacao",
-  "2": "Relatorios",
-  "3": "Folha"
+  "1": "contribution-collection",
+  "2": "payroll",
+  "3": "ocean",
+  "4": "institutes",
+  "5": "third-portal",
+  "x": "Sair"
 };
 
 (async () => {
@@ -19,6 +22,12 @@ const AREAS = {
       }))
     }
   ]);
+
+  // Verifica se o usuário escolheu "Sair"
+  if (areaChoice === "Sair") {
+    console.log("Encerrando...");
+    process.exit(0);
+  }
 
   const { processName } = await inquirer.prompt([
     {
