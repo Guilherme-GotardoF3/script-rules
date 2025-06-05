@@ -48,12 +48,12 @@ export async function exportProcess(processName, area) {
                 continue;
             }
 
-            await exportRuleWithFormat(ruleDoc, ruleType, task, path.join(stepDir, ruleType), baseDir);
+            await exportRuleWithFormat(ruleDoc, ruleType, task, path.join(stepDir, ruleType), baseDir, db);
         }
     }
 }
 
-async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir) {
+async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir, db) {
     const enrichedBase = {
         _id: task._id,
         type: {
@@ -66,18 +66,27 @@ async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir)
     };
 
     if (ruleType === "queries") {
+        const parametersIds = extractParametersIds(JSON.parse(ruleDoc.query));
+        const parametersDocs = await db
+            .collection("parameters")
+            .find({ _id: { $in: parametersIds.map(id => new ObjectId(id)) } })
+            .toArray();
+
+        const inputParameters = parametersDocs.map(param => ({
+            name: param.name || "",
+            type: "Parameter",
+            description: param.description,
+            value: param.value
+        }));
+
+        const collections = extractLookupCollections(JSON.parse(ruleDoc.query));
+
         const enriched = {
             ...enrichedBase,
             output_name: task.outputName || "",
             fixed_value: true,
-            input_parameters: [
-                {
-                    name: "",
-                    type: "",
-                    description: ""
-                }
-            ],
-            collections: [],
+            input_parameters: inputParameters,
+            collections: collections,
             output: {},
             Aggregation: typeof ruleDoc.query === "string" ? JSON.parse(ruleDoc.query) : ruleDoc.query
         };
@@ -89,4 +98,53 @@ async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir)
         };
         await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
     }
+}
+
+function extractParametersIds(aggregation) {
+    const ids = new Set();
+
+    function search(value, path = "") {
+        if (typeof value === "string" && value.startsWith("p:")) {
+            const id = value.substring(2);
+            if (ObjectId.isValid(id)) {
+                ids.add(id);
+                console.log(`Parâmetro encontrado em ${path}`, id);
+            } else {
+                console.warn("Id inválido de parâmetro");
+            }
+        } else if (Array.isArray(value)) {
+            value.forEach((item, index) => search(item, `${path}[${index}]`));
+        } else if (typeof value === "object" && value !== null) {
+            for (const [key, val] of Object.entries(value)) {
+                search(val, path ? `${path}.${key}` : key);
+            }
+        }
+    }
+
+    search(aggregation);
+    return [...ids];
+}
+
+function extractLookupCollections(aggregation) {
+    const collections = new Set();
+
+    function search(value) {
+        if (Array.isArray(value)) {
+            value.forEach(search);
+        } else if (typeof value === "object" && value !== null) {
+            if (value.$lookup && typeof value.$lookup === "object") {
+                const from = value.$lookup.from;
+                if (typeof from === "string") {
+                    collections.add(from);
+                }
+            }
+
+            for (const val of Object.values(value)) {
+                search(val);
+            }
+        }
+    }
+    
+    search(aggregation);
+    return [...collections];
 }
