@@ -3,29 +3,26 @@ import { saveJson } from "./utils.js";
 import { ObjectId } from "mongodb";
 import path from "path";
 
-export async function exportProcess(processName, tenantId) {
-    console.log(`Procurando processo "${processName}" no banco "${tenantId}"`);
+export async function exportProcess(processName) {
+    console.log(`Procurando processo "${processName}"`);
 
     const db = await getDb();
 
     const process = await db.collection("processes").findOne({ name: processName });
     if (!process) throw new Error(`Processo "${processName}" não encontrado`);
 
-    // Diretório base do processo
     const processDir = path.join("processes", process.name);
     await saveJson(processDir, process.name, process);
 
-    // Buscar steps
     const stepIds = process.steps.map(s => s.step);
     const steps = await db.collection("steps").find({ _id: { $in: stepIds } }).toArray();
 
-    console.log(`Processo finalizado de ${processName} com ${steps.length} step(s).`);
+    console.log(`Processo ${processName} encontrado com ${steps.length} step(s).`);
 
     for (const step of steps) {
         const stepDir = path.join(processDir, "steps", step.name);
         await saveJson(stepDir, step.name, step);
 
-        // Extrair tasks desta step
         const taskIds = (step.actions || [])
             .filter(action => action.type === "tasks" && action.ref)
             .map(action => action.ref.$oid || action.ref);
@@ -83,14 +80,12 @@ async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir) {
             output: {},
             Aggregation: typeof ruleDoc.query === "string" ? JSON.parse(ruleDoc.query) : ruleDoc.query
         };
-
         await saveJson(outputDir, enriched.name, enriched);
     } else {
         const enriched = {
             ...enrichedBase,
             Command: typeof ruleDoc.command === "string" ? JSON.parse(ruleDoc.command) : ruleDoc.command
         };
-
         await saveJson(outputDir, enriched.name, enriched);
     }
 }
