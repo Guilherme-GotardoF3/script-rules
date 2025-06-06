@@ -1,5 +1,5 @@
 import { getDb } from "./mongo.js";
-import { saveJson } from "./utils.js";
+import { saveJson, clearDirIfExistis } from "./utils.js";
 import { ObjectId } from "mongodb";
 import path from "path";
 
@@ -13,6 +13,8 @@ export async function exportProcess(processName, area) {
     if (!process) throw new Error(`Processo "${processName}" não encontrado`);
 
     const processDir = path.join("processes", process.name);
+    clearDirIfExistis(path.join(baseDir, processDir));
+
     await saveJson(`${baseDir}/${processDir}`, process.name, process);
 
     const stepIds = process.steps.map(s => s.step);
@@ -229,11 +231,11 @@ export async function updateParameters() {
             name: param.name,
             description: param.description,
             data: {
-                value: param.data?.value,
-                type: param.data?.type,
-                isDefault: param.data?.isDefault
+                value: param.value,
+                type: param.type,
+                isDefault: param.isDefault
             }
-        }
-        saveJson("parameters", param.name, parameter);
+        };
+        await saveJson("parameters", param.name, parameter);
     }
 }
