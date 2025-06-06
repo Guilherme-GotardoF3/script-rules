@@ -6,7 +6,7 @@ import path from "path";
 export async function exportProcess(processName, area) {
     console.log(`Procurando processo "${processName}"`);
 
-    const baseDir = `${area}`;
+    const baseDir = `export/${area}`;
     const db = await getDb();
 
     const process = await db.collection("processes").findOne({ name: processName });
