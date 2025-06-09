@@ -200,7 +200,7 @@ function extractSystemActions(aggregation) {
 
     function search(value, path = "") {
         if (typeof value === "string") {
-            if (value.startsWith("$.") && !value.startsWith("$.$$")) {
+            if (value.startsWith("$.") && (!value.startsWith("$.$$.otp") || !value.startsWith("$.otp"))) {
                 systemActions.add(value);
                 console.log(`Ação do sistema encontrada em ${path}`, value);
             }
@@ -223,11 +223,27 @@ function extractSystemActions(aggregation) {
 
 export async function updateParameters() {
     const db = await getDb();
-    const allParameters = await db.collection("parameters").find().toArray();
 
-    for (const param of allParameters) {
+    const parameters = await db.collection("parameters").find().toArray();
+    const parametersMap = new Map(parameters.map(p => [String(p._id), p]));
+
+    const parameterIds = parameters.map(p => p._id);
+
+    const tasks = await db.collection("tasks").find({
+        "rule.ref": { $in: parameterIds }
+    }).toArray();
+
+    for (const task of tasks) {
+        const ruleId = task?.rule?.ref;
+        const param = parametersMap.get(String(ruleId));
+        if (!param) continue;
+
         const parameter = {
-            _id: param._id,
+            _id: task._id,
+            type: {
+                _id: param._id,
+                name: "parameters"
+            },
             name: param.name,
             description: param.description,
             data: {
@@ -236,6 +252,7 @@ export async function updateParameters() {
                 isDefault: param.isDefault
             }
         };
+
         await saveJson("parameters", param.name, parameter);
     }
 }
