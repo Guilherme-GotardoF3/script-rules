@@ -1,0 +1,28 @@
+{
+  "_id": "64906779e6217fe166e426ce",
+  "type": {
+    "_id": "64b5887465fdceb72e9ce3ba",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReportResumePayments",
+  "description": "Escrita para as consultas que analisam o resumo da folha de pagamento",
+  "main_collection": "payroll_report_resume_payments",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_payroll_resume_payments"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_trf_project_payroll_resume_payments.participation._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_payroll_resume_payments.payrollPlanning"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

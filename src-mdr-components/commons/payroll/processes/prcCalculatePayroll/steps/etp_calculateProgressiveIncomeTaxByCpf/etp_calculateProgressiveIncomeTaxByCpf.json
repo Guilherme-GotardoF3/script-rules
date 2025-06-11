@@ -1,0 +1,29 @@
+{
+  "_id": "67485631d657153a5fc34bab",
+  "name": "etp_calculateProgressiveIncomeTaxByCpf",
+  "description": "Etapa para calcular o IR por CPF quando o assistido/beneficiário tem mais de um benefício num plano ou em outro plano",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "674853d78c4d6d801c98afc0",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6749f9f070646f6fa05f3126",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "674855398c4d6d801c98b005",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-11-28T11:38:25.612Z",
+  "updatedAt": "2024-11-29T17:31:56.884Z",
+  "__v": 0
+}

@@ -1,0 +1,45 @@
+{
+  "_id": "65243d462adaf0cff48fc6f2",
+  "name": "prc_relatorio_cadastro_bi",
+  "description": "recolhe os dados de cadastro que vao ser utilizados pela ferramenta de BI",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "collection",
+  "owners": [
+    {
+      "ref": "be713bcb-315d-47f6-ac7c-e933189010fb",
+      "type": "user"
+    },
+    {
+      "ref": "2df23a72-bd8c-4ebc-8f41-eff1b1ae64ca",
+      "type": "user"
+    },
+    {
+      "ref": "3e4a8b63-52f1-40b9-8f13-4e6752c1eaa2",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "6605ba76b043c6a0b16c84ad",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2023-10-09T17:49:58.514Z",
+  "updatedAt": "2024-07-18T15:36:30.477Z",
+  "__v": 0,
+  "dueDate": null,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false
+}

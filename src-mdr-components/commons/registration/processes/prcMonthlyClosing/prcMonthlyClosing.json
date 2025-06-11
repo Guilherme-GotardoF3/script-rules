@@ -1,0 +1,41 @@
+{
+  "_id": "662fac1e8cc8c0c298529322",
+  "name": "prcMonthlyClosing",
+  "description": "Processo que vai realizar as consistencias e o fechmento mensal",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "people",
+  "owners": [
+    {
+      "ref": "ad447d00-30e2-45fd-a87d-c80ba1b50c69",
+      "type": "user"
+    },
+    {
+      "ref": "d60dcbab-9e19-4aef-9c34-42b349e373a5",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "662facb21dea28472864c686",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-04-29T14:18:06.503Z",
+  "updatedAt": "2024-07-18T15:36:30.477Z",
+  "__v": 0,
+  "dueDate": null,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false
+}

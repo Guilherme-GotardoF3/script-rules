@@ -1,0 +1,34 @@
+{
+  "_id": "64638d7c810463c25c6d21b1",
+  "type": {
+    "_id": "6516d16717286710fa962edf",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReportProcessingExceptionScheduled",
+  "description": "Componente de escrita relatório de exceções programadas",
+  "main_collection": "payroll_report_processing_exception_scheduled",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_report_exception_schedules_amount"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation.number": "$.$$.otp_trf_project_report_exception_schedules_amount.participation.number"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_report_exception_schedules_amount.payrollPlanning"
+          },
+          {
+            "payroll": "$.$$.otp_trf_project_report_exception_schedules_amount.payroll"
+          },
+          {
+            "rubric._id": "$.$$.otp_trf_project_report_exception_schedules_amount.rubric._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

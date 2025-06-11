@@ -1,0 +1,42 @@
+{
+  "_id": "64ca641623f8c43b4c9090a9",
+  "name": "ImportSalary-Sponsored",
+  "description": "Processo para importação do salario real de contribuição",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "collection",
+  "owners": [
+    {
+      "ref": "83c466b5-c42c-4608-b426-41972261ec78",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "64ca6366d569f01c1cc05465",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "66bdfa4178d1f79becf45332",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2023-08-02T14:11:34.230Z",
+  "updatedAt": "2025-04-11T13:10:55.912Z",
+  "__v": 0,
+  "dueDate": null,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "9a3a7b43-8347-4479-bc37-11e596047d8f",
+    "username": "ansilva@f3capital.com.br"
+  },
+  "isSync": false
+}

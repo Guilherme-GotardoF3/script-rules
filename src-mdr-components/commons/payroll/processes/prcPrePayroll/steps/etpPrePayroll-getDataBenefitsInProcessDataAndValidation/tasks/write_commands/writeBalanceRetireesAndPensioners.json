@@ -1,0 +1,27 @@
+{
+  "_id": "66b4d66b94ae22fadae7e0c5",
+  "type": {
+    "_id": "66b4d66b9021b9e80babc00b",
+    "name": "write_commands"
+  },
+  "name": "writeBalanceRetireesAndPensioners",
+  "description": "Escreve o saldo dos aposentados e pensionistas para processo da folha",
+  "main_collection": "benefits_in_payroll_process",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payload": "$.$$.otp_trf_getBalanceRetireesAndPensioners.payload"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "payload.benefit._id": "$.$$.otp_trf_getBalanceRetireesAndPensioners.payload.benefit._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

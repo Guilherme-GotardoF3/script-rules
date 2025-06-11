@@ -1,0 +1,1382 @@
+{
+  "_id": "6749d4130f47ed278c60161f",
+  "type": {
+    "_id": "6749d4139427594d740a530f",
+    "name": "queries"
+  },
+  "name": "redistributionBenefitEnd",
+  "description": "Procura se algum beneficiário perdeu a condição de beneficiário, se sim faz a redistribuição para os outros beneficiários caso exista.",
+  "main_collection": "people",
+  "output_name": "otp_redistributionBenefitEnd",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "kinshipMother",
+      "type": "Parameter",
+      "description": "id do parentesco \"mâe\" da collection kinships",
+      "value": "65f0a9570b8bfc37fa207720"
+    },
+    {
+      "name": "kinshipSpouse",
+      "type": "Parameter",
+      "description": "id referente ao parentesco \"cônjuge\" da collection kinships",
+      "value": "672ecf1abf79df4f579c7934"
+    },
+    {
+      "name": "kinshipFather",
+      "type": "Parameter",
+      "description": "id referente ao parentesco \"pai\" da collection kinships",
+      "value": "642225ab268565dc88761f21"
+    },
+    {
+      "name": "kinshipPartner",
+      "type": "Parameter",
+      "description": "id referente ao parentesco \"companheiro(a)\" da collection kinships",
+      "value": "65f0a9570b8bfc37fa20771f"
+    },
+    {
+      "name": "kinshipCollegeSon",
+      "type": "Parameter",
+      "description": "id referente ao parentesco \"filho universitário\" da collection kinships",
+      "value": "672ecef3bf79df4f579c7903"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "benefits",
+    "payroll_plannings",
+    "people",
+    "family_groups",
+    "account_balances",
+    "account_movements"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$unwind": {
+        "path": "$participations"
+      }
+    },
+    {
+      "$group": {
+        "_id": "$participations.participationSource._id",
+        "uniqueParticipations": {
+          "$addToSet": "$participations._id"
+        }
+      }
+    },
+    {
+      "$match": {
+        "uniqueParticipations": {
+          "$exists": true
+        },
+        "_id": {
+          "$ne": null
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "uniqueParticipations",
+        "foreignField": "participation",
+        "as": "benefit",
+        "pipeline": [
+          {
+            "$project": {
+              "participation": 1,
+              "paymentMethods": 1,
+              "history": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "bundle": {
+          "payrollPlanningId": "$.payrollPlanningId"
+        },
+        "benefitSize": {
+          "$size": "$benefit"
+        },
+        "getDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "benefitSize": {
+          "$gte": 1
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$uniqueParticipations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payroll_plannings",
+        "localField": "bundle.payrollPlanningId",
+        "foreignField": "_id",
+        "as": "payrollPlanning",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 0,
+              "competenceDate": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollPlanning",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "uniqueParticipations",
+        "foreignField": "participations._id",
+        "as": "base.person",
+        "let": {
+          "competenceDate": "$payrollPlanning.competenceDate",
+          "participation": "$uniqueParticipations"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "age": {
+                "$subtract": [
+                  {
+                    "$year": {
+                      "$toDate": "$$competenceDate"
+                    }
+                  },
+                  {
+                    "$year": "$birthDate"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$set": {
+              "age": {
+                "$cond": {
+                  "if": {
+                    "$gt": [
+                      {
+                        "$dateFromParts": {
+                          "year": {
+                            "$year": {
+                              "$toDate": "$$competenceDate"
+                            }
+                          },
+                          "month": {
+                            "$month": "$birthDate"
+                          },
+                          "day": {
+                            "$dayOfMonth": "$birthDate"
+                          }
+                        }
+                      },
+                      {
+                        "$toDate": "$$competenceDate"
+                      }
+                    ]
+                  },
+                  "then": {
+                    "$subtract": [
+                      "$age",
+                      1
+                    ]
+                  },
+                  "else": "$age"
+                }
+              }
+            }
+          },
+          {
+            "$match": {
+              "$or": [
+                {
+                  "age": {
+                    "$gte": 21
+                  }
+                },
+                {
+                  "$and": [
+                    {
+                      "age": {
+                        "$eq": 20
+                      }
+                    },
+                    {
+                      "$expr": {
+                        "$eq": [
+                          {
+                            "$month": {
+                              "$toDate": "$$competenceDate"
+                            }
+                          },
+                          {
+                            "$month": {
+                              "$toDate": "$birthDate"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "$addFields": {
+              "disablement": {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$eq": [
+                          "$disablement",
+                          null
+                        ]
+                      },
+                      "then": false
+                    },
+                    {
+                      "case": {
+                        "$or": [
+                          {
+                            "$lte": [
+                              "$disablement.effectiveDate.endAt",
+                              "$$competenceDate"
+                            ]
+                          },
+                          {
+                            "$eq": [
+                              "$disablement.effectiveDate.endAt",
+                              null
+                            ]
+                          }
+                        ]
+                      },
+                      "then": true
+                    },
+                    {
+                      "case": {
+                        "$gt": [
+                          "$disablement.effectiveDate.endAt",
+                          "$$competenceDate"
+                        ]
+                      },
+                      "then": false
+                    }
+                  ],
+                  "default": false
+                }
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$participations"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$$participation",
+                  "$participations._id"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "age": 1,
+              "deathDate": 1,
+              "educationLevel": 1,
+              "disablement": 1,
+              "participations": 1,
+              "birthDate": 1,
+              "day": {
+                "$dayOfMonth": "$birthDate"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$base.person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "_id",
+        "foreignField": "participations._id",
+        "as": "personId",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$personId",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "family_groups",
+        "localField": "personId._id",
+        "foreignField": "person",
+        "as": "base.familyGroup",
+        "let": {
+          "competenceDate": "$getDate",
+          "dependentId": "$base.person._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$dependents"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$dependents.effectiveDate.startedAt",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$dependents.effectiveDate.endedAt",
+                          null
+                        ]
+                      },
+                      {
+                        "$gte": [
+                          "$dependents.effectiveDate.endedAt",
+                          "$$competenceDate"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$$dependentId",
+                      "$dependents.person._id"
+                    ]
+                  }
+                ]
+              },
+              "dependents.isTaxIncomeDependent": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$base.familyGroup",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$or": [
+            {
+              "$and": [
+                {
+                  "$ne": [
+                    "$base.familyGroup.dependents.kinship._id",
+                    "p:67101d1c14c324ef916f14f4"
+                  ]
+                },
+                {
+                  "$ne": [
+                    "$base.familyGroup.dependents.kinship._id",
+                    "p:67101e8f1ce917e6a4e0e3e9"
+                  ]
+                },
+                {
+                  "$ne": [
+                    "$base.familyGroup.dependents.kinship._id",
+                    "p:6710207efa968868ce59709b"
+                  ]
+                },
+                {
+                  "$ne": [
+                    "$base.familyGroup.dependents.kinship._id",
+                    "p:671024fa5756605daf6c73ce"
+                  ]
+                },
+                {
+                  "$ne": [
+                    "$base.person.disablement",
+                    true
+                  ]
+                },
+                {
+                  "$eq": [
+                    "$base.person.deathDate",
+                    null
+                  ]
+                }
+              ]
+            },
+            {
+              "$and": [
+                {
+                  "$lte": [
+                    "$base.person.age",
+                    24
+                  ]
+                },
+                {
+                  "$ne": [
+                    "$base.familyGroup.dependents.kinship._id",
+                    "p:67102792fab8b864e6ac8630"
+                  ]
+                },
+                {
+                  "$ne": [
+                    "$base.person.disablement",
+                    true
+                  ]
+                },
+                {
+                  "$eq": [
+                    "$base.person.deathDate",
+                    null
+                  ]
+                }
+              ]
+            },
+            {
+              "$and": [
+                {
+                  "$ne": [
+                    "$base.person.disablement",
+                    true
+                  ]
+                },
+                {
+                  "$ne": [
+                    "$base.person.deathDate",
+                    null
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "family_groups",
+        "localField": "personId._id",
+        "foreignField": "person",
+        "as": "base.otherDependents",
+        "let": {
+          "dependentEnd": "$base.familyGroup.dependents._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$dependents"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$ne": [
+                  "$dependents._id",
+                  "$$dependentEnd"
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$person",
+              "dependents": {
+                "$push": "$dependents"
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "dependents": 1
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$dependents"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "benefitDependent": {
+          "$filter": {
+            "input": "$benefit",
+            "as": "benefit",
+            "cond": {
+              "$eq": [
+                "$$benefit.participation",
+                "$uniqueParticipations"
+              ]
+            }
+          }
+        },
+        "benefitOtherDependent": {
+          "$filter": {
+            "input": "$benefit",
+            "as": "benefit",
+            "cond": {
+              "$or": [
+                {
+                  "$ne": [
+                    "$$benefit.participation",
+                    "$uniqueParticipations"
+                  ]
+                },
+                {
+                  "$not": [
+                    "$$benefit.participation"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "otherDependentsCount": {
+          "$size": "$benefitOtherDependent"
+        }
+      }
+    },
+    {
+      "$set": {
+        "benefitDependent": {
+          "$map": {
+            "input": "$benefitDependent",
+            "as": "benefit",
+            "in": {
+              "participation": "$$benefit.participation",
+              "paymentMethods": {
+                "$map": {
+                  "input": "$$benefit.paymentMethods",
+                  "as": "paymentMethod",
+                  "in": {
+                    "method": "$$paymentMethod.method",
+                    "value": {
+                      "$cond": {
+                        "if": {
+                          "$eq": [
+                            "$base.person.age",
+                            20
+                          ]
+                        },
+                        "then": {
+                          "$round": [
+                            {
+                              "$multiply": [
+                                {
+                                  "$divide": [
+                                    "$$paymentMethod.value",
+                                    30
+                                  ]
+                                },
+                                "$base.person.day"
+                              ]
+                            },
+                            2
+                          ]
+                        },
+                        "else": 0
+                      }
+                    },
+                    "parcelsQuantity": "$$paymentMethod.parcelsQuantity",
+                    "percentage": "$$paymentMethod.percentage"
+                  }
+                }
+              },
+              "history": "$$benefit.history"
+            }
+          }
+        },
+        "benefitOtherDependent": {
+          "$map": {
+            "input": "$benefitOtherDependent",
+            "as": "benefit",
+            "in": {
+              "participation": "$$benefit.participation",
+              "paymentMethods": {
+                "$map": {
+                  "input": "$$benefit.paymentMethods",
+                  "as": "paymentMethod",
+                  "in": {
+                    "method": "$$paymentMethod.method",
+                    "value": {
+                      "$cond": {
+                        "if": {
+                          "$eq": [
+                            "$base.person.age",
+                            20
+                          ]
+                        },
+                        "then": {
+                          "$round": [
+                            {
+                              "$sum": [
+                                {
+                                  "$multiply": [
+                                    {
+                                      "$divide": [
+                                        "$$paymentMethod.value",
+                                        30
+                                      ]
+                                    },
+                                    "$base.person.day"
+                                  ]
+                                },
+                                {
+                                  "$multiply": [
+                                    {
+                                      "$divide": [
+                                        {
+                                          "$divide": [
+                                            {
+                                              "$multiply": [
+                                                "$$paymentMethod.value",
+                                                "$benefitSize"
+                                              ]
+                                            },
+                                            "$otherDependentsCount"
+                                          ]
+                                        },
+                                        30
+                                      ]
+                                    },
+                                    {
+                                      "$subtract": [
+                                        30,
+                                        "$base.person.day"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            2
+                          ]
+                        },
+                        "else": {
+                          "$round": [
+                            {
+                              "$divide": [
+                                {
+                                  "$multiply": [
+                                    "$$paymentMethod.value",
+                                    "$benefitSize"
+                                  ]
+                                },
+                                "$otherDependentsCount"
+                              ]
+                            },
+                            2
+                          ]
+                        }
+                      }
+                    },
+                    "parcelsQuantity": "$$paymentMethod.parcelsQuantity",
+                    "percentage": "$$paymentMethod.percentage"
+                  }
+                }
+              },
+              "history": "$$benefit.history"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "account_balances",
+        "localField": "base.person._id",
+        "foreignField": "person._id",
+        "as": "balanceDependent",
+        "pipeline": [
+          {
+            "$sort": {
+              "competenceDate": -1
+            }
+          },
+          {
+            "$group": {
+              "_id": "$person._id",
+              "lastBalance": {
+                "$first": "$$ROOT"
+              }
+            }
+          },
+          {
+            "$replaceRoot": {
+              "newRoot": "$lastBalance"
+            }
+          },
+          {
+            "$project": {
+              "person": 1,
+              "value": 1,
+              "pensionAccountList": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "account_balances",
+        "localField": "base.otherDependents.dependents.person._id",
+        "foreignField": "person._id",
+        "as": "balanceOtherDependents",
+        "pipeline": [
+          {
+            "$sort": {
+              "competenceDate": -1
+            }
+          },
+          {
+            "$group": {
+              "_id": "$person._id",
+              "lastBalance": {
+                "$first": "$$ROOT"
+              }
+            }
+          },
+          {
+            "$replaceRoot": {
+              "newRoot": "$lastBalance"
+            }
+          },
+          {
+            "$project": {
+              "person": 1,
+              "value": 1,
+              "pensionAccountList": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$set": {
+        "balanceDependent": {
+          "$map": {
+            "input": "$balanceDependent",
+            "as": "balance",
+            "in": {
+              "person": "$$balance.person",
+              "monetaryUnitValue": {
+                "$arrayElemAt": [
+                  "$$balance.pensionAccountList.monetaryUnitValue",
+                  0
+                ]
+              },
+              "originalValue": "$$balance.value",
+              "value": {
+                "$cond": {
+                  "if": {
+                    "$eq": [
+                      "$base.person.age",
+                      20
+                    ]
+                  },
+                  "then": {
+                    "$round": [
+                      {
+                        "$multiply": [
+                          {
+                            "$divide": [
+                              "$$balance.value",
+                              30
+                            ]
+                          },
+                          "$base.person.day"
+                        ]
+                      },
+                      2
+                    ]
+                  },
+                  "else": 0
+                }
+              }
+            }
+          }
+        },
+        "balanceOtherDependents": {
+          "$map": {
+            "input": "$balanceOtherDependents",
+            "as": "balance",
+            "in": {
+              "person": "$$balance.person",
+              "monetaryUnitValue": {
+                "$arrayElemAt": [
+                  "$$balance.pensionAccountList.monetaryUnitValue",
+                  0
+                ]
+              },
+              "originalValue": "$$balance.value",
+              "value": {
+                "$cond": {
+                  "if": {
+                    "$eq": [
+                      "$base.person.age",
+                      20
+                    ]
+                  },
+                  "then": {
+                    "$round": [
+                      {
+                        "$sum": [
+                          {
+                            "$multiply": [
+                              {
+                                "$divide": [
+                                  "$$balance.value",
+                                  30
+                                ]
+                              },
+                              "$base.person.day"
+                            ]
+                          },
+                          {
+                            "$multiply": [
+                              {
+                                "$divide": [
+                                  {
+                                    "$divide": [
+                                      {
+                                        "$multiply": [
+                                          "$$balance.value",
+                                          "$benefitSize"
+                                        ]
+                                      },
+                                      "$otherDependentsCount"
+                                    ]
+                                  },
+                                  30
+                                ]
+                              },
+                              {
+                                "$subtract": [
+                                  30,
+                                  "$base.person.day"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      2
+                    ]
+                  },
+                  "else": {
+                    "$round": [
+                      {
+                        "$divide": [
+                          {
+                            "$multiply": [
+                              "$$balance.value",
+                              "$benefitSize"
+                            ]
+                          },
+                          "$otherDependentsCount"
+                        ]
+                      },
+                      2
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$set": {
+        "benefitOtherDependent": {
+          "$map": {
+            "input": "$benefitOtherDependent",
+            "as": "benefit",
+            "in": {
+              "$mergeObjects": [
+                "$$benefit",
+                {
+                  "paymentMethods": "$$benefit.paymentMethods",
+                  "history": {
+                    "$concatArrays": [
+                      "$$benefit.history",
+                      [
+                        {
+                          "optingExemption": false,
+                          "accountQuotaBalance": {
+                            "$arrayElemAt": [
+                              {
+                                "$map": {
+                                  "input": "$balanceOtherDependents",
+                                  "as": "balance",
+                                  "in": {
+                                    "$multiply": [
+                                      "$$balance.value",
+                                      "$$balance.monetaryUnitValue.value"
+                                    ]
+                                  }
+                                }
+                              },
+                              0
+                            ]
+                          },
+                          "accountCashBalance": {
+                            "$arrayElemAt": [
+                              {
+                                "$map": {
+                                  "input": "$balanceOtherDependents",
+                                  "as": "balance",
+                                  "in": "$$balance.value"
+                                }
+                              },
+                              0
+                            ]
+                          },
+                          "monthlyValueInCash": {
+                            "$arrayElemAt": [
+                              {
+                                "$map": {
+                                  "input": "$$benefit.paymentMethods",
+                                  "as": "paymentMethod",
+                                  "in": "$$paymentMethod.value"
+                                }
+                              },
+                              0
+                            ]
+                          },
+                          "monthlyValueInQuotas": {
+                            "$arrayElemAt": [
+                              {
+                                "$map": {
+                                  "input": "$$benefit.paymentMethods",
+                                  "as": "paymentMethod",
+                                  "in": {
+                                    "$multiply": [
+                                      "$$paymentMethod.value",
+                                      {
+                                        "$arrayElemAt": [
+                                          {
+                                            "$map": {
+                                              "input": "$balanceOtherDependents",
+                                              "as": "balance",
+                                              "in": "$$balance.monetaryUnitValue.value"
+                                            }
+                                          },
+                                          0
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                }
+                              },
+                              0
+                            ]
+                          },
+                          "paymentMethods": "$$benefit.paymentMethods",
+                          "status": "Ativo",
+                          "effectiveDate": "$getDate",
+                          "expirationDate": null,
+                          "updatedBy": "Rules",
+                          "statusReason": "Redistribuição do valor do benefício",
+                          "taxRegimeTypes": []
+                        }
+                      ]
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "benefitDependent": {
+          "$map": {
+            "input": "$benefitDependent",
+            "as": "benefit",
+            "in": {
+              "$mergeObjects": [
+                "$$benefit",
+                {
+                  "history": {
+                    "$concatArrays": [
+                      "$$benefit.history",
+                      [
+                        {
+                          "optingExemption": false,
+                          "accountQuotaBalance": {
+                            "$arrayElemAt": [
+                              {
+                                "$map": {
+                                  "input": "$balanceDependent",
+                                  "as": "balance",
+                                  "in": {
+                                    "$multiply": [
+                                      "$$balance.value",
+                                      "$$balance.monetaryUnitValue.value"
+                                    ]
+                                  }
+                                }
+                              },
+                              0
+                            ]
+                          },
+                          "accountCashBalance": {
+                            "$arrayElemAt": [
+                              {
+                                "$map": {
+                                  "input": "$balanceDependent",
+                                  "as": "balance",
+                                  "in": "$$balance.value"
+                                }
+                              },
+                              0
+                            ]
+                          },
+                          "monthlyValueInCash": {
+                            "$arrayElemAt": [
+                              {
+                                "$map": {
+                                  "input": "$$benefit.paymentMethods",
+                                  "as": "paymentMethod",
+                                  "in": "$$paymentMethod.value"
+                                }
+                              },
+                              0
+                            ]
+                          },
+                          "monthlyValueInQuotas": {
+                            "$arrayElemAt": [
+                              {
+                                "$map": {
+                                  "input": "$$benefit.paymentMethods",
+                                  "as": "paymentMethod",
+                                  "in": {
+                                    "$multiply": [
+                                      "$$paymentMethod.value",
+                                      {
+                                        "$arrayElemAt": [
+                                          {
+                                            "$map": {
+                                              "input": "$balanceDependent",
+                                              "as": "balance",
+                                              "in": "$$balance.monetaryUnitValue.value"
+                                            }
+                                          },
+                                          0
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                }
+                              },
+                              0
+                            ]
+                          },
+                          "paymentMethods": "$$benefit.paymentMethods",
+                          "status": {
+                            "$cond": {
+                              "if": {
+                                "$eq": [
+                                  "$base.person.age",
+                                  20
+                                ]
+                              },
+                              "then": "Ativo",
+                              "else": "Inativo"
+                            }
+                          },
+                          "effectiveDate": "$getDate",
+                          "expirationDate": {
+                            "$cond": {
+                              "if": {
+                                "$eq": [
+                                  "$base.person.age",
+                                  20
+                                ]
+                              },
+                              "then": "$getDate",
+                              "else": null
+                            }
+                          },
+                          "updatedBy": "Rules",
+                          "statusReason": {
+                            "$cond": {
+                              "if": {
+                                "$eq": [
+                                  "$base.person.age",
+                                  20
+                                ]
+                              },
+                              "then": "Redistribuição do valor do benefício",
+                              "else": "Perda da condição de beneficiário"
+                            }
+                          },
+                          "taxRegimeTypes": []
+                        }
+                      ]
+                    ]
+                  }
+                },
+                {
+                  "paymentMethods": "$$benefit.paymentMethods"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "benefits": {
+          "$concatArrays": [
+            "$benefitDependent",
+            "$benefitOtherDependent"
+          ]
+        },
+        "balance": {
+          "$concatArrays": [
+            "$balanceDependent",
+            "$balanceOtherDependents"
+          ]
+        },
+        "payrollPlanning": 1,
+        "getDate": 1,
+        "beneficiaryEndId": "$base.person._id"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "account_movements",
+        "localField": "balance.person._id",
+        "foreignField": "person._id",
+        "as": "movements",
+        "pipeline": [
+          {
+            "$sort": {
+              "competenceDate": -1
+            }
+          },
+          {
+            "$group": {
+              "_id": "$person._id",
+              "lastMovement": {
+                "$first": "$$ROOT"
+              }
+            }
+          },
+          {
+            "$replaceRoot": {
+              "newRoot": "$lastMovement"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefits",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$balance",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$balance.person.participation._id",
+            "$benefits.participation"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$movements",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "benefits": 1,
+        "movements": {
+          "person": "$balance.person",
+          "pensionAccount": "$movements.pensionAccount",
+          "competenceDate": "$payrollPlanning.competenceDate",
+          "monetaryUnitValue": "$balance.monetaryUnitValue",
+          "occurrence": {
+            "_id": "66d8c245297cfb70f248607a",
+            "name": "Ajuste Saldo"
+          },
+          "operationDate": "$getDate",
+          "origin": null,
+          "percentageMovement": "$movements.percentageMovement",
+          "value": {
+            "$cond": {
+              "if": {
+                "$eq": [
+                  "$beneficiaryEndId",
+                  "$balance.person._id"
+                ]
+              },
+              "then": {
+                "$round": [
+                  {
+                    "$multiply": [
+                      {
+                        "$abs": {
+                          "$subtract": [
+                            "$balance.originalValue",
+                            "$balance.value"
+                          ]
+                        }
+                      },
+                      -1
+                    ]
+                  },
+                  2
+                ]
+              },
+              "else": {
+                "$round": [
+                  {
+                    "$abs": {
+                      "$subtract": [
+                        "$balance.originalValue",
+                        "$balance.value"
+                      ]
+                    }
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          "amountQuotas": {
+            "$cond": {
+              "if": {
+                "$eq": [
+                  "$beneficiaryEndId",
+                  "$balance.person._id"
+                ]
+              },
+              "then": {
+                "$round": [
+                  {
+                    "$divide": [
+                      {
+                        "$multiply": [
+                          {
+                            "$abs": {
+                              "$subtract": [
+                                "$balance.originalValue",
+                                "$balance.value"
+                              ]
+                            }
+                          },
+                          -1
+                        ]
+                      },
+                      "$balance.monetaryUnitValue.value"
+                    ]
+                  },
+                  2
+                ]
+              },
+              "else": {
+                "$round": [
+                  {
+                    "$divide": [
+                      {
+                        "$abs": {
+                          "$subtract": [
+                            "$balance.originalValue",
+                            "$balance.value"
+                          ]
+                        }
+                      },
+                      "$balance.monetaryUnitValue.value"
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          "createdAt": "$movements.createdAt",
+          "updatedAt": "$getDate"
+        }
+      }
+    }
+  ]
+}

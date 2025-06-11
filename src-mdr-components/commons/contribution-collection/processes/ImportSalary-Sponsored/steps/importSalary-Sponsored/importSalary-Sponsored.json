@@ -1,0 +1,47 @@
+{
+  "_id": "64ca6366d569f01c1cc05465",
+  "name": "importSalary-Sponsored",
+  "description": "Etapa para importação de salario",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "668d48650e37b2c7761410aa",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66a3a850246315c1b55376c2",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "64ca631c48ea9f1ddb61fd74",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6684417fc84389b502b2e437",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67edb4a3436d0b0933008d81",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67edb4a3436d0b0933008d85",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2023-08-02T14:08:38.811Z",
+  "updatedAt": "2025-04-11T13:10:55.748Z",
+  "__v": 0
+}

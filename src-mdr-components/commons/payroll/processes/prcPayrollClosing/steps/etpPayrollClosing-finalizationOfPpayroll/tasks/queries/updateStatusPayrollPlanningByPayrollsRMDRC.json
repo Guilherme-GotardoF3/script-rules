@@ -1,0 +1,87 @@
+{
+  "_id": "67d32147ad46f7d2003312cd",
+  "type": {
+    "_id": "67d32146dbdd0853b20e83c9",
+    "name": "queries"
+  },
+  "name": "updateStatusPayrollPlanningByPayrollsRMDRC",
+  "description": "Atualiza o status da referência estendida da payrollPlanning que fica dentro da collection payrolls_RMDRC",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_updateStatusPayrollPlanningByPayrollsRMDRC",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payroll_plannings"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$addFields": {
+        "errorVerification": "$.otp_trf_verificar_erro_folha"
+      }
+    },
+    {
+      "$match": {
+        "errorVerification.status": {
+          "$ne": "ERROR"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payroll_plannings",
+        "localField": "payrollPlanning._id",
+        "foreignField": "_id",
+        "as": "payrollPlanningStatus",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$status",
+                  "FINISHED"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "status": 1,
+              "paymentDate": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollPlanningStatus",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": "$_id",
+        "payrollPlanning": {
+          "payrollType": "$payrollPlanning.payrollType",
+          "competenceDate": "$payrollPlanning.competenceDate",
+          "paymentDate": "$payrollPlanning.paymentDate",
+          "status": "$payrollPlanningStatus.status",
+          "_id": "$payrollPlanning._id"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "_id": "64da76f5ba01c1820abdb506",
+  "type": {
+    "_id": "64da6378ba01c1820abdb504",
+    "name": "write_commands"
+  },
+  "name": "writeVerifications",
+  "description": "Escrita das verificacoes da folha",
+  "main_collection": "sheet_processing_verifications",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_projeta_escrita_verificacoes"
+      },
+      "filter": {
+        "$and": [
+          {
+            "payrollPlanning": "$.$$.otp_trf_projeta_escrita_verificacoes.payrollPlanning"
+          },
+          {
+            "sheetVerification": "$.$$.otp_trf_projeta_escrita_verificacoes.sheetVerification"
+          },
+          {
+            "participation": "$.$$.otp_trf_projeta_escrita_verificacoes.participation"
+          },
+          {
+            "sheetVerificationRule._id": "$.$$.otp_trf_projeta_escrita_verificacoes.sheetVerificationRule._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "_id": "6740f0d0be3cae28a65d4414",
+  "type": {
+    "_id": "6740f0d0759e56654c598240",
+    "name": "api_requests"
+  },
+  "name": "clean_payrolls_exceptionAmount_zero",
+  "description": "Essa API exclui apenas as ocorrências em que payrolls>payrollItems> exceptionAmount é zero",
+  "method": "post",
+  "headers": {
+    "tenant-id": "$.tenantId",
+    "authorization": "Bearer $.opt_trf_request_token.payload.accessToken"
+  },
+  "pathParameters": {},
+  "queryParameters": {},
+  "Url": "$.navegaApiUrl /payrolls/benefit-payroll/rubric-remove-batch/$.payrollPlanningId",
+  "Body": {
+    "type": "json",
+    "data": {
+      "benefits": "$.benefits"
+    }
+  }
+}

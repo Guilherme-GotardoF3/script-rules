@@ -1,0 +1,395 @@
+{
+  "_id": "66f567ee91839e9a3f444d7c",
+  "type": {
+    "_id": "66f567ee997a7365c4711355",
+    "name": "queries"
+  },
+  "name": "regressiveBaseRecompose",
+  "description": "Componente a ser utilizado para servir de base para recompor a tabela use_base do IR regressivo",
+  "main_collection": "people",
+  "output_name": "otp_regressiveBaseRecompose",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC",
+    "monetary_unit_values",
+    "collection_records_RMDRC",
+    "payroll_plannings"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "participations._id": {
+          "$in": "$.participationId"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "participations._id": {
+          "$in": "$.participationId"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "participations": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "participations._id",
+        "foreignField": "person.participation._id",
+        "as": "payrolls",
+        "pipeline": [
+          {
+            "$sort": {
+              "payrollPlanning.paymentDate": 1
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$payrollItems",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$or": [
+                {
+                  "payrollItems.rubric._id": "674e6e61519c6b3b81a2d297"
+                },
+                {
+                  "payrollItems.rubric._id": "674e6e7a519c6b3b81a2d2c0"
+                },
+                {
+                  "payrollItems.rubric._id": "674e6eae519c6b3b81a2d32a"
+                },
+                {
+                  "payrollItems.rubric._id": "674e6e9f519c6b3b81a2d31e"
+                },
+                {
+                  "payrollItems.rubric._id": "674e6e96519c6b3b81a2d310"
+                },
+                {
+                  "payrollItems.rubric._id": "674e6db4519c6b3b81a2d191"
+                }
+              ]
+            }
+          },
+          {
+            "$lookup": {
+              "from": "monetary_unit_values",
+              "localField": "person.participation.participationClass.plan._id",
+              "foreignField": "monetaryUnit.plan._id",
+              "as": "quotas",
+              "let": {
+                "paymentDate": "$payrollPlanning.paymentDate"
+              },
+              "pipeline": [
+                {
+                  "$match": {
+                    "$expr": {
+                      "$and": [
+                        {
+                          "$eq": [
+                            "$$paymentDate",
+                            "$referenceDate"
+                          ]
+                        },
+                        {
+                          "$eq": [
+                            "$monetaryUnit._id",
+                            "67326f9b11e1d84832e0ae9a"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$quotas",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "participation": 1,
+              "person": 1,
+              "listaPagamentos": {
+                "_id": "$payrollItems._id",
+                "paymentDate": "$payrollPlanning.paymentDate",
+                "value": "$payrollItems.finalAmount",
+                "qtdQuotas": {
+                  "$divide": [
+                    "$payrollItems.finalAmount",
+                    "$quotas.value"
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "$sort": {
+              "paymentDate": 1
+            }
+          },
+          {
+            "$group": {
+              "_id": "$person.participation._id",
+              "person": {
+                "$first": "$person"
+              },
+              "listaPagamentos": {
+                "$push": "$listaPagamentos"
+              }
+            }
+          },
+          {
+            "$lookup": {
+              "from": "collection_records_RMDRC",
+              "localField": "person.participation._id",
+              "foreignField": "person.participation._id",
+              "as": "listaContribuicao",
+              "pipeline": [
+                {
+                  "$unwind": {
+                    "path": "$rubrics",
+                    "preserveNullAndEmptyArrays": false
+                  }
+                },
+                {
+                  "$unwind": {
+                    "path": "$rubrics.movements",
+                    "preserveNullAndEmptyArrays": false
+                  }
+                },
+                {
+                  "$sort": {
+                    "paymentDate": 1
+                  }
+                },
+                {
+                  "$project": {
+                    "_id": "$_id",
+                    "paymentDate": "$paymentDate",
+                    "value": "$rubrics.movements.value",
+                    "qtdQuotas": "$rubrics.movements.amountQuotas"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrolls",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "qtsQuotaCont": {
+          "$sum": [
+            "$payrolls.listaContribuicao.qtdQuotas"
+          ]
+        },
+        "qtsQuotaPag": {
+          "$sum": [
+            "$payrolls.listaPagamentos.qtdQuotas"
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$gte": [
+            "$qtsQuotaCont",
+            "$qtsQuotaPag"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "person": "$payrolls.person",
+        "listaPagamentos": "$payrolls.listaPagamentos",
+        "listaContribuicao": "$payrolls.listaContribuicao"
+      }
+    },
+    {
+      "$addFields": {
+        "memoriaCalculo": {
+          "$function": {
+            "body": "function memoriaCalculo(pessoa, listaPagamentos, listaContribuicao) { listaPagamentos.sort((a, b) => new Date(a.paymentDate) - new Date(b.paymentDate)); function calcularIdadeEmAnos(dataInicial, dataFinal) { const diffEmMilissegundos = new Date(dataFinal) - new Date(dataInicial); const diffEmAnos = diffEmMilissegundos / (1000 * 60 * 60 * 24 * 365); return Math.floor(diffEmAnos); } function formatContribuicoes(listaContribuicao) { const contribuicoesAntes2005 = listaContribuicao.filter(contribuicao => new Date(contribuicao.paymentDate) < new Date(\"2005-01-01\")); if (contribuicoesAntes2005.lenght > 0) { const totalQtdQuotas = contribuicoesAntes2005.reduce((sum, contribuicao) => sum + contribuicao.qtdQuotas, 0); const contribuicoesApos2005 = listaContribuicao.filter(contribuicao => new Date(contribuicao.paymentDate) >= new Date(\"2005-01-01\")); contribuicoesApos2005.push({ _id: \"\", paymentDate: \"2005-01-01T00:00:00.000Z\", value: 0, qtdQuotas: totalQtdQuotas }); contribuicoesApos2005.sort((a, b) => new Date(a.paymentDate) - new Date(b.paymentDate)); return { contribuicoesApos2005, contribuicoesAntes2005 }; } else { listaContribuicao.sort((a, b) => new Date(a.paymentDate) - new Date(b.paymentDate)); return { listaContribuicao }; } } const listaFormatada = formatContribuicoes(listaContribuicao); const listaContribuicoesUsadas = []; const listaContribuicoesMeioUsadas = []; for (const pagamento of listaPagamentos) { let totalCotasUsadas = 0; const qtdQuotasPagamento = pagamento.qtdQuotas; let isValid = true; let i = 0; while (isValid) { const contribuicaoMeioUsada = listaContribuicoesMeioUsadas.length > 0 ? listaContribuicoesMeioUsadas[listaContribuicoesMeioUsadas.length - 1] : undefined; if (contribuicaoMeioUsada && contribuicaoMeioUsada.cotasNaoUsadas > 0) { if (qtdQuotasPagamento >= contribuicaoMeioUsada.cotasNaoUsadas) { totalCotasUsadas = contribuicaoMeioUsada.cotasNaoUsadas; listaContribuicoesMeioUsadas.push({ ...contribuicaoMeioUsada, cotasUsadas: contribuicaoMeioUsada.cotasNaoUsadas, cotasNaoUsadas: 0, pagamento, idade: calcularIdadeEmAnos(contribuicaoMeioUsada.paymentDate, pagamento.paymentDate) }); listaContribuicoesUsadas.push({ _id: contribuicaoMeioUsada._id, paymentDate: contribuicaoMeioUsada.paymentDate, value: contribuicaoMeioUsada.value, qtdQuotas: contribuicaoMeioUsada.cotasNaoUsadas, pagamento, idade: calcularIdadeEmAnos(contribuicaoMeioUsada.paymentDate, pagamento.paymentDate) }); } if (qtdQuotasPagamento < contribuicaoMeioUsada.cotasNaoUsadas) { const cotasNaoUsadas = contribuicaoMeioUsada.cotasNaoUsadas - qtdQuotasPagamento; const cotasUsadas = qtdQuotasPagamento; listaContribuicoesMeioUsadas.push({ ...contribuicaoMeioUsada, cotasUsadas, cotasNaoUsadas, pagamento }); listaContribuicoesUsadas.push({ _id: contribuicaoMeioUsada._id, paymentDate: contribuicaoMeioUsada.paymentDate, value: contribuicaoMeioUsada.value, qtdQuotas: cotasUsadas, pagamento, idade: calcularIdadeEmAnos(contribuicaoMeioUsada.paymentDate, pagamento.paymentDate) }); isValid = false; } } if (isValid) { let novaListaContribuicoes = listaFormatada.listaContribuicao; if (listaContribuicoesUsadas.length > 0) { const listaContribuicoesUsadasIds = new Set(listaContribuicoesUsadas.map(contribuicao => contribuicao._id)); novaListaContribuicoes = listaFormatada.listaContribuicao.filter(contribuicao => !listaContribuicoesUsadasIds.has(contribuicao._id)).sort((a, b) => new Date(a.paymentDate) - new Date(b.paymentDate)); } const contribuicao = novaListaContribuicoes[i]; totalCotasUsadas = totalCotasUsadas + contribuicao.qtdQuotas; if (qtdQuotasPagamento >= totalCotasUsadas) { listaContribuicoesUsadas.push({ ...contribuicao, pagamento, idade: calcularIdadeEmAnos(contribuicao.paymentDate, pagamento.paymentDate) }); } if (qtdQuotasPagamento < totalCotasUsadas) { const cotasNaoUsadas = totalCotasUsadas - qtdQuotasPagamento; const cotasUsadas = contribuicao.qtdQuotas - cotasNaoUsadas; listaContribuicoesMeioUsadas.push({ ...contribuicao, cotasUsadas, cotasNaoUsadas, pagamento }); listaContribuicoesUsadas.push({ ...contribuicao, qtdQuotas: cotasUsadas, pagamento, idade: calcularIdadeEmAnos(contribuicao.paymentDate, pagamento.paymentDate) }); isValid = false; } } i++; } } return { pessoa, listaContribuicoesUsadas, listaContribuicoesMeioUsadas }; }",
+            "args": [
+              "$person",
+              "$listaPagamentos",
+              "$listaContribuicao"
+            ],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "memoriaCalculo.listaContribuicoesUsadas": {
+          "$map": {
+            "input": "$memoriaCalculo.listaContribuicoesUsadas",
+            "as": "contribuicao",
+            "in": {
+              "$mergeObjects": [
+                "$$contribuicao",
+                {
+                  "cotasUsadas": "$$contribuicao.qtdQuotas",
+                  "cotasNaoUsadas": 0
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "memoriaCalculo.gravarUseBase": {
+          "$concatArrays": [
+            "$memoriaCalculo.listaContribuicoesMeioUsadas",
+            {
+              "$filter": {
+                "input": "$memoriaCalculo.listaContribuicoesUsadas",
+                "as": "contribuicaoUsada",
+                "cond": {
+                  "$not": {
+                    "$in": [
+                      "$$contribuicaoUsada.paymentDate",
+                      {
+                        "$map": {
+                          "input": "$memoriaCalculo.listaContribuicoesMeioUsadas",
+                          "as": "contribuicaoMeioUsada",
+                          "in": "$$contribuicaoMeioUsada.paymentDate"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$set": {
+        "gravarUseBase": {
+          "$sortArray": {
+            "input": "$memoriaCalculo.gravarUseBase",
+            "sortBy": {
+              "paymentDate": 1,
+              "pagamento.paymentDate": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "registerUseBase": "$gravarUseBase"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$gravarUseBase",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "gravarUseBase.pagamento._id",
+        "foreignField": "payrollItems._id",
+        "as": "payroll",
+        "let": {
+          "paymentDate": "$bundle.listaContribuicoesMeioUsadas.pagamento.paymentDate"
+        },
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 0,
+              "person": 1,
+              "benefit": 1,
+              "payrollPlanning": 1,
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payroll_plannings",
+        "localField": "payroll.payrollPlanning._id",
+        "foreignField": "_id",
+        "as": "payrollPlannings"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollPlannings",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "payrollPlanning": {
+          "_id": "$payroll.payrollPlanning._id",
+          "referenceDate": "$payroll.payrollPlanning.competenceDate",
+          "creditDate": "$payrollPlannings.creditDate",
+          "paymentDate": "$payroll.payrollPlanning.paymentDate",
+          "payrollType": "$payroll.payrollPlanning.payrollType"
+        },
+        "benefit": "$payroll.benefit._id",
+        "payroll": "$payroll._id",
+        "payrollItem": "$payroll.payrollItem._id",
+        "competenceDate": "$gravarUseBase.paymentDate",
+        "referenceDate": "$gravarUseBase.paymentDate",
+        "qtdQuotas": "$gravarUseBase.qtdQuotas",
+        "unusedQuotas": "$gravarUseBase.cotasNaoUsadas",
+        "usedQuotas": {
+          "$toDouble": "$gravarUseBase.cotasUsadas"
+        },
+        "collectionRecord": "$gravarUseBase._id"
+      }
+    }
+  ]
+}

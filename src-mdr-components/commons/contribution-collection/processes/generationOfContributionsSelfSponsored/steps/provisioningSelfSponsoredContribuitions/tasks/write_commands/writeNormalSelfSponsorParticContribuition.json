@@ -1,0 +1,34 @@
+{
+  "_id": "66a268a90a662322b70aabb3",
+  "type": {
+    "_id": "66a268a92dac257f7d0f84e7",
+    "name": "write_commands"
+  },
+  "name": "writeNormalSelfSponsorParticContribuition",
+  "description": "Escreve dados da contribuição no provisionamento",
+  "main_collection": "contribution_provisioning_temp",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_calculateNormalSelfSponsorParticContNew"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otp_calculateNormalSelfSponsorParticContNew.person._id"
+          },
+          {
+            "person.participation._id": "$.$$.otp_calculateNormalSelfSponsorParticContNew.person.participation._id"
+          },
+          {
+            "referenceDate": "$.$$.otp_calculateNormalSelfSponsorParticContNew.referenceDate"
+          },
+          {
+            "directContributionCalculation": "$.$$.otp_calculateNormalSelfSponsorParticContNew.directContributionCalculation"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

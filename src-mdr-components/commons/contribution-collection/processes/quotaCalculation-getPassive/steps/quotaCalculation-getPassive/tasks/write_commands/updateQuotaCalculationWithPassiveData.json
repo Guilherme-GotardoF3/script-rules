@@ -1,0 +1,25 @@
+{
+  "_id": "66e9978b541f2af88c790397",
+  "type": {
+    "_id": "66e9978b1799613867313f83",
+    "name": "write_commands"
+  },
+  "name": "updateQuotaCalculationWithPassiveData",
+  "description": "Escreve dados do passivo",
+  "main_collection": "quota_calculations",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_getPassiveToCalculationQuota"
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$._id"
+          }
+        ]
+      },
+      "upsert": false
+    }
+  }
+}

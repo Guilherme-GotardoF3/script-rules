@@ -1,0 +1,1494 @@
+{
+  "_id": "66c4df38750044d136de8150",
+  "type": {
+    "_id": "66c4df3784aa2c279e9602cd",
+    "name": "queries"
+  },
+  "name": "getFinancialStatementData",
+  "description": "Tarefa que busca os dados para a ficha financeira.",
+  "main_collection": "files_lines_contents",
+  "output_name": "otp_getFinancialStatementData",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "fileId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "files",
+    "people",
+    "employment_history",
+    "rubrics"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "file": "$.fileId",
+        "status": "success"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "files",
+        "localField": "file",
+        "foreignField": "_id",
+        "as": "fileData"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$fileData",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "content.parsed.salario_de_participacao": {
+          "$ifNull": [
+            "$content.parsed.salario_de_participacao",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.13_salario_de_participacao": {
+          "$ifNull": [
+            "$content.parsed.13_salario_de_participacao",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.valor_sre_no_mes": {
+          "$ifNull": [
+            "$content.parsed.valor_sre_no_mes",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.valor_srd_no_mes": {
+          "$ifNull": [
+            "$content.parsed.valor_srd_no_mes",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.valor_participacao_no_lucro_no_mes": {
+          "$ifNull": [
+            "$content.parsed.valor_participacao_no_lucro_no_mes",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.campo_vago_1": {
+          "$ifNull": [
+            "$content.parsed.campo_vago_1",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.campo_vago_2": {
+          "$ifNull": [
+            "$content.parsed.campo_vago_2",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.percentual_contribuicao_basica": {
+          "$ifNull": [
+            "$content.parsed.percentual_contribuicao_basica",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.percentual_contribuicao_adicional": {
+          "$ifNull": [
+            "$content.parsed.percentual_contribuicao_adicional",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.percentual_contribuicao_esporadica": {
+          "$ifNull": [
+            "$content.parsed.percentual_contribuicao_esporadica",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.percentual_contribuicao_especifica_sre": {
+          "$ifNull": [
+            "$content.parsed.percentual_contribuicao_especifica_sre",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.percentual_contribuicao_especifica_srd": {
+          "$ifNull": [
+            "$content.parsed.percentual_contribuicao_especifica_srd",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.percentual_contrib_especifica_participacao_lucro_esporadica": {
+          "$ifNull": [
+            "$content.parsed.percentual_contrib_especifica_participacao_lucro_esporadica",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.percentual_contribuicao_especifica_vago_1": {
+          "$ifNull": [
+            "$content.parsed.percentual_contribuicao_especifica_vago_1",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.percentual_contribuicao_especifica_vago_2": {
+          "$ifNull": [
+            "$content.parsed.percentual_contribuicao_especifica_vago_2",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.contribuicao_basica_do_participante": {
+          "$ifNull": [
+            "$content.parsed.contribuicao_basica_do_participante",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.contribuicao_adicional_participante": {
+          "$ifNull": [
+            "$content.parsed.contribuicao_adicional_participante",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.contribuicao_esporadica_do_participante": {
+          "$ifNull": [
+            "$content.parsed.contribuicao_esporadica_do_participante",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.contribuicao_especifica_participante": {
+          "$ifNull": [
+            "$content.parsed.contribuicao_especifica_participante",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.contribuicao_especial_do_participante": {
+          "$ifNull": [
+            "$content.parsed.contribuicao_especial_do_participante",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.contribuicao_basica_da_patrocinadora": {
+          "$ifNull": [
+            "$content.parsed.contribuicao_basica_da_patrocinadora",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.contribuicao_adicional_da_patrocinadora": {
+          "$ifNull": [
+            "$content.parsed.contribuicao_adicional_da_patrocinadora",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.contribuicao_voluntaria_variavel_da_patrocinadora": {
+          "$ifNull": [
+            "$content.parsed.contribuicao_voluntaria_variavel_da_patrocinadora",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.contribuicao_especial_da_patrocinadora": {
+          "$ifNull": [
+            "$content.parsed.contribuicao_especial_da_patrocinadora",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.13_contribuicao_basica_do_participante_ii": {
+          "$ifNull": [
+            "$content.parsed.13_contribuicao_basica_do_participante_ii",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.13_contribuicao_adicional_do_participante_ii": {
+          "$ifNull": [
+            "$content.parsed.13_contribuicao_adicional_do_participante_ii",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.13_contribuicao_esporadica_do_participante_ii": {
+          "$ifNull": [
+            "$content.parsed.13_contribuicao_esporadica_do_participante_ii",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.13_contribuicao_basica_normal_da_patrocinadora_ii": {
+          "$ifNull": [
+            "$content.parsed.13_contribuicao_basica_normal_da_patrocinadora_ii",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.13_contribuicao_adicional_da_patrocinadora_ii": {
+          "$ifNull": [
+            "$content.parsed.13_contribuicao_adicional_da_patrocinadora_ii",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.codigo_de_gerencia_departamento": {
+          "$ifNull": [
+            "$content.parsed.codigo_de_gerencia_departamento",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.salario_base_para_emprestimo": {
+          "$ifNull": [
+            "$content.parsed.salario_base_para_emprestimo",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.naturalidade": {
+          "$ifNull": [
+            "$content.parsed.naturalidade",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.nacionalidade": {
+          "$ifNull": [
+            "$content.parsed.nacionalidade",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.nome_pai": {
+          "$ifNull": [
+            "$content.parsed.nome_pai",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.nome_mae": {
+          "$ifNull": [
+            "$content.parsed.nome_mae",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.nome_conjuge": {
+          "$ifNull": [
+            "$content.parsed.nome_conjuge",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.identidade": {
+          "$ifNull": [
+            "$content.parsed.identidade",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.orgao_expedidor": {
+          "$ifNull": [
+            "$content.parsed.orgao_expedidor",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.data_expedicao": {
+          "$ifNull": [
+            "$content.parsed.data_expedicao",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.telefone": {
+          "$ifNull": [
+            "$content.parsed.telefone",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.ocupacao": {
+          "$ifNull": [
+            "$content.parsed.ocupacao",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.plano_de_beneficio": {
+          "$ifNull": [
+            "$content.parsed.plano_de_beneficio",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_contrib_basica_do_participante": {
+          "$ifNull": [
+            "$content.parsed.diferenca_contrib_basica_do_participante",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_contrib_adicional_do_participante": {
+          "$ifNull": [
+            "$content.parsed.diferenca_contrib_adicional_do_participante",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_contrib_esporadica_do_participante": {
+          "$ifNull": [
+            "$content.parsed.diferenca_contrib_esporadica_do_participante",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_contrib_especifica_do_participante": {
+          "$ifNull": [
+            "$content.parsed.diferenca_contrib_especifica_do_participante",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_contrib_especial_do_participante": {
+          "$ifNull": [
+            "$content.parsed.diferenca_contrib_especial_do_participante",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_contrib_basica_normal_da_patrocinadora": {
+          "$ifNull": [
+            "$content.parsed.diferenca_contrib_basica_normal_da_patrocinadora",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_contrib_adicional_da_patrocinadora": {
+          "$ifNull": [
+            "$content.parsed.diferenca_contrib_adicional_da_patrocinadora",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_contrib_voluntaria_variavel_da_patrocinadora": {
+          "$ifNull": [
+            "$content.parsed.diferenca_contrib_voluntaria_variavel_da_patrocinadora",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_contrib_especial_da_patrocinadora": {
+          "$ifNull": [
+            "$content.parsed.diferenca_contrib_especial_da_patrocinadora",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_13_contrib_basica_do_participante_ii": {
+          "$ifNull": [
+            "$content.parsed.diferenca_13_contrib_basica_do_participante_ii",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_13_contrib_adicional_do_participante_ii": {
+          "$ifNull": [
+            "$content.parsed.diferenca_13_contrib_adicional_do_participante_ii",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_13_contrib_esporadica_do_participante_ii": {
+          "$ifNull": [
+            "$content.parsed.diferenca_13_contrib_esporadica_do_participante_ii",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_13_contrib_basica_normal_da_patrocinadora_ii": {
+          "$ifNull": [
+            "$content.parsed.diferenca_13_contrib_basica_normal_da_patrocinadora_ii",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_13_contrib_adicional_da_patrocinadora_ii": {
+          "$ifNull": [
+            "$content.parsed.diferenca_13_contrib_adicional_da_patrocinadora_ii",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.enderecamento": {
+          "$ifNull": [
+            "$content.parsed.enderecamento",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.codigo_perfil": {
+          "$ifNull": [
+            "$content.parsed.codigo_perfil",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.percentual_contribuicao_suplementar_participante": {
+          "$ifNull": [
+            "$content.parsed.percentual_contribuicao_suplementar_participante",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.contribuicao_suplementar_voluntaria_do_participante": {
+          "$ifNull": [
+            "$content.parsed.contribuicao_suplementar_voluntaria_do_participante",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.13_contribuicao_suplementar_voluntaria_do_participante_ii": {
+          "$ifNull": [
+            "$content.parsed.13_contribuicao_suplementar_voluntaria_do_participante_ii",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_contrib_suplementar_voluntaria_do_participante": {
+          "$ifNull": [
+            "$content.parsed.diferenca_contrib_suplementar_voluntaria_do_participante",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.diferenca_13_contrib_suplementar_voluntaria_do_participante_ii": {
+          "$ifNull": [
+            "$content.parsed.diferenca_13_contrib_suplementar_voluntaria_do_participante_ii",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.regime_de_tributacao": {
+          "$ifNull": [
+            "$content.parsed.regime_de_tributacao",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.margem_consignavel": {
+          "$ifNull": [
+            "$content.parsed.margem_consignavel",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.emprestimo": {
+          "$ifNull": [
+            "$content.parsed.emprestimo",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.e_mail": {
+          "$ifNull": [
+            "$content.parsed.e_mail",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.data_de_desligamento": {
+          "$ifNull": [
+            "$content.parsed.data_de_desligamento",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.plano_de_beneficio_antigo": {
+          "$ifNull": [
+            "$content.parsed.plano_de_beneficio_antigo",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.data_de_migracao_para_o_vivoprev": {
+          "$ifNull": [
+            "$content.parsed.data_de_migracao_para_o_vivoprev",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.ctb_administrativa_partic": {
+          "$ifNull": [
+            "$content.parsed.ctb_administrativa_partic",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.joia": {
+          "$ifNull": [
+            "$content.parsed.joia",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.13_joia": {
+          "$ifNull": [
+            "$content.parsed.13_joia",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.normal_patrocinadora": {
+          "$ifNull": [
+            "$content.parsed.normal_patrocinadora",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.13_normal_patrocinadora": {
+          "$ifNull": [
+            "$content.parsed.13_normal_patrocinadora",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.desp_administrativa_patroc": {
+          "$ifNull": [
+            "$content.parsed.desp_administrativa_patroc",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.contribuicao_risco_morte": {
+          "$ifNull": [
+            "$content.parsed.contribuicao_risco_morte",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.contribuicao_risco_invalidez": {
+          "$ifNull": [
+            "$content.parsed.contribuicao_risco_invalidez",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.contribuicao_p_deficit_equacionado": {
+          "$ifNull": [
+            "$content.parsed.contribuicao_p_deficit_equacionado",
+            "0000000000000"
+          ]
+        },
+        "content.parsed.contribuicao_especifica": {
+          "$ifNull": [
+            "$content.parsed.contribuicao_especifica",
+            "0000000000000"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "data": {
+          "plan": {
+            "$toInt": "$content.parsed.plano_de_beneficio"
+          },
+          "competenceDate": {
+            "$toDate": {
+              "$concat": [
+                {
+                  "$substr": [
+                    "$content.parsed.data_da_competencia",
+                    2,
+                    4
+                  ]
+                },
+                "-",
+                {
+                  "$substr": [
+                    "$content.parsed.data_da_competencia",
+                    0,
+                    2
+                  ]
+                },
+                "-01"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "data": {
+          "person": {
+            "name": "$content.parsed.nome_do_participante",
+            "sex": "$content.parsed.sexo",
+            "cpf": "$content.parsed.cpf",
+            "investmentProfile": {
+              "$toInt": "$content.parsed.codigo_perfil"
+            },
+            "employmentHistory": {
+              "company": {
+                "$toInt": "$content.parsed.codigo_da_patrocinadora"
+              },
+              "registration": "$content.parsed.matricula_patrocinadora"
+            },
+            "birthDate": {
+              "$toDate": {
+                "$concat": [
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_nascimento",
+                      0,
+                      4
+                    ]
+                  },
+                  "-",
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_nascimento",
+                      4,
+                      2
+                    ]
+                  },
+                  "-",
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_nascimento",
+                      6,
+                      2
+                    ]
+                  }
+                ]
+              }
+            },
+            "accessionDate": {
+              "$toDate": {
+                "$concat": [
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_adesao",
+                      0,
+                      4
+                    ]
+                  },
+                  "-",
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_adesao",
+                      4,
+                      2
+                    ]
+                  },
+                  "-",
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_adesao",
+                      6,
+                      2
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "data": {
+          "salaries": {
+            "participationSalary": {
+              "$toDecimal": {
+                "$concat": [
+                  {
+                    "$substr": [
+                      "$content.parsed.salario_de_participacao",
+                      0,
+                      {
+                        "$subtract": [
+                          {
+                            "$strLenCP": "$content.parsed.salario_de_participacao"
+                          },
+                          2
+                        ]
+                      }
+                    ]
+                  },
+                  ".",
+                  {
+                    "$substr": [
+                      "$content.parsed.salario_de_participacao",
+                      {
+                        "$subtract": [
+                          {
+                            "$strLenCP": "$content.parsed.salario_de_participacao"
+                          },
+                          2
+                        ]
+                      },
+                      2
+                    ]
+                  }
+                ]
+              }
+            },
+            "participationSalary13": {
+              "$toDecimal": {
+                "$concat": [
+                  {
+                    "$substr": [
+                      "$content.parsed.13_salario_de_participacao",
+                      0,
+                      {
+                        "$subtract": [
+                          {
+                            "$strLenCP": "$content.parsed.13_salario_de_participacao"
+                          },
+                          2
+                        ]
+                      }
+                    ]
+                  },
+                  ".",
+                  {
+                    "$substr": [
+                      "$content.parsed.13_salario_de_participacao",
+                      {
+                        "$subtract": [
+                          {
+                            "$strLenCP": "$content.parsed.13_salario_de_participacao"
+                          },
+                          2
+                        ]
+                      },
+                      2
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "data": {
+          "contribuitions": {
+            "participant": {
+              "basic": {
+                "$toDecimal": {
+                  "$concat": [
+                    {
+                      "$substr": [
+                        "$content.parsed.contribuicao_basica_do_participante",
+                        0,
+                        {
+                          "$subtract": [
+                            {
+                              "$strLenCP": "$content.parsed.contribuicao_basica_do_participante"
+                            },
+                            2
+                          ]
+                        }
+                      ]
+                    },
+                    ".",
+                    {
+                      "$substr": [
+                        "$content.parsed.contribuicao_basica_do_participante",
+                        {
+                          "$subtract": [
+                            {
+                              "$strLenCP": "$content.parsed.contribuicao_basica_do_participante"
+                            },
+                            2
+                          ]
+                        },
+                        2
+                      ]
+                    }
+                  ]
+                }
+              },
+              "basic13": {
+                "$toDecimal": {
+                  "$concat": [
+                    {
+                      "$substr": [
+                        "$content.parsed.13_contribuicao_basica_do_participante_ii",
+                        0,
+                        {
+                          "$subtract": [
+                            {
+                              "$strLenCP": "$content.parsed.13_contribuicao_basica_do_participante_ii"
+                            },
+                            2
+                          ]
+                        }
+                      ]
+                    },
+                    ".",
+                    {
+                      "$substr": [
+                        "$content.parsed.13_contribuicao_basica_do_participante_ii",
+                        {
+                          "$subtract": [
+                            {
+                              "$strLenCP": "$content.parsed.13_contribuicao_basica_do_participante_ii"
+                            },
+                            2
+                          ]
+                        },
+                        2
+                      ]
+                    }
+                  ]
+                }
+              },
+              "deathDisk": {
+                "$toDecimal": {
+                  "$concat": [
+                    {
+                      "$substr": [
+                        "$content.parsed.contribuicao_risco_morte",
+                        0,
+                        {
+                          "$subtract": [
+                            {
+                              "$strLenCP": "$content.parsed.contribuicao_risco_morte"
+                            },
+                            2
+                          ]
+                        }
+                      ]
+                    },
+                    ".",
+                    {
+                      "$substr": [
+                        "$content.parsed.contribuicao_risco_morte",
+                        {
+                          "$subtract": [
+                            {
+                              "$strLenCP": "$content.parsed.contribuicao_risco_morte"
+                            },
+                            2
+                          ]
+                        },
+                        2
+                      ]
+                    }
+                  ]
+                }
+              },
+              "disabilityRisk": {
+                "$toDecimal": {
+                  "$concat": [
+                    {
+                      "$substr": [
+                        "$content.parsed.contribuicao_risco_invalidez",
+                        0,
+                        {
+                          "$subtract": [
+                            {
+                              "$strLenCP": "$content.parsed.contribuicao_risco_invalidez"
+                            },
+                            2
+                          ]
+                        }
+                      ]
+                    },
+                    ".",
+                    {
+                      "$substr": [
+                        "$content.parsed.contribuicao_risco_invalidez",
+                        {
+                          "$subtract": [
+                            {
+                              "$strLenCP": "$content.parsed.contribuicao_risco_invalidez"
+                            },
+                            2
+                          ]
+                        },
+                        2
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            "sponsor": {
+              "normal": {
+                "$toDecimal": {
+                  "$concat": [
+                    {
+                      "$substr": [
+                        "$content.parsed.normal_patrocinadora",
+                        0,
+                        {
+                          "$subtract": [
+                            {
+                              "$strLenCP": "$content.parsed.normal_patrocinadora"
+                            },
+                            2
+                          ]
+                        }
+                      ]
+                    },
+                    ".",
+                    {
+                      "$substr": [
+                        "$content.parsed.normal_patrocinadora",
+                        {
+                          "$subtract": [
+                            {
+                              "$strLenCP": "$content.parsed.normal_patrocinadora"
+                            },
+                            2
+                          ]
+                        },
+                        2
+                      ]
+                    }
+                  ]
+                }
+              },
+              "normal13": {
+                "$toDecimal": {
+                  "$concat": [
+                    {
+                      "$substr": [
+                        "$content.parsed.13_normal_patrocinadora",
+                        0,
+                        {
+                          "$subtract": [
+                            {
+                              "$strLenCP": "$content.parsed.13_normal_patrocinadora"
+                            },
+                            2
+                          ]
+                        }
+                      ]
+                    },
+                    ".",
+                    {
+                      "$substr": [
+                        "$content.parsed.13_normal_patrocinadora",
+                        {
+                          "$subtract": [
+                            {
+                              "$strLenCP": "$content.parsed.13_normal_patrocinadora"
+                            },
+                            2
+                          ]
+                        },
+                        2
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "data": {
+          "registrySponsored": {
+            "$toInt": "$content.parsed.matricula_patrocinadora"
+          },
+          "loan": {
+            "baseSalariesForLoan": {
+              "$toDecimal": {
+                "$concat": [
+                  {
+                    "$substr": [
+                      "$content.parsed.salario_base_para_emprestimo",
+                      0,
+                      {
+                        "$subtract": [
+                          {
+                            "$strLenCP": "$content.parsed.salario_base_para_emprestimo"
+                          },
+                          2
+                        ]
+                      }
+                    ]
+                  },
+                  ".",
+                  {
+                    "$substr": [
+                      "$content.parsed.salario_base_para_emprestimo",
+                      {
+                        "$subtract": [
+                          {
+                            "$strLenCP": "$content.parsed.salario_base_para_emprestimo"
+                          },
+                          2
+                        ]
+                      },
+                      2
+                    ]
+                  }
+                ]
+              }
+            },
+            "consignableMargin": {
+              "$toDecimal": {
+                "$concat": [
+                  {
+                    "$substr": [
+                      "$content.parsed.margem_consignavel",
+                      0,
+                      {
+                        "$subtract": [
+                          {
+                            "$strLenCP": "$content.parsed.margem_consignavel"
+                          },
+                          2
+                        ]
+                      }
+                    ]
+                  },
+                  ".",
+                  {
+                    "$substr": [
+                      "$content.parsed.margem_consignavel",
+                      {
+                        "$subtract": [
+                          {
+                            "$strLenCP": "$content.parsed.margem_consignavel"
+                          },
+                          2
+                        ]
+                      },
+                      2
+                    ]
+                  }
+                ]
+              }
+            },
+            "loan": {
+              "$toDecimal": {
+                "$concat": [
+                  {
+                    "$substr": [
+                      "$content.parsed.emprestimo",
+                      0,
+                      {
+                        "$subtract": [
+                          {
+                            "$strLenCP": "$content.parsed.emprestimo"
+                          },
+                          2
+                        ]
+                      }
+                    ]
+                  },
+                  ".",
+                  {
+                    "$substr": [
+                      "$content.parsed.emprestimo",
+                      {
+                        "$subtract": [
+                          {
+                            "$strLenCP": "$content.parsed.emprestimo"
+                          },
+                          2
+                        ]
+                      },
+                      2
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "as": "person",
+        "let": {
+          "parameters": "$data.person",
+          "planId": "$fileData.details.plan.id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$name",
+                      "$$parameters.name"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      {
+                        "$dateToString": {
+                          "format": "%Y-%m-%d",
+                          "date": "$birthDate"
+                        }
+                      },
+                      {
+                        "$dateToString": {
+                          "format": "%Y-%m-%d",
+                          "date": "$$parameters.birthDate"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$documents"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$documents.type.name",
+                      "CPF"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$documents.document",
+                      "$$parameters.cpf"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "documents": 1,
+              "addresses": 1,
+              "bankAccounts": 1,
+              "emails": 1,
+              "participations": {
+                "$filter": {
+                  "input": "$participations",
+                  "as": "participation",
+                  "cond": {
+                    "$eq": [
+                      "$$participation.participationClass.plan._id",
+                      "$$planId"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "employment_history",
+        "localField": "person._id",
+        "foreignField": "person._id",
+        "as": "employmentHistory",
+        "let": {
+          "personId": "$person._id",
+          "competenceDate": "$data.competenceDate",
+          "registrySponsored": {
+            "$toString": "$data.registrySponsored"
+          },
+          "companyId": "$fileData.details.company.id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$$registrySponsored",
+                      "$registry"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$$companyId",
+                      "$company._id"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$or": [
+                  {
+                    "$and": [
+                      {
+                        "$gt": [
+                          "$$competenceDate",
+                          "$effectiveDate.startedAt"
+                        ]
+                      },
+                      {
+                        "$lte": [
+                          "$effectiveDate.endedAt",
+                          "$$competenceDate"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "$and": [
+                      {
+                        "$gte": [
+                          "$$competenceDate",
+                          "$effectiveDate.startedAt"
+                        ]
+                      },
+                      {
+                        "$eq": [
+                          {
+                            "$ifNull": [
+                              "$effectiveDate.endedAt",
+                              null
+                            ]
+                          },
+                          null
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "effectiveDate.startedAt": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "person": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$employmentHistory"
+      }
+    },
+    {
+      "$addFields": {
+        "payslip": [
+          {
+            "rubric": {
+              "_id": "6695212f506aba6f92309012",
+              "name": "Salário de Participação"
+            },
+            "receiptRecord": null,
+            "value": {
+              "$toDouble": "$data.salaries.participationSalary"
+            },
+            "referenceDate": "$data.competenceDate"
+          },
+          {
+            "rubric": {
+              "_id": "66bcfec0e83894503ec58e10",
+              "name": "Salário de Participação 13º"
+            },
+            "receiptRecord": null,
+            "value": {
+              "$toDouble": "$data.salaries.participationSalary13"
+            },
+            "referenceDate": "$data.competenceDate"
+          },
+          {
+            "rubric": {
+              "_id": "66952a180f261cc7246bfa2c",
+              "name": "Contribuição normal participante"
+            },
+            "receiptRecord": null,
+            "value": {
+              "$toDouble": "$data.contribuitions.participant.basic"
+            },
+            "referenceDate": "$data.competenceDate"
+          },
+          {
+            "rubric": {
+              "_id": "66bcfef1e83894503ec58e11",
+              "name": "Contribuição normal participante 13º"
+            },
+            "receiptRecord": null,
+            "value": {
+              "$toDouble": "$data.contribuitions.participant.basic13"
+            },
+            "referenceDate": "$data.competenceDate"
+          },
+          {
+            "rubric": {
+              "_id": "66a13d175eedd5cb12057937",
+              "name": "Contribuição risco (morte)"
+            },
+            "receiptRecord": null,
+            "value": {
+              "$toDouble": "$data.contribuitions.participant.deathDisk"
+            },
+            "referenceDate": "$data.competenceDate"
+          },
+          {
+            "rubric": {
+              "_id": "66a13d005eedd5cb12057936",
+              "name": "Contribuição risco (invalidez)"
+            },
+            "receiptRecord": null,
+            "value": {
+              "$toDouble": "$data.contribuitions.participant.disabilityRisk"
+            },
+            "referenceDate": "$data.competenceDate"
+          },
+          {
+            "rubric": {
+              "_id": "669529ab0f261cc7246bf9fe",
+              "name": "Contribuição normal patrocinadora"
+            },
+            "receiptRecord": null,
+            "value": {
+              "$toDouble": "$data.contribuitions.sponsor.normal"
+            },
+            "referenceDate": "$data.competenceDate"
+          },
+          {
+            "rubric": {
+              "_id": "66bcfe85e83894503ec58e0f",
+              "name": "Contribuição normal patrocinadora 13º"
+            },
+            "receiptRecord": null,
+            "value": {
+              "$toDouble": "$data.contribuitions.sponsor.normal13"
+            },
+            "referenceDate": "$data.competenceDate"
+          },
+          {
+            "rubric": {
+              "_id": "66bd0210e83894503ec58e14",
+              "name": "Salário Base para Empréstimo"
+            },
+            "receiptRecord": null,
+            "value": {
+              "$toDouble": "$data.loan.baseSalariesForLoan"
+            },
+            "referenceDate": "$data.competenceDate"
+          },
+          {
+            "rubric": {
+              "_id": "66bd0238e83894503ec58e15",
+              "name": "Margem Consignável"
+            },
+            "receiptRecord": null,
+            "value": {
+              "$toDouble": "$data.loan.consignableMargin"
+            },
+            "referenceDate": "$data.competenceDate"
+          },
+          {
+            "rubric": {
+              "_id": "66bd0263e83894503ec58e16",
+              "name": "Empréstimo"
+            },
+            "receiptRecord": null,
+            "value": {
+              "$toDouble": "$data.loan.loan"
+            },
+            "referenceDate": "$data.competenceDate"
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payslip",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "payslip.value": {
+          "$gt": 0
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "payslip.rubric.name",
+        "foreignField": "name",
+        "as": "payslip.rubric",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "support": 1,
+              "order": 1,
+              "configurations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payslip.rubric",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "competenceDate": {
+          "$dateFromParts": {
+            "year": {
+              "$year": "$data.competenceDate"
+            },
+            "month": {
+              "$month": "$data.competenceDate"
+            },
+            "day": {
+              "$dayOfMonth": "$data.competenceDate"
+            },
+            "hour": 3,
+            "minute": 0,
+            "second": 0,
+            "millisecond": 0,
+            "timezone": "+00:00"
+          }
+        },
+        "payslip.referenceDate": {
+          "$dateFromParts": {
+            "year": {
+              "$year": "$payslip.referenceDate"
+            },
+            "month": {
+              "$month": "$payslip.referenceDate"
+            },
+            "day": {
+              "$dayOfMonth": "$payslip.referenceDate"
+            },
+            "hour": 3,
+            "minute": 0,
+            "second": 0,
+            "millisecond": 0,
+            "timezone": "+00:00"
+          }
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$person._id",
+        "root": {
+          "$first": "$$ROOT"
+        },
+        "payslip": {
+          "$push": "$payslip"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": "$root.person",
+        "employmentHistory": "$root.employmentHistory",
+        "payslip": "$payslip",
+        "origin": "Patrocinador",
+        "amount": {
+          "$toDouble": {
+            "$sum": "$payslip.value"
+          }
+        },
+        "paymentMethod": {
+          "_id": "66bcf877ef381a379e3f7f89",
+          "name": "Folha Patrocinadora"
+        },
+        "competenceDate": "$root.competenceDate"
+      }
+    },
+    {
+      "$addFields": {
+        "paymentDate": "$competenceDate",
+        "discountCompanyDate": "$competenceDate"
+      }
+    }
+  ]
+}

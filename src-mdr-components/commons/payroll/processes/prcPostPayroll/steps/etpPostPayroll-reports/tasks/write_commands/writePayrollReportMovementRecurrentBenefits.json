@@ -1,0 +1,28 @@
+{
+  "_id": "642db8f0a9bc65f7a2789b62",
+  "type": {
+    "_id": "6520106ea2da4282abfcddd2",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReportMovementRecurrentBenefits",
+  "description": "Componente de escrita relatório payroll_report_movement_recurrent_benefits",
+  "main_collection": "payroll_report_movement_recurrent_benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_write_report_benefits_recorren"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_trf_project_write_report_benefits_recorren.participation._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_write_report_benefits_recorren.payrollPlanning"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

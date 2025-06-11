@@ -1,0 +1,31 @@
+{
+  "_id": "64947fc4fee58cb2b81f5848",
+  "type": {
+    "_id": "652018a7a2da4282abfcdddc",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReportBenefitChangeRubricValidations",
+  "description": "Componente de escrita relatório payroll_report_benefit_change_rubric_validations",
+  "main_collection": "payroll_report_benefit_change_rubric_validations",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_change_benefit_rubric_validations"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_trf_project_change_benefit_rubric_validations.participation._id"
+          },
+          {
+            "benefit._id": "$.$$.otp_trf_project_change_benefit_rubric_validations.benefit._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_change_benefit_rubric_validations.payrollPlanning"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

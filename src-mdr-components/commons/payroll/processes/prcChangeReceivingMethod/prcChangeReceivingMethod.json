@@ -1,0 +1,25 @@
+{
+  "_id": "6751d7ba272284f61af0414d",
+  "name": "prcChangeReceivingMethod",
+  "description": "Grava a estrutura da forma de recebimento, mas para andar junto com os componentes já existentes da folha, grava também na estrutura antiga da forma de pagamento",
+  "context": "payroll",
+  "steps": [
+    {
+      "step": "6751d7aa5add2144b22573f8",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false,
+  "createdAt": "2024-12-05T16:41:30.137Z",
+  "updatedAt": "2024-12-06T14:07:35.865Z",
+  "__v": 0
+}

@@ -1,0 +1,14 @@
+{
+  "_id": "6710207e9dac26648c0ea70a",
+  "type": {
+    "_id": "6710207efa968868ce59709b",
+    "name": "parameters"
+  },
+  "name": "kinshipFather",
+  "description": "id referente ao parentesco \"pai\" da collection kinships",
+  "data": {
+    "value": "642225ab268565dc88761f21",
+    "type": "constant",
+    "isDefault": false
+  }
+}

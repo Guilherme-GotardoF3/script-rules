@@ -1,0 +1,31 @@
+{
+  "_id": "67d576eaae2fb5ada3c65a6c",
+  "type": {
+    "_id": "67d576eaae2fb5ada3c65a6a",
+    "name": "write_commands"
+  },
+  "name": "writeCriticsActiveParticipants",
+  "description": "Consulta de crítica listando participantes ativos no cadastro, porém não constam no arquivo de movimentação.",
+  "main_collection": "processed_collection_review",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpCriticsActiveParticipants"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otpCriticsActiveParticipants.person._id"
+          },
+          {
+            "person.participation._id": "$.$$.otpCriticsActiveParticipants.person.participation._id"
+          },
+          {
+            "referenceDate": "$.$$.otpCriticsActiveParticipants.referenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

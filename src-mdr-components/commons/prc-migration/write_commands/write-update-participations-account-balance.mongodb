@@ -1,0 +1,25 @@
+//_id: {'$oid': '6703e9a1423324021de27ee0'}
+//_tenant: sandbox-cs
+//name: writeUpdateParticipationsAccountBalance
+//description: Escrita da atualização da referencia estendida de pessoa
+//collection: account_balances_rmdrc
+
+{
+	command: {
+        "updateOne": {
+            "update": {
+                "$set": {
+                    "person": "$.$$.otpUpdateParticipationsAccountBalance.person"
+                }
+            },
+            "filter": {
+                "$and": [
+                    {
+                        "_id": "$.$$.otpUpdateParticipationsAccountBalance.accountBalances"
+                    }
+                ]
+            },
+            "upsert": true
+        }
+    }
+}

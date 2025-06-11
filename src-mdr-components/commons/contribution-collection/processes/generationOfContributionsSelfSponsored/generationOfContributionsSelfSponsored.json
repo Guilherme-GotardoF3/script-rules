@@ -1,0 +1,42 @@
+{
+  "_id": "669ebaa1670dd0ab54d54d49",
+  "name": "generationOfContributionsSelfSponsored",
+  "description": "Processo para geração das contribuições dos autopatrocinados, incluindo processo de cobrança",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "collection",
+  "owners": [
+    {
+      "ref": "a751f239-74df-44af-8f8a-69358d4d76fb",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "669ebb859481323d12d978d8",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "66a1332cc88832ddbdbd27c7",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-07-22T20:01:37.703Z",
+  "updatedAt": "2025-03-29T14:51:12.871Z",
+  "__v": 0,
+  "dueDate": null,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "ec711d3c-19d7-4459-bd1c-6d02655cc979",
+    "username": "ansilva@f3capital.com.br"
+  },
+  "isSync": false
+}

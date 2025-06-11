@@ -1,0 +1,31 @@
+{
+  "_id": "66d7a991fda0202d2bdb9582",
+  "type": {
+    "_id": "66d7a9915aa84dc5dd165191",
+    "name": "write_commands"
+  },
+  "name": "createCollectiveBalanceAccount",
+  "description": "Cria item na collective account balance",
+  "main_collection": "collective_account_balances",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_collectiveAccountBalanceComposition"
+      },
+      "filter": {
+        "$and": [
+          {
+            "plan._id": "$.$$.otp_collectiveAccountBalanceComposition.plan._id"
+          },
+          {
+            "competenceDate": "$.$$.otp_collectiveAccountBalanceComposition.competenceDate"
+          },
+          {
+            "date": "$.$$.otp_collectiveAccountBalanceComposition.date"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

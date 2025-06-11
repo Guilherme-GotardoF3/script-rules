@@ -1,0 +1,303 @@
+{
+  "_id": "667d9f3e1a707d48163f303b",
+  "type": {
+    "_id": "667d9f3e430651d7a66ea464",
+    "name": "queries"
+  },
+  "name": "getAllCompetencesInMovements",
+  "description": "Lista todas as competencias existentes na collection de accountMovements",
+  "main_collection": "account_movements",
+  "output_name": "otp_getAllCompetencesInMovements",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participationIds",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "planId": {
+            "$ifNull": [
+              "$.planId",
+              1
+            ]
+          },
+          "participationIds": {
+            "$ifNull": [
+              "$.participationIds",
+              []
+            ]
+          },
+          "competenceDate": {
+            "$ifNull": [
+              "$.competenceDate",
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$bundle.planId",
+                    1
+                  ]
+                },
+                "then": 1,
+                "else": "$bundle.planId"
+              }
+            },
+            {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$bundle.planId",
+                    1
+                  ]
+                },
+                "then": 1,
+                "else": "$person.participation.participationClass.plan._id"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "bundle.year": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$bundle.competenceDate",
+                1
+              ]
+            },
+            "then": 1,
+            "else": {
+              "$toInt": {
+                "$arrayElemAt": [
+                  {
+                    "$split": [
+                      "$bundle.competenceDate",
+                      "-"
+                    ]
+                  },
+                  1
+                ]
+              }
+            }
+          }
+        },
+        "bundle.month": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$bundle.competenceDate",
+                1
+              ]
+            },
+            "then": 1,
+            "else": {
+              "$toInt": {
+                "$arrayElemAt": [
+                  {
+                    "$split": [
+                      "$bundle.competenceDate",
+                      "-"
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                {
+                  "$cond": {
+                    "if": {
+                      "$eq": [
+                        "$bundle.competenceDate",
+                        1
+                      ]
+                    },
+                    "then": 1,
+                    "else": "$bundle.year"
+                  }
+                },
+                {
+                  "$cond": {
+                    "if": {
+                      "$eq": [
+                        "$bundle.competenceDate",
+                        1
+                      ]
+                    },
+                    "then": 1,
+                    "else": {
+                      "$year": {
+                        "$toDate": "$competenceDate"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "$eq": [
+                {
+                  "$cond": {
+                    "if": {
+                      "$eq": [
+                        "$bundle.competenceDate",
+                        1
+                      ]
+                    },
+                    "then": 1,
+                    "else": "$bundle.month"
+                  }
+                },
+                {
+                  "$cond": {
+                    "if": {
+                      "$eq": [
+                        "$bundle.competenceDate",
+                        1
+                      ]
+                    },
+                    "then": 1,
+                    "else": {
+                      "$month": {
+                        "$toDate": "$competenceDate"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$bundle.participationIds",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "bundle.participationId": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                {
+                  "$ifNull": [
+                    "$bundle.participationIds",
+                    1
+                  ]
+                },
+                1
+              ]
+            },
+            "then": 1,
+            "else": "$bundle.participationIds"
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$bundle.participationId",
+                    1
+                  ]
+                },
+                "then": 1,
+                "else": "$bundle.participationId"
+              }
+            },
+            {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$bundle.participationId",
+                    1
+                  ]
+                },
+                "then": 1,
+                "else": "$person.participation._id"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$sort": {
+        "competenceDate": 1
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "year": {
+            "$year": "$competenceDate"
+          },
+          "month": {
+            "$month": "$competenceDate"
+          }
+        },
+        "competenceDate": {
+          "$first": "$competenceDate"
+        }
+      }
+    },
+    {
+      "$project": {
+        "competenceDate": "$competenceDate",
+        "_id": 0
+      }
+    },
+    {
+      "$sort": {
+        "competenceDate": 1
+      }
+    }
+  ]
+}

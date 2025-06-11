@@ -1,0 +1,14 @@
+{
+  "_id": "671fc82085dcb7cfa4a983ad",
+  "type": {
+    "_id": "671fc8208df790b126e59bec",
+    "name": "parameters"
+  },
+  "name": "paymentMethodId",
+  "description": "id do método de pagamento \"Prazo certo em reais\"",
+  "data": {
+    "value": "66bd4cdd4eb4534a4f853c6c",
+    "type": "constant",
+    "isDefault": false
+  }
+}

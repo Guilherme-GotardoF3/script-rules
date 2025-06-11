@@ -1,0 +1,28 @@
+{
+  "_id": "6764645cb7a616a9ec4fa18a",
+  "type": {
+    "_id": "6764645cd855b3d90dac12f1",
+    "name": "write_commands"
+  },
+  "name": "writeProjectInstituteBPD_benefitEntitlements",
+  "description": "Escreve a projeção do cálculo do instituto BPD",
+  "main_collection": "benefit_entitlements",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_projectInstituteBPD_benefitEntitlements"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person.participations._id": "$.$$.otp_projectInstituteBPD_benefitEntitlements.person.participations._id"
+          },
+          {
+            "type": "$.$$.otp_projectInstituteBPD_benefitEntitlements.type"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

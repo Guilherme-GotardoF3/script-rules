@@ -1,0 +1,14 @@
+{
+  "_id": "66e44ba38be6af7903960c53",
+  "type": {
+    "_id": "66e44ba2137b1d08405e2f77",
+    "name": "parameters"
+  },
+  "name": "exemptRubricIn1343",
+  "description": "id da rubrica IN1343-Dedução Base Tributável (informativo)\n",
+  "data": {
+    "value": "674e6db5519c6b3b81a2d1bd",
+    "type": "constant",
+    "isDefault": false
+  }
+}

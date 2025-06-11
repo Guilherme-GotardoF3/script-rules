@@ -1,0 +1,52 @@
+{
+  "_id": "65d8f34a9b815872b68f15e0",
+  "name": "prcPayrollClosing",
+  "description": "Processo para finalização da folha de pagamento de beneficios",
+  "trigger": {
+    "type": "manual"
+  },
+  "owners": [
+    {
+      "ref": "d60dcbab-9e19-4aef-9c34-42b349e373a5",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "65d8f21b0ee692ef28d67264",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f2280ee692ef28d67278",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "66672a369c4e0b69085c6114",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f2400ee692ef28d672a0",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:34:34.224Z",
+  "updatedAt": "2025-04-08T15:12:29.010Z",
+  "__v": 0,
+  "dueDate": null,
+  "context": "benefit",
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "0cce8ea3-4059-496e-80ec-9ff04b516115",
+    "username": "dpitol@f3capital.com.br"
+  },
+  "isSync": false
+}

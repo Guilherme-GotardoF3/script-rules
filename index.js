@@ -1,4 +1,6 @@
 import { exportProcess, updateParameters } from "./src/exportProcess.js";
+import { verifyExportedProcesses } from "./src/verifyProcesses.js";
+import { verifyDatabase } from "./src/verifyDatabase.js"
 import inquirer from "inquirer";
 
 const AREAS = {
@@ -7,9 +9,19 @@ const AREAS = {
   "3": "ocean",
   "4": "institutes",
   "5": "third-portal",
-  "6": "Update Parameters",
+  "6": "billing",
+  "7": "patrimony",
+  "8": "benefits",
+  "9": "registration",
+  "p": "Update Parameters",
+  "v": "Verification Processes",
+  "b": "Verification Database",
   "x": "Sair"
 };
+
+const VALID_AREAS = Object.values(AREAS).filter(
+  a => !["Update Parameters", "Verification Processes", "Sair"].includes(a)
+);
 
 (async () => {
   const { areaChoice } = await inquirer.prompt([
@@ -29,10 +41,27 @@ const AREAS = {
     process.exit(0);
   }
 
-  if (areaChoice === "Update Parameters"){
+  if (areaChoice === "Update Parameters") {
     console.log(`Iniciando atualização de parâmetros, banco atual ${process.env.DB_NAME}`);
     await updateParameters();
     process.exit(0);
+  }
+
+  if (areaChoice === "Verification Processes") {
+    console.log("Iniciando verificação de processos exportados...");
+    await verifyExportedProcesses();
+    process.exit(0);
+  }
+
+  if (areaChoice === "Verification Database") {
+    console.log("Iniciando verificação de processos no banco de dados...");
+    await verifyDatabase();
+    process.exit(0);
+  }
+
+  if (!VALID_AREAS.includes(areaChoice)) {
+    console.error("Opção inválida.");
+    process.exit(1);
   }
 
   const { processName } = await inquirer.prompt([

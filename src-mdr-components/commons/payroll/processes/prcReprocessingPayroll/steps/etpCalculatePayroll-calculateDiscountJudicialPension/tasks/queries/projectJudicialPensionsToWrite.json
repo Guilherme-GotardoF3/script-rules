@@ -1,0 +1,148 @@
+{
+  "_id": "6679fa10200949defc828b9c",
+  "type": {
+    "_id": "6679fa10994f0cec9f955589",
+    "name": "queries"
+  },
+  "name": "projectJudicialPensionsToWrite",
+  "description": "Projeta os dados de pensão alimentícia e de IR",
+  "main_collection": "payroll_plannings",
+  "output_name": "otp_projectJudicialPensionsToWrite",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1
+      }
+    },
+    {
+      "$addFields": {
+        "otp_trf_calculateJudicialPensionDiscountItems": "$.otp_trf_calculateJudicialPensionDiscountItems"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otp_trf_calculateJudicialPensionDiscountItems"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otp_trf_calculateJudicialPensionDiscountItems"
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payrollItems": "$otp_trf_calculateJudicialPensionDiscountItems.result"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems"
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "rubricId": "$payrollItems.rubric._id",
+          "payroll": "$payrollItems.payroll",
+          "recipient": "$payrollItems.judicialPension.recipient._id"
+        },
+        "newPayrollItems": {
+          "$first": "$payrollItems"
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "payroll": "$newPayrollItems.payroll"
+        },
+        "newPayrollItems": {
+          "$push": "$newPayrollItems"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id.payroll",
+        "foreignField": "_id",
+        "as": "payroll",
+        "let": {
+          "rubricIds": "$newPayrollItems.rubric._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payrollItems"
+            }
+          },
+          {
+            "$addFields": {
+              "isValid": {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$in": [
+                          "$payrollItems.rubric._id",
+                          "$$rubricIds"
+                        ]
+                      },
+                      "then": false
+                    }
+                  ],
+                  "default": true
+                }
+              }
+            }
+          },
+          {
+            "$match": {
+              "isValid": true
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "newPayrollItems": {
+          "$concatArrays": [
+            "$newPayrollItems",
+            "$payroll.payrollItems"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$_id.payroll",
+        "payrollItems": "$newPayrollItems"
+      }
+    }
+  ]
+}

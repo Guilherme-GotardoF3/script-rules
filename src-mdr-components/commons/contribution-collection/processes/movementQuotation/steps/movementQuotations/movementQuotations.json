@@ -1,0 +1,41 @@
+{
+  "_id": "6418836a37ed7cedd2f38105",
+  "name": "movementQuotations",
+  "description": "Etapa para a cotizacao dos movimentos",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "64188293ae5a7bdeea35055d",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66c8a76a6b44c320801d505d",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66d7132b778dca2b9b092c10",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66d714cc778dca2b9b092c33",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66d6403698cf7eff654d193e",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2023-03-20T16:01:46.142Z",
+  "updatedAt": "2024-09-03T13:53:24.072Z",
+  "__v": 0
+}

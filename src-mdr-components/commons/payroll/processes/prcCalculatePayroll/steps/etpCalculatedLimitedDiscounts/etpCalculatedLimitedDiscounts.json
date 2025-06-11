@@ -1,0 +1,23 @@
+{
+  "_id": "66bfa1ffa5898d24a9405315",
+  "name": "etpCalculatedLimitedDiscounts",
+  "description": "etapa que limita os descontos da ordem de processamento em 30%",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66bfa16bff895311294ff034",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66bfafbc8864449efe2d4bbd",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-08-16T19:01:19.164Z",
+  "updatedAt": "2024-08-16T20:01:11.648Z",
+  "__v": 0
+}

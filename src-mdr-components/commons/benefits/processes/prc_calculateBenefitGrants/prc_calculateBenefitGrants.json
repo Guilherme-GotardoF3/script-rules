@@ -1,0 +1,25 @@
+{
+  "_id": "6751dcc90a6225365986dc0a",
+  "name": "prc_calculateBenefitGrants",
+  "description": "Processo que chama a etapa etp_calculateBenefitGrants que tem um componente que pega o benefit type do bundle e chama um componente condicional que, dependendo do tipo de beneficio, irá chamar a tarefa de cálculo correspondente.",
+  "context": "benefit",
+  "steps": [
+    {
+      "step": "6751dc3b8d18a5bba3249021",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "fe66bca9-90de-4909-8c1a-966f21a824bc",
+    "username": "dpitol@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "9122ff06-ec30-4c99-b8ae-42671989a0b6",
+    "username": "dpitol@f3capital.com.br"
+  },
+  "isSync": false,
+  "createdAt": "2024-12-05T17:03:05.744Z",
+  "updatedAt": "2025-03-25T13:36:49.441Z",
+  "__v": 0
+}

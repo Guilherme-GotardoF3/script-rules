@@ -1,0 +1,25 @@
+{
+  "_id": "66e86ac18e33f136103cf960",
+  "name": "quotaCalculation-getPassive",
+  "description": "Busca o  passivo para o calculo de cota",
+  "context": "collection",
+  "steps": [
+    {
+      "step": "66e8892defe3eddc267fe4d9",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "createdAt": "2024-09-16T17:28:33.808Z",
+  "updatedAt": "2024-09-17T15:01:08.335Z",
+  "__v": 0,
+  "isSync": false
+}

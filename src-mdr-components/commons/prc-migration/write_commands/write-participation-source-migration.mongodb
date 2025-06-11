@@ -1,0 +1,25 @@
+//_id: {'$oid': '66fda4a327ca02e079890510'}
+//_tenant: sandbox-cs
+//name: writeParticipationSourceMigration
+//description: escreve o campo participationSource na people
+//collection: people
+
+{
+	command: {
+        "updateOne": {
+            "update": {
+                "$set": {
+                    "participations": "$.$$.otpParticipationSourceMigration.participations"
+                }
+            },
+            "filter": {
+                "$and": [
+                    {
+                        "_id": "$.$$.otpParticipationSourceMigration._id"
+                    }
+                ]
+            },
+            "upsert": true
+        }
+    }
+}

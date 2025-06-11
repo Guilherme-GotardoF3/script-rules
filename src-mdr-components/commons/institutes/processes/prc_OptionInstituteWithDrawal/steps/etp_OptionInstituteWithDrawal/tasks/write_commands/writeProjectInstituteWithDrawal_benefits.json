@@ -1,0 +1,28 @@
+{
+  "_id": "678ac68333b51b289e23d186",
+  "type": {
+    "_id": "678ac68377ed8fb4da89029f",
+    "name": "write_commands"
+  },
+  "name": "writeProjectInstituteWithDrawal_benefits",
+  "description": "Escreve na benefits a concessão de um resgate de contribuições conforme determinado no componente de condição anterior",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_projectInstituteWithDrawal_benefits"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation": "$.$$.otp_projectInstituteWithDrawal_benefits.participation"
+          },
+          {
+            "institute._id": "$.$$.otp_projectInstituteWithDrawal_benefits.institute.type._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

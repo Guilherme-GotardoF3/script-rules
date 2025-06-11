@@ -1,0 +1,327 @@
+{
+  "_id": "66954b18463c51cd1913e4fb",
+  "type": {
+    "_id": "66954b173a1b7d7f3b82b064",
+    "name": "queries"
+  },
+  "name": "applyReadjustmentsSalarySelfSponsored",
+  "description": "Calcula reajuste de salario de autopatrocinados",
+  "main_collection": "plan_readjustments",
+  "output_name": "otp_applyReadjustmentsSalarySelfSponsored",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "selfSponsoredSalaryAdjustmentId",
+      "type": "Parameter",
+      "description": "id do reajuste de salario de autopatrocinado ",
+      "value": "67fe6d56475e354faf208597"
+    },
+    {
+      "name": "applyReadjustment",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "recovery_temporal_series"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "p:6723b9441d9a90c03c7dabb9"
+      }
+    },
+    {
+      "$addFields": {
+        "bundle": {
+          "applyReadjustments": "$.applyReadjustment"
+        },
+        "person": "$.$$.otp_getAllSelfSponsoredToImportSalaries"
+      }
+    },
+    {
+      "$addFields": {
+        "month": {
+          "$month": {
+            "$toDate": "$person.competenceDate"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "monthName": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$month",
+                    1
+                  ]
+                },
+                "then": "January"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$month",
+                    2
+                  ]
+                },
+                "then": "February"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$month",
+                    3
+                  ]
+                },
+                "then": "March"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$month",
+                    4
+                  ]
+                },
+                "then": "April"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$month",
+                    5
+                  ]
+                },
+                "then": "May"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$month",
+                    6
+                  ]
+                },
+                "then": "June"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$month",
+                    7
+                  ]
+                },
+                "then": "July"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$month",
+                    8
+                  ]
+                },
+                "then": "August"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$month",
+                    9
+                  ]
+                },
+                "then": "September"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$month",
+                    10
+                  ]
+                },
+                "then": "October"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$month",
+                    11
+                  ]
+                },
+                "then": "November"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$month",
+                    12
+                  ]
+                },
+                "then": "December"
+              }
+            ],
+            "default": "Unknown"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "recovery_temporal_series",
+        "localField": "readjustmentIndex.recoveryTemporalIndex._id",
+        "foreignField": "index._id",
+        "as": "recoveryTemporalSeries",
+        "let": {
+          "competenceDate": {
+            "$toDate": "$person.competenceDate"
+          }
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$lt": [
+                  "$date",
+                  "$$competenceDate"
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "date": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$recoveryTemporalSeries",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "salary": {
+          "lastSalary": "$person.salaries.amount",
+          "indexReadjustment": "$monetaryUnitValues.value",
+          "newSalary": {
+            "$round": [
+              {
+                "$add": [
+                  "$person.salaries.amount",
+                  {
+                    "$multiply": [
+                      "$person.salaries.amount",
+                      {
+                        "$ifNull": [
+                          {
+                            "$divide": [
+                              "$recoveryTemporalSeries.value",
+                              100
+                            ]
+                          },
+                          1
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$set": {
+        "salaryUsed": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$readjustmentMonth",
+                "$monthName"
+              ]
+            },
+            "then": "$salary.newSalary",
+            "else": "$salary.lastSalary"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "variationSalary": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$readjustmentMonth",
+                "$monthName"
+              ]
+            },
+            "then": {
+              "$round": [
+                {
+                  "$abs": {
+                    "$subtract": [
+                      "$salary.lastSalary",
+                      "$salary.newSalary"
+                    ]
+                  }
+                },
+                2
+              ]
+            },
+            "else": 0
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "salaryImportGeneration": "$person.salaryImportGeneration",
+        "person": "$person.person",
+        "competenceDate": "$person.competenceDate",
+        "referenceDate": "$person.referenceDate",
+        "salaries": [
+          {
+            "source": "company",
+            "amount": "$salaryUsed",
+            "type": "base",
+            "variation": {
+              "$cond": {
+                "if": {
+                  "$and": [
+                    {
+                      "$ne": [
+                        "$salary.lastSalary",
+                        "$salary.newSalary"
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        "$bundle.applyReadjustments",
+                        "true"
+                      ]
+                    }
+                  ]
+                },
+                "then": "$variationSalary",
+                "else": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

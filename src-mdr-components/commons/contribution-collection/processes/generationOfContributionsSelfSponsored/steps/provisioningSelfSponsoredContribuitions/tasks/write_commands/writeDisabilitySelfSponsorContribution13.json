@@ -1,0 +1,34 @@
+{
+  "_id": "67e8333d2e7ee50b6201b175",
+  "type": {
+    "_id": "67e8333ca008800842c1ea21",
+    "name": "write_commands"
+  },
+  "name": "writeDisabilitySelfSponsorContribution13",
+  "description": "Escrita da 13ª contribuição risco - invalidez.",
+  "main_collection": "contribution_provisioning_temp",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpCalculateDisabilitySelfSponsorContribution13"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otpCalculateDisabilitySelfSponsorContribution13.person._id"
+          },
+          {
+            "person.participation._id": "$.$$.otpCalculateDisabilitySelfSponsorContribution13.person.participation._id"
+          },
+          {
+            "referenceDate": "$.$$.otpCalculateDisabilitySelfSponsorContribution13.referenceDate"
+          },
+          {
+            "directContributionCalculation": "$.$$.otpCalculateDisabilitySelfSponsorContribution13.directContributionCalculation"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

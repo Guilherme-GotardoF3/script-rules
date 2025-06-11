@@ -1,0 +1,35 @@
+{
+  "_id": "65d8f1c80ee692ef28d671ec",
+  "name": "etpCalculatePayroll-calculationOfExceptions",
+  "description": "Etapa para o calculo das exceções",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "646517ae727f348e7f0d16ea",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6466428e23d2ed1150b3bc45",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "646517e8727f348e7f0d16ff",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "646642108484b5fb006db726",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:28:08.010Z",
+  "updatedAt": "2024-07-12T19:21:53.737Z",
+  "__v": 0
+}

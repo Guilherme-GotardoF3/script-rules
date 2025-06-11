@@ -1,0 +1,397 @@
+{
+  "_id": "66c372170755ce936797a91b",
+  "type": {
+    "_id": "66c37216c89bca2f90cb1d32",
+    "name": "queries"
+  },
+  "name": "generateBillingData",
+  "description": "Tarefa que gera contribuicao e altera seu status",
+  "main_collection": "processing_collection_contributions",
+  "output_name": "otp_generateBillingData",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "processingCollectionContributionId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "contribution_provisioning",
+    "investment_profiles",
+    "employment_history",
+    "people",
+    "foundation_payment_method"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.processingCollectionContributionId"
+      }
+    },
+    {
+      "$addFields": {
+        "participationClassId": {
+          "$ifNull": [
+            "$participationClass._id",
+            null
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "contribution_provisioning",
+        "as": "contributionProvisioning",
+        "let": {
+          "competenceDate": "$competenceDate",
+          "referenceDate": "$referenceDate",
+          "planId": "$plan._id",
+          "participationClassId": {
+            "$ifNull": [
+              "$participationClass._id",
+              null
+            ]
+          },
+          "participations": {
+            "$ifNull": [
+              "$participations",
+              null
+            ]
+          }
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      {
+                        "$dateToString": {
+                          "format": "%Y-%m-%d",
+                          "date": "$referenceDate"
+                        }
+                      },
+                      {
+                        "$dateToString": {
+                          "format": "%Y-%m-%d",
+                          "date": "$$competenceDate"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$$planId",
+                      "$person.participation.participationClass.plan._id"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$or": [
+                  {
+                    "$in": [
+                      "$person.participation._id",
+                      "$$participations"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$$participations",
+                      []
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$rubrics",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "rubrics.rubric.configurations.isTaxCalculated": false
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "person": 1,
+              "dueDate": 1,
+              "rubrics": 1
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "person": {
+                "$first": "$person"
+              },
+              "dueDate": {
+                "$first": "$dueDate"
+              },
+              "rubrics": {
+                "$push": "$rubrics"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$contributionProvisioning",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "person": "$contributionProvisioning.person"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "investment_profiles",
+        "localField": "person.participation.participationClass._id",
+        "foreignField": "participationClasses._id",
+        "as": "investmentProfile",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "description": 1,
+              "isPredefined": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$investmentProfile",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "employment_history",
+        "localField": "person._id",
+        "foreignField": "person._id",
+        "as": "employmentHistory",
+        "let": {
+          "referenceDate": "$referenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$effectiveDate",
+                      "$$referenceDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "effectiveDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "company": 1,
+              "registry": 1,
+              "employmentContractType": 1,
+              "effectiveDate": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$employmentHistory",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$contributionProvisioningsCharges",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "person._id",
+        "foreignField": "_id",
+        "as": "person",
+        "let": {
+          "participationId": "$person.participation",
+          "bankId": {
+            "$ifNull": [
+              "$bank._id",
+              null
+            ]
+          }
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId._id"
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "participations.foundationPaymentMethod": {
+                "$exists": true
+              },
+              "$expr": {
+                "$or": [
+                  {
+                    "$eq": [
+                      "$participations.foundationPaymentMethod.bank._id",
+                      "$$bankId"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$$bankId",
+                      null
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "documents": 1,
+              "addresses": 1,
+              "bankAccounts": 1,
+              "emails": 1,
+              "allParticipationFields": "$participations",
+              "participation": "$$participationId"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "foundation_payment_method",
+        "localField": "foundationPaymentMethod._id",
+        "foreignField": "_id",
+        "as": "foundationPaymentMethodData",
+        "let": {
+          "personFoundationPaymentMethodId": {
+            "$ifNull": [
+              "$person.allParticipationFields.foundationPaymentMethod._id",
+              null
+            ]
+          }
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$_id",
+                      "$$personFoundationPaymentMethodId"
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$$personFoundationPaymentMethodId",
+                      null
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$foundationPaymentMethodData",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "processingCollectionContribution": {
+          "_id": "$_id",
+          "referenceDate": "$referenceDate"
+        },
+        "bank": "$person.allParticipationFields.foundationPaymentMethod.bank",
+        "referenceDate": {
+          "$arrayElemAt": [
+            "$contributionProvisioning.rubrics.referenceDate",
+            0
+          ]
+        },
+        "dueDate": "$contributionProvisioning.dueDate",
+        "amount": {
+          "$sum": "$contributionProvisioning.rubrics.amount"
+        },
+        "amountCharges": {
+          "$sum": "$contributionProvisioningsCharges.rubrics.amount"
+        },
+        "person": "$person",
+        "contributionProvisionings": [
+          {
+            "_id": "$contributionProvisioning._id",
+            "dueDate": "$contributionProvisioning.dueDate",
+            "rubrics": "$contributionProvisioning.rubrics"
+          }
+        ],
+        "contributionProvisioningsCharges": [],
+        "paymentMethod": "$foundationPaymentMethod",
+        "investmentProfile": "$investmentProfile",
+        "employmentHistory": "$employmentHistory",
+        "status": "PROCESSED"
+      }
+    }
+  ]
+}

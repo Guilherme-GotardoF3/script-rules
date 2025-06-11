@@ -1,0 +1,17 @@
+{
+  "_id": "67599004cf9cd9fcfcde1336",
+  "name": "etpRulesMovement",
+  "description": "Etapa para que o produto possa fazer o levantamento dos valores de saldos e movimentações:",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "67598ff3c489b2d70b6b04c2",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-12-11T13:13:40.549Z",
+  "updatedAt": "2025-03-14T21:17:06.851Z",
+  "__v": 0
+}

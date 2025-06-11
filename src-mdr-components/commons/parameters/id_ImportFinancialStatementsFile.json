@@ -1,0 +1,14 @@
+{
+  "_id": "67d42a8e4c33492c293fcd4d",
+  "type": {
+    "_id": "67d42a8e98c3896283cd9c4b",
+    "name": "parameters"
+  },
+  "name": "id_ImportFinancialStatementsFile",
+  "description": "Parâmetro para o id do tipo de importação do arquivo de movimento da. Usado para gerar críticas durante o processo de importação do arquivo de movimento no painel de terceiros.",
+  "data": {
+    "value": "67d3218cd61a29ba7b25b441",
+    "type": "constant",
+    "isDefault": false
+  }
+}

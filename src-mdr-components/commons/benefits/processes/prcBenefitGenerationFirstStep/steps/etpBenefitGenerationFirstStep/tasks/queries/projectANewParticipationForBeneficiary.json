@@ -1,0 +1,271 @@
+{
+  "_id": "66020d76db6266e84ce9dd7a",
+  "type": {
+    "_id": "66020ebd449fbc2643ec6d75",
+    "name": "queries"
+  },
+  "name": "projectANewParticipationForBeneficiary",
+  "description": "Projetar a nova participação do beneficiário que se tornará pensionista",
+  "main_collection": "people",
+  "output_name": "otp_trf_projectANewParticipationForBeneficiary",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_classeParticip_PensaoMorteAssistido",
+      "type": "Parameter",
+      "description": "Seleciona o id do tipo de classe de participação para \"Pensão por Morte (Assistido)\" para a conversão de aposentadoria em pensão por morte",
+      "value": "67ded168488ad929060f73ac"
+    },
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "participation_classes",
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "benefitStartDate": "$.otp_calculateBenefitStartDate[0].benefitStartDate"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$bundle.benefitStartDate",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "participations._id": "$.participationId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "bundle": 1,
+        "taxRegimeType": "$participations.taxRegimeType",
+        "participationClassesId": "p:67ded2ab16b2d5085d5191f3"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$taxRegimeType"
+      }
+    },
+    {
+      "$addFields": {
+        "otp_trf_projectDataForNewGrantingBenefits": "$.otp_trf_projectDataForNewGrantingBenefits",
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otp_trf_projectDataForNewGrantingBenefits",
+        "includeArrayIndex": "sum"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "participation_classes",
+        "localField": "participationClassesId",
+        "foreignField": "_id",
+        "as": "participation_classes",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "plan": 1,
+              "type": 1,
+              "status": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participation_classes"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "as": "people",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations"
+            }
+          },
+          {
+            "$addFields": {
+              "participations.number": {
+                "$cond": {
+                  "if": {
+                    "$regexMatch": {
+                      "input": "$participations.number",
+                      "regex": "^[0-9]+(\\.[0-9]+)?$"
+                    }
+                  },
+                  "then": {
+                    "$toDouble": "$participations.number"
+                  },
+                  "else": null
+                }
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": null,
+              "numberMax": {
+                "$max": "$participations.number"
+              }
+            }
+          },
+          {
+            "$project": {
+              "numberMax": 1,
+              "_id": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$people",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "sum": {
+          "$toInt": "$sum"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "personId": "$otp_trf_projectDataForNewGrantingBenefits.familyGroups.dependents.person._id",
+        "newParticipation": {
+          "number": {
+            "$sum": [
+              {
+                "$toDouble": "$people.numberMax"
+              },
+              "$sum",
+              1
+            ]
+          },
+          "participationSource": {
+            "_id": "$.participationId"
+          },
+          "participationClass": "$participation_classes",
+          "tags": [],
+          "taxRegimeType": "$taxRegimeType",
+          "effectiveDate": {
+            "startedAt": "$bundle.benefitStartDate",
+            "endedAt": null
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "as": "person",
+        "let": {
+          "personId": "$otp_trf_projectDataForNewGrantingBenefits.familyGroups.dependents.person._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$_id",
+                  "$$personId"
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "participations": {
+                "$concatArrays": [
+                  "$participations",
+                  []
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "participations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person"
+      }
+    },
+    {
+      "$addFields": {
+        "participations": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$person.participations",
+                null
+              ]
+            },
+            "then": [],
+            "else": "$person.participations"
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$newParticipation"
+      }
+    },
+    {
+      "$project": {
+        "_id": "$_id",
+        "personId": "$personId",
+        "otp_trf_projectDataForNewGrantingBenefits": "$otp_trf_projectDataForNewGrantingBenefits",
+        "participations": {
+          "$concatArrays": [
+            "$participations",
+            [
+              "$newParticipation"
+            ]
+          ]
+        }
+      }
+    }
+  ]
+}

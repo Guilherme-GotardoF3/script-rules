@@ -1,0 +1,17 @@
+{
+  "_id": "65d8f15b0ee692ef28d67160",
+  "name": "etpPrePayroll-finalization",
+  "description": "Etapa com a finalização do processo de pre processamento da folha",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "65dca2e0a537fdf83dfed34d",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:26:19.340Z",
+  "updatedAt": "2024-07-05T13:10:10.314Z",
+  "__v": 0
+}

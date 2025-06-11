@@ -1,0 +1,27 @@
+{
+  "_id": "66d6403698cf7eff654d193e",
+  "type": {
+    "_id": "66d640369f845e2ca2d094cc",
+    "name": "write_commands"
+  },
+  "name": "updateCollectionRecordProcessWithQuotation",
+  "description": "Atualiza o status par cotizado",
+  "main_collection": "collection_records_processes",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "quotaProcess.status": "quoted"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.collectionRecordProcessId"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

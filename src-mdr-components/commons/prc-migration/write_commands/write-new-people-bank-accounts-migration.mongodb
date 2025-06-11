@@ -1,0 +1,25 @@
+//_id: {'$oid': '67004898fdb7d5bd2cd46748'}
+//_tenant: sandbox-cs
+//name: writeNewPeopleBankAccountsMigration
+//description: escreve os dados bancários na people 
+//collection: people
+
+{
+	command: {
+        "updateOne": {
+            "update": {
+                "$set": {
+                    "bankAccounts": "$.$$.otpNewPeopleBankAccountsMigration.bankAccounts"
+                }
+            },
+            "filter": {
+                "$and": [
+                    {
+                        "_id": "$.$$.otpNewPeopleBankAccountsMigration._id"
+                    }
+                ]
+            },
+            "upsert": true
+        }
+    }
+}

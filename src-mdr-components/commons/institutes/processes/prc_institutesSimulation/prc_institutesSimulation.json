@@ -1,0 +1,25 @@
+{
+  "_id": "67882d8fe59c944f2cf1fc13",
+  "name": "prc_institutesSimulation",
+  "description": "Apenas simula as regras de movimentação de resgate e portabilidade",
+  "context": "benefit",
+  "steps": [
+    {
+      "step": "67882cfe30794e78693972e1",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "fe66bca9-90de-4909-8c1a-966f21a824bc",
+    "username": "dpitol@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "fe66bca9-90de-4909-8c1a-966f21a824bc",
+    "username": "dpitol@f3capital.com.br"
+  },
+  "isSync": false,
+  "createdAt": "2025-01-15T21:50:07.765Z",
+  "updatedAt": "2025-01-20T13:40:49.515Z",
+  "__v": 0
+}

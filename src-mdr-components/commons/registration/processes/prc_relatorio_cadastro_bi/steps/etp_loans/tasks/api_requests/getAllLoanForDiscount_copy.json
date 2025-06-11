@@ -1,0 +1,25 @@
+{
+  "_id": "6605b780b0d6cd2559eec3a5",
+  "type": {
+    "_id": "662d30febe50c3d767771de9",
+    "name": "api_requests"
+  },
+  "name": "getAllLoanForDiscount_copy",
+  "description": "Busca a lista de emprestimos por plano e competencia",
+  "method": "get",
+  "headers": {
+    "tenant-id": "$.tenantId",
+    "authorization": "Bearer $.opt_trf_request_token.payload.accessToken"
+  },
+  "pathParameters": {},
+  "queryParameters": {
+    "plan": "Visão Telefônica",
+    "competenceDate": "2024-01-01T03:00:00.000Z",
+    "creditSourceType": "benefit_payroll"
+  },
+  "Url": "/loans?plan=PreVisão&competenceDate=2023-10-01T03:00:00.000Z&creditSourceType=benefit_payroll",
+  "Body": {
+    "type": "json",
+    "data": ""
+  }
+}

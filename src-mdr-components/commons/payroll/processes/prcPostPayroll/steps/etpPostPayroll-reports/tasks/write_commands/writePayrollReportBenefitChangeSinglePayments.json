@@ -1,0 +1,31 @@
+{
+  "_id": "642d9b2fa5cf2417666e73e1",
+  "type": {
+    "_id": "651d67f09aac026d92b91539",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReportBenefitChangeSinglePayments",
+  "description": "Componente de escrita relatório payroll_report_benefit_change_single_payments",
+  "main_collection": "payroll_report_benefit_change_single_payments",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_write_report_pagamento_unico"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_trf_project_write_report_pagamento_unico.participation._id"
+          },
+          {
+            "benefit._id": "$.$$.otp_trf_project_write_report_pagamento_unico.benefit._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_write_report_pagamento_unico.payrollPlanning"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

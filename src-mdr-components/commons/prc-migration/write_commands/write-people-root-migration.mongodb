@@ -1,0 +1,41 @@
+//_id: {'$oid': '66f458686711856e2232f146'}
+//_tenant: sandbox-cs
+//name: writePeopleRootMigration
+//description: Escrita da atualização dos campos da raiz de people, exceto arrays
+//collection: people
+
+{
+	command: {
+        "updateOne": {
+            "update": {
+                "$set": {
+                    "name": "$.$$.otpPeopleRootMigration.name",
+                    "birthDate": "$.$$.otpPeopleRootMigration.birthDate",
+                    "image": "$.$$.otpPeopleRootMigration.image",
+                    "sex": "$.$$.otpPeopleRootMigration.sex",
+                    "nationality": "$.$$.otpPeopleRootMigration.nationality",
+                    "deathDate": "$.$$.otpPeopleRootMigration.deathDate",
+                    "foreignerData": "$.$$.otpPeopleRootMigration.foreignerData",
+                    "socialSecurityBenefit": "$.$$.otpPeopleRootMigration.socialSecurityBenefit",
+                    "educationLevel": "$.$$.otpPeopleRootMigration.educationLevel",
+                    "isTaxFreeAtSixtyFive": "$.$$.otpPeopleRootMigration.isTaxFreeAtSixtyFive",
+                    "isFatca": "$.$$.otpPeopleRootMigration.isFatca",
+                    "disablement": "$.$$.otpPeopleRootMigration.disablement",
+                    "isPoliticallyExposedPerson": "$.$$.otpPeopleRootMigration.isPoliticallyExposedPerson",
+                    "incomeTaxFree": "$.$$.otpPeopleRootMigration.incomeTaxFree",
+                    "fatherName": "$.$$.otpPeopleRootMigration.fatherName",
+                    "motherName": "$.$$.otpPeopleRootMigration.motherName",
+                    "maritalStatus": "$.$$.otpPeopleRootMigration.maritalStatus"
+                }
+            },
+            "filter": {
+                "$and": [
+                    {
+                        "_id": "$.$$.otpPeopleRootMigration._id"
+                    }
+                ]
+            },
+            "upsert": true
+        }
+    }
+}

@@ -1,0 +1,39 @@
+{
+  "_id": "65dca2e0a537fdf83dfed34d",
+  "type": {
+    "_id": "65dca2bfa04558fcca1355f6",
+    "name": "api_requests"
+  },
+  "name": "executeCalculatePayroll",
+  "description": "Tarefa para execução do processo principal de calculo da folha de pagamento",
+  "method": "post",
+  "headers": {
+    "tenant-id": "$.tenantId",
+    "authorization": "Bearer $.opt_trf_request_token.payload.accessToken"
+  },
+  "pathParameters": {},
+  "queryParameters": {},
+  "Url": "$.navegaApiUrl /workflows/processes-executions/65d8f30b9b815872b68f15b7",
+  "Body": {
+    "type": "json",
+    "data": {
+      "owners": [
+        {
+          "ref": "d60dcbab-9e19-4aef-9c34-42b349e373a5",
+          "type": "user"
+        }
+      ],
+      "trigger": {
+        "type": "now"
+      },
+      "endDeadline": "2050-11-30T03:00:00.000Z",
+      "initialParameters": {
+        "payrollPlanningId": "$.payrollPlanningId",
+        "tenantId": "$.tenatId",
+        "navegaApiUrl": "$.navegaApiUrl",
+        "benefits": "$.benefits",
+        "opt_trf_request_token": "$.opt_trf_request_token"
+      }
+    }
+  }
+}

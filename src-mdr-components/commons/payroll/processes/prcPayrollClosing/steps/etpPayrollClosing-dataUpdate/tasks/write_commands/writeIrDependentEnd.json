@@ -1,0 +1,25 @@
+{
+  "_id": "670fbb23bd9ed7c555665b88",
+  "type": {
+    "_id": "670fbb23effa932e8c782c3c",
+    "name": "write_commands"
+  },
+  "name": "writeIrDependentEnd",
+  "description": "Escrita do encerramentos de dependente IR",
+  "main_collection": "family_groups",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpIrDependentEnd"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person": "$.$$.otpIrDependentEnd.person"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

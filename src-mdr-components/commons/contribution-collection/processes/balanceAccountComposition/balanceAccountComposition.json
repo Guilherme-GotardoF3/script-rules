@@ -1,0 +1,37 @@
+{
+  "_id": "66118e34fce3a9c47b28f1c7",
+  "name": "balanceAccountComposition",
+  "description": "Processo para composição mensal/diária do saldo de conta dos participantes",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "collection",
+  "owners": [
+    {
+      "ref": "ad447d00-30e2-45fd-a87d-c80ba1b50c69",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "66118e544be1b7c85c98a990",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-04-06T18:02:28.954Z",
+  "updatedAt": "2024-08-23T15:29:37.481Z",
+  "__v": 0,
+  "dueDate": null,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false
+}

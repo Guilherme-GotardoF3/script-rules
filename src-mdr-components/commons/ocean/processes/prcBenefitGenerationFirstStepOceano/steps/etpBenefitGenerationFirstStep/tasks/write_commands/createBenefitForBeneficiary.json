@@ -1,0 +1,25 @@
+{
+  "_id": "6602112ddb6266e84ce9dd7d",
+  "type": {
+    "_id": "6602fe4e271878b6345f404f",
+    "name": "write_commands"
+  },
+  "name": "createBenefitForBeneficiary",
+  "description": "Cria o beneficio para o participante ",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_trf_projectANewBenefitForBeneficiary"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation": "$.$$.otp_trf_trf_projectANewBenefitForBeneficiary.participation"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

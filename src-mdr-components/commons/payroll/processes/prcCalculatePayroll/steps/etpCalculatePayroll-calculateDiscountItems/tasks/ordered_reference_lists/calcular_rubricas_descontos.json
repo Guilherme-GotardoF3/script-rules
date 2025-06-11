@@ -1,0 +1,12 @@
+{
+  "_id": "63a1af89837e8b00656b3f9b",
+  "type": {
+    "_id": "63a1af2e03498a006a002b97",
+    "name": "ordered_reference_lists"
+  },
+  "name": "calcular_rubricas_descontos",
+  "description": "Calcula as rubricas de descontos de acordo com o benefício gerado.",
+  "outputName": "otp_trf_calcular_rubricas_descontos",
+  "rulePath": "$.rule",
+  "referenceListPath": "$.$$.otp_trf_buscar_rubricas_descontos..br_rubric[0]"
+}

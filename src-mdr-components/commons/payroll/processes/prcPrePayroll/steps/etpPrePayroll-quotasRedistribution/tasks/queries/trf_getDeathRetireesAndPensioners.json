@@ -1,0 +1,92 @@
+{
+  "_id": "66560cfa1e489237f8b69d0d",
+  "type": {
+    "_id": "66560cfa2aee6f8846b4891e",
+    "name": "queries"
+  },
+  "name": "trf_getDeathRetireesAndPensioners",
+  "description": "Tarefa para buscar os aposentados falecidos e seus pensionistas vivos.",
+  "main_collection": "people",
+  "output_name": "otp_trf_getDeathRetireesAndPensioners",
+  "fixed_value": false,
+  "input_parameters": [],
+  "collections": [
+    "dependents",
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$project": {
+        "name": 1,
+        "birthDate": 1,
+        "deathDate": 1,
+        "participations": 1,
+        "createdAt": 1,
+        "updatedAt": 1
+      }
+    },
+    {
+      "$match": {
+        "deathDate": {
+          "$ne": null
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "dependents",
+        "localField": "_id",
+        "foreignField": "owner",
+        "as": "dependents",
+        "pipeline": [
+          {
+            "$project": {
+              "owner": 1,
+              "dependent": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "dependents.dependent",
+        "foreignField": "_id",
+        "as": "personDependent",
+        "pipeline": [
+          {
+            "$match": {
+              "deathDate": {
+                "$eq": null
+              }
+            }
+          },
+          {
+            "$project": {
+              "name": 1,
+              "birthDate": 1,
+              "deathDate": 1,
+              "participations": 1,
+              "createdAt": 1,
+              "updatedAt": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$gte": [
+            {
+              "$size": "$personDependent"
+            },
+            1
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "_id": "67e316539d17419cad3c8e3f",
+  "type": {
+    "_id": "67e31653b0d15b20dda9179f",
+    "name": "parameters"
+  },
+  "name": "id_classeStatusBenefitEnd",
+  "description": "Seleciona o id da classe/status de participação de \"Benefício Encerrado\"",
+  "data": {
+    "value": "67e312544c11cc02349d1806",
+    "type": "constant",
+    "isDefault": false
+  }
+}

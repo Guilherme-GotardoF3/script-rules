@@ -1,0 +1,37 @@
+{
+  "_id": "64b841a59de6561bf40b6b72",
+  "type": {
+    "_id": "64b84220a73aeae41dfe0d1b",
+    "name": "api_requests"
+  },
+  "name": "execute_reports_payroll",
+  "description": "Executa os relatorios da folha",
+  "method": "post",
+  "headers": {
+    "tenant-id": "$.tenantId",
+    "authorization": "Bearer $.opt_trf_request_token.payload.accessToken"
+  },
+  "pathParameters": {},
+  "queryParameters": {},
+  "Url": "$.navegaApiUrl /workflows/processes-executions/65d8f3259b815872b68f15ce",
+  "Body": {
+    "type": "json",
+    "data": {
+      "owners": [
+        {
+          "ref": "d60dcbab-9e19-4aef-9c34-42b349e373a5",
+          "type": "user"
+        }
+      ],
+      "trigger": {
+        "type": "now"
+      },
+      "endDeadline": "2050-11-30T03:00:00.000Z",
+      "initialParameters": {
+        "payrollPlanningId": "$.payrollPlanningId",
+        "tenantId": "$.tenatId",
+        "navegaApiUrl": "$.navegaApiUrl"
+      }
+    }
+  }
+}

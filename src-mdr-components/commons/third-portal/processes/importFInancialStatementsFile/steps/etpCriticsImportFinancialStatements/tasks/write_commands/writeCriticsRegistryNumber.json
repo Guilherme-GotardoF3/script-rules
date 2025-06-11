@@ -1,0 +1,31 @@
+{
+  "_id": "67d576eaae2fb5ada3c65a2c",
+  "type": {
+    "_id": "67d576eaae2fb5ada3c65a2a",
+    "name": "write_commands"
+  },
+  "name": "writeCriticsRegistryNumber",
+  "description": "Escrita para consulta comparando número de registro do participante com número de matrícula no arquivo de movimento.",
+  "main_collection": "processed_collection_review",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpCriticsRegistryNumber"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otpCriticsRegistryNumber.person._id"
+          },
+          {
+            "person.participation._id": "$.$$.otpCriticsRegistryNumber.person.participation._id"
+          },
+          {
+            "referenceDate": "$.$$.otpCriticsRegistryNumber.referenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "_id": "65fdc885e3b6ae08f32b364b",
+  "name": "etpPrePayroll-updateBenefits",
+  "description": "Etapa para atualização dos benefícios antes do processamento",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "65e75ff6a20d7330d6234851",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "65f1d34f52d07f519355e455",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "65d657916290120a1bf5e168",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "65d657d76290120a1bf5e17c",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    }
+  ],
+  "createdAt": "2024-03-22T18:05:57.390Z",
+  "updatedAt": "2024-03-22T18:05:57.390Z",
+  "__v": 0
+}

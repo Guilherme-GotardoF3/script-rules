@@ -1,0 +1,34 @@
+{
+  "_id": "6616942dd4bd77959eaa6c5b",
+  "type": {
+    "_id": "6615a59c15696e5d70bb9d05",
+    "name": "write_commands"
+  },
+  "name": "createMovementWithdrawalBenefitPayments",
+  "description": "Componente criar os registros na movimentação para baixa do pagamento de benefício",
+  "main_collection": "account_movements",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_withdrawalBenefitPayments"
+      },
+      "filter": {
+        "$and": [
+          {
+            "pensionAccount": "$.$$.otp_withdrawalBenefitPayments.pensionAccount._id"
+          },
+          {
+            "origin._id": "$.$$.otp_withdrawalBenefitPayments.origin._id"
+          },
+          {
+            "person": "$.$$.otp_withdrawalBenefitPayments.person._id"
+          },
+          {
+            "competenceDate": "$.$$.otp_withdrawalBenefitPayments.competenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

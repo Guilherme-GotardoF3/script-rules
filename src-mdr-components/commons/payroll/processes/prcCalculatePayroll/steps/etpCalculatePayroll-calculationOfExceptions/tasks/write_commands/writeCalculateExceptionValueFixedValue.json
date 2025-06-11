@@ -1,0 +1,27 @@
+{
+  "_id": "6466428e23d2ed1150b3bc45",
+  "type": {
+    "_id": "64b5808bf91a21b17de911a7",
+    "name": "write_commands"
+  },
+  "name": "writeCalculateExceptionValueFixedValue",
+  "description": "writeCalculateExceptionValueFixedValue",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payrollItems": "$.$$.otp_projectCalculateExceptionValueFixedValue.payrollItems"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_projectCalculateExceptionValueFixedValue._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

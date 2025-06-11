@@ -1,0 +1,221 @@
+//_id: {"$oid": "66f4537b7f4bb1706c9444e9"}
+//_tenant: sandbox-cs
+//name: phonesMigration
+//description: Atualiza o campo de telefone na collection people
+//collection: pre_people
+
+//use("sandbox-cs");
+
+//db.pre_people.aggregate(
+    [
+        {
+          "$lookup": {
+            "from": "Collection_dictionary",
+            "localField": "identificador",
+            "foreignField": "id_origem",
+            "as": "idPeople",
+            "pipeline": [
+              {
+                "$match": {
+                  "$expr": {
+                    "$eq": [
+                      "$collection_name",
+                      "Pessoa"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$idPeople",
+            "preserveNullAndEmptyArrays": false
+          }
+        },
+        {
+          "$project": {
+            "_id": "$idPeople.id_destino",
+            "phones": {
+              "$ifNull": [
+                "$telefones",
+                []
+              ]
+            }
+          }
+        },
+        {
+          "$match": {
+            "$or": [
+              {
+                "$expr": {
+                  "$eq": [
+                    {
+                      "$size": [
+                        "$.people"
+                      ]
+                    },
+                    0
+                  ]
+                }
+              },
+              {
+                "_id": {
+                  "$in": "$.people"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$phones",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$lookup": {
+            "from": "Collection_dictionary",
+            "localField": "phones.identificador_tipo_telefone",
+            "foreignField": "id_origem",
+            "as": "idTipoTelefone",
+            "pipeline": [
+              {
+                "$match": {
+                  "$expr": {
+                    "$eq": [
+                      "$collection_name",
+                      "Tipo_Telefone"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$idTipoTelefone",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$lookup": {
+            "from": "CollectionIntegration_Tipo_Telefone",
+            "localField": "idTipoTelefone.id_origem",
+            "foreignField": "identificador",
+            "as": "tipoTelefone"
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$tipoTelefone",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$lookup": {
+            "from": "Collection_dictionary",
+            "localField": "phones.identificador",
+            "foreignField": "id_origem",
+            "as": "idRaizPhones",
+            "pipeline": [
+              {
+                "$match": {
+                  "$expr": {
+                    "$eq": [
+                      "$collection_name",
+                      "Telefone"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$idRaizPhones",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$addFields": {
+            "phones": {
+              "$ifNull": [
+                "$phones",
+                null
+              ]
+            }
+          }
+        },
+        {
+          "$project": {
+            "_id": 1,
+            "phones": {
+              "$switch": {
+                "branches": [
+                  {
+                    "case": {
+                      "$eq": [
+                        "$phones",
+                        null
+                      ]
+                    },
+                    "then": []
+                  }
+                ],
+                "default": [
+                  {
+                    "_id": "$idRaizPhones.id_destino",
+                    "type": {
+                      "name": "$tipoTelefone.nome",
+                      "_id": "$idTipoTelefone.id_destino"
+                    },
+                    "ddd": "$phones.ddd",
+                    "notification": {
+                      "sms": "$phones.notificacao_sms",
+                      "whatsapp": "$phones.notificacao_whatsapp"
+                    },
+                    "number": "$phones.numero",
+                    "ddi": "$phones.ddi",
+                    "extension": {
+                      "$switch": {
+                        "branches": [
+                          {
+                            "case": {
+                              "$eq": [
+                                "$phones.extensao",
+                                ""
+                              ]
+                            },
+                            "then": null
+                          }
+                        ],
+                        "default": "$phones.extensao"
+                      }
+                    },
+                    "isPrimary": "$phones.primario"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$phones",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$group": {
+            "_id": "$_id",
+            "phones": {
+              "$push": "$phones"
+            }
+          }
+        }
+      ]
+        //);

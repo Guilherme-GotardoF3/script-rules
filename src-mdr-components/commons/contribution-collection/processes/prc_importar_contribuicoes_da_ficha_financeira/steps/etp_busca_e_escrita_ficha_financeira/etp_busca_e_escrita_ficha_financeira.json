@@ -1,0 +1,61 @@
+{
+  "_id": "642b38adfdc49f777a25822e",
+  "name": "etp_busca_e_escrita_ficha_financeira",
+  "description": "busca a ficha financeira baseado na lista de participações ativas",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6470e2e03f0a2e63f7b3243e",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64dbd1a97493c2647517d95e",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64dbd2147493c2647517d97b",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64dbd2587493c2647517d991",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "642b373188d800a20ce10c16",
+      "type": "tasks",
+      "order": 8,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    }
+  ],
+  "createdAt": "2023-04-03T20:35:57.264Z",
+  "updatedAt": "2023-10-04T18:29:31.873Z",
+  "__v": 0
+}

@@ -1,0 +1,34 @@
+{
+  "_id": "6667058e77f28cb7cbbc324a",
+  "type": {
+    "_id": "6667058e74a946fc7ef90326",
+    "name": "write_commands"
+  },
+  "name": "writeControlIrRegressiveUseBase",
+  "description": "Escrita de base de uso do IR Regressivo.",
+  "main_collection": "payroll_ir_regressive_controll_use_base",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_projectControlIrRegressiveUseBase"
+      },
+      "filter": {
+        "$and": [
+          {
+            "benefit": "$.$$.otp_projectControlIrRegressiveUseBase.benefit"
+          },
+          {
+            "payroll": "$.$$.otp_projectControlIrRegressiveUseBase.payroll"
+          },
+          {
+            "payrollPlanning._id": "$.$$.otp_projectControlIrRegressiveUseBase.payrollPlanning._id"
+          },
+          {
+            "collectionRecord": "$.$$.otp_projectControlIrRegressiveUseBase.collectionRecord"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

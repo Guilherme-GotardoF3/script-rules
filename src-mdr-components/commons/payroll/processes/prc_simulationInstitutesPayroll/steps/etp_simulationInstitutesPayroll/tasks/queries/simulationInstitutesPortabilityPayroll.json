@@ -1,0 +1,1200 @@
+{
+  "_id": "67929a5882a85d628b9f8cdd",
+  "type": {
+    "_id": "67929a5846a2e59beec419c9",
+    "name": "queries"
+  },
+  "name": "simulationInstitutesPortabilityPayroll",
+  "description": "Tarefa que gera a simulação da portabilidade",
+  "main_collection": "people",
+  "output_name": "otp_simulationInstitutesPortabilityPayroll",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "rubricGrossTotalRedempetion",
+      "type": "Parameter",
+      "description": "Seleciona o id da rubrica de resgate bruto quando o pagamento é total - apenas 1 parcela",
+      "value": "665ce510d11b2a523e47147b"
+    },
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "intituteTypeId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "balance",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "receivingMethods",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "requestDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "rubrics",
+    "institute_types",
+    "payment_receivings",
+    "payment_methods",
+    "plans",
+    "income_tax",
+    "payroll_plannings"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "participationId": "$.participationId",
+          "intituteTypeId": "$.intituteTypeId",
+          "estruturaSaldo": "$.balance",
+          "receivingMethods": "$.receivingMethods",
+          "origin": "simulacao",
+          "requestDate": {
+            "$toDate": "$.requestDate"
+          }
+        },
+        "rubrics": {
+          "rubricIdResgUnicoBruto": "p:675a0eb406e87956a1e40d74",
+          "rubricIdPortab": "6787fcd667bcb66db5ca258b",
+          "otherRubrics": [
+            "665ce507d11b2a523e471342",
+            "6669b6ade6778f6244cc1082"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$participations._id",
+            "$bundle.participationId"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "name": 1,
+        "documents": 1,
+        "participations": 1,
+        "bundle": 1,
+        "rubrics": 1,
+        "loanValue": {
+          "rubric": "6669b6ade6778f6244cc1082",
+          "amount": {
+            "$toDouble": 0
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "rubricUsed": {
+          "$cond": {
+            "if": {
+              "$ne": [
+                "$loanValue.amount",
+                0
+              ]
+            },
+            "then": "$rubrics.rubricIdResgUnicoBruto",
+            "else": "$rubrics.rubricIdPortab"
+          }
+        },
+        "rubricPortab": "$rubrics.rubricIdPortab",
+        "isInstallments": {
+          "$cond": {
+            "if": {
+              "$gt": [
+                {
+                  "$arrayElemAt": [
+                    "$bundle.receivingMethods.installment.quantity",
+                    0
+                  ]
+                },
+                1
+              ]
+            },
+            "then": true,
+            "else": false
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubricUsed",
+        "foreignField": "_id",
+        "as": "rubrics.rubricUsed",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubrics.rubricIdImpostoProgr",
+        "foreignField": "_id",
+        "as": "rubrics.rubricImpostoProgr",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubrics.rubricIdPortab",
+        "foreignField": "_id",
+        "as": "rubricPortab",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "institute_types",
+        "localField": "bundle.instituteTypeId",
+        "foreignField": "_id",
+        "as": "instituteType",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$instituteType",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$bundle.receivingMethods",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payment_receivings",
+        "localField": "bundle.receivingMethods.paymentReceiving._id",
+        "foreignField": "_id",
+        "as": "receivingMethods"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$receivingMethods",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payment_methods",
+        "localField": "receivingMethods.paymentMethod._id",
+        "foreignField": "_id",
+        "as": "paymentMethods",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$paymentMethods",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$bundle.estruturaSaldo",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$bundle.estruturaSaldo.contaSaldoResgatavel",
+                true
+              ]
+            },
+            {
+              "$eq": [
+                "$participations.taxRegimeType._id",
+                "66bd44764eb4534a4f834c3c"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "saldoResgatavel": {
+          "$multiply": [
+            "$bundle.estruturaSaldo.value",
+            {
+              "$divide": [
+                "$bundle.receivingMethods.reservePercentage",
+                100
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "plans",
+        "localField": "participations.participationClass.plan._id",
+        "foreignField": "_id",
+        "as": "plan"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$plan",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "income_tax",
+        "localField": "participations.taxRegimeType._id",
+        "foreignField": "taxRegimeType",
+        "as": "incomeTax",
+        "let": {
+          "requestDate": "$bundle.requestDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$or": [
+                  {
+                    "$gte": [
+                      "$effectiveDate.endedAt",
+                      "$$requestDate"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$effectiveDate.endedAt",
+                      null
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "effectiveDate.startedAt": 1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$incomeTax",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "amountCalculate": {
+          "rubric": "665ce510d11b2a523e47147b",
+          "amount": {
+            "$cond": {
+              "if": {
+                "$eq": [
+                  {
+                    "$ifNull": [
+                      "$loanValue.amount",
+                      0
+                    ]
+                  },
+                  0
+                ]
+              },
+              "then": 0,
+              "else": {
+                "$ifNull": [
+                  "$loanValue.amount",
+                  0
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "percentage_aliquot": {
+          "$function": {
+            "body": "function (incomeTax, amount_base_calculation) {  if (!incomeTax) return {};  if (!incomeTax.tracks || incomeTax.tracks.length === 0) return {};  incomeTax.track = incomeTax.tracks[0];  for (const curr of incomeTax.tracks) {    if (amount_base_calculation < curr.track) {      return incomeTax;    } else {      incomeTax.track = curr;    }  } return incomeTax;}",
+            "args": [
+              "$incomeTax",
+              "$amountCalculate"
+            ],
+            "lang": "js"
+          }
+        },
+        "percentageAliquotSimplify": {
+          "$function": {
+            "body": "function (incomeTax, amount_base_calculation) {  if (!incomeTax) return {};  if (!incomeTax.tracks || incomeTax.tracks.length === 0) return {};  incomeTax.track = incomeTax.tracks[0];  for (const curr of incomeTax.tracks) {    if ((amount_base_calculation-incomeTax.simplifiedDiscountDeduction) < curr.track) {      return incomeTax;    } else {      incomeTax.track = curr;    }  } return incomeTax;}",
+            "args": [
+              "$incomeTax",
+              "$amountCalculate"
+            ],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "amountIrBD": {
+          "$subtract": [
+            {
+              "$multiply": [
+                {
+                  "$divide": [
+                    {
+                      "$subtract": [
+                        "$amountCalculate.amount",
+                        {
+                          "$cond": {
+                            "if": {
+                              "$ne": [
+                                "$loanValue.amount",
+                                0
+                              ]
+                            },
+                            "then": "$percentage_aliquot.track.deduction",
+                            "else": 0
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "$subtract": [
+                        1,
+                        {
+                          "$divide": [
+                            "$percentage_aliquot.track.aliquot",
+                            100
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "$divide": [
+                    "$percentage_aliquot.track.aliquot",
+                    100
+                  ]
+                }
+              ]
+            },
+            {
+              "$cond": {
+                "if": {
+                  "$ne": [
+                    "$loanValue.amount",
+                    0
+                  ]
+                },
+                "then": "$percentage_aliquot.track.deduction",
+                "else": 0
+              }
+            }
+          ]
+        },
+        "amountSimplifyIrBD": {
+          "$subtract": [
+            {
+              "$multiply": [
+                {
+                  "$divide": [
+                    {
+                      "$subtract": [
+                        {
+                          "$subtract": [
+                            "$amountCalculate.amount",
+                            {
+                              "$cond": {
+                                "if": {
+                                  "$ne": [
+                                    "$loanValue.amount",
+                                    0
+                                  ]
+                                },
+                                "then": "$percentageAliquotSimplify.simplifiedDiscountDeduction",
+                                "else": 0
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "$cond": {
+                            "if": {
+                              "$ne": [
+                                "$loanValue.amount",
+                                0
+                              ]
+                            },
+                            "then": "$percentage_aliquot.track.deduction",
+                            "else": 0
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "$subtract": [
+                        1,
+                        {
+                          "$divide": [
+                            "$percentage_aliquot.track.aliquot",
+                            100
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "$divide": [
+                    "$percentage_aliquot.track.aliquot",
+                    100
+                  ]
+                }
+              ]
+            },
+            {
+              "$cond": {
+                "if": {
+                  "$ne": [
+                    "$loanValue.amount",
+                    0
+                  ]
+                },
+                "then": "$percentage_aliquot.track.deduction",
+                "else": 0
+              }
+            }
+          ]
+        },
+        "amountIrCdCv": {
+          "$toDouble": {
+            "$round": [
+              {
+                "$multiply": [
+                  "$amountCalculate.amount",
+                  {
+                    "$divide": [
+                      "$percentage_aliquot.rescuePercentage",
+                      100
+                    ]
+                  }
+                ]
+              },
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "incomeTaxGrossInstallment": {
+          "rubric": "665ce507d11b2a523e471342",
+          "amount": {
+            "$cond": {
+              "if": {
+                "$eq": [
+                  "$plan.type._id",
+                  "66bd4cbe4eb4534a4f8527b4"
+                ]
+              },
+              "then": "$amountSimplifyIrBD",
+              "else": "$amountIrCdCv"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "netInstallment": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$isInstallments",
+                false
+              ]
+            },
+            "then": 0,
+            "else": {
+              "$subtract": [
+                "$amountCalculate.amount",
+                "$incomeTaxGrossInstallment.amount"
+              ]
+            }
+          }
+        },
+        "valueWithDrawalInPortab": {
+          "rubric": "665ce510d11b2a523e47147b",
+          "amount": {
+            "$add": [
+              "$incomeTaxGrossInstallment.amount",
+              "$loanValue.amount"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "installments.taxBaseFirstInstallment.grossValue": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$isInstallments",
+                false
+              ]
+            },
+            "then": 0,
+            "else": {
+              "$divide": [
+                {
+                  "$subtract": [
+                    {
+                      "$sum": [
+                        {
+                          "$ifNull": [
+                            "$loanValue.amount",
+                            0
+                          ]
+                        },
+                        "$netInstallment"
+                      ]
+                    },
+                    "$percentage_aliquot.track.deduction"
+                  ]
+                },
+                {
+                  "$subtract": [
+                    1,
+                    {
+                      "$divide": [
+                        "$percentage_aliquot.track.aliquot",
+                        100
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "installments.taxBaseFirstInstallment.progressiveIncomeTax": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$isInstallments",
+                false
+              ]
+            },
+            "then": 0,
+            "else": {
+              "$subtract": [
+                {
+                  "$multiply": [
+                    "$installments.taxBaseFirstInstallment.grossValue",
+                    {
+                      "$divide": [
+                        "$percentage_aliquot.track.aliquot",
+                        100
+                      ]
+                    }
+                  ]
+                },
+                "$percentage_aliquot.track.deduction"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "installments.firstInstallment.netRescue": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$isInstallments",
+                false
+              ]
+            },
+            "then": 0,
+            "else": {
+              "$subtract": [
+                "$installments.taxBaseFirstInstallment.grossValue",
+                "$installments.taxBaseFirstInstallment.progressiveIncomeTax"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "installments.firstInstallment.netfirstInstallment": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$isInstallments",
+                false
+              ]
+            },
+            "then": 0,
+            "else": {
+              "$subtract": [
+                "$installments.firstInstallment.netRescue",
+                {
+                  "$ifNull": [
+                    "$loanValue.amount",
+                    0
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "installments.othersInstallments": {
+          "netValue": {
+            "$cond": {
+              "if": {
+                "$eq": [
+                  "$isInstallments",
+                  false
+                ]
+              },
+              "then": 0,
+              "else": {
+                "$subtract": [
+                  "$saldoResgatavel",
+                  "$installments.taxBaseFirstInstallment.grossValue"
+                ]
+              }
+            }
+          },
+          "remainingInstallments": {
+            "$cond": {
+              "if": {
+                "$eq": [
+                  "$isInstallments",
+                  false
+                ]
+              },
+              "then": 0,
+              "else": {
+                "$subtract": [
+                  "$bundle.receivingMethods.installment.quantity",
+                  1
+                ]
+              }
+            }
+          },
+          "netValueOthersInstallments": {
+            "$cond": {
+              "if": {
+                "$eq": [
+                  "$isInstallments",
+                  false
+                ]
+              },
+              "then": 0,
+              "else": {
+                "$divide": [
+                  {
+                    "$subtract": [
+                      "$saldoResgatavel",
+                      "$installments.taxBaseFirstInstallment.grossValue"
+                    ]
+                  },
+                  {
+                    "$subtract": [
+                      "$bundle.receivingMethods.installment.quantity",
+                      1
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payroll_plannings",
+        "localField": "plan._id",
+        "foreignField": "plan._id",
+        "as": "payrollPlanning",
+        "let": {
+          "requestDate": {
+            "$dateToString": {
+              "format": "%Y-%m",
+              "date": "$bundle.requestDate"
+            }
+          }
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$bundle.instituteType.name",
+                      "$type"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      {
+                        "$dateToString": {
+                          "format": "%Y-%m",
+                          "date": "$competenceDate"
+                        }
+                      },
+                      "$$requestDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollPlanning",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "rubricsProject": {
+          "$concatArrays": [
+            [
+              "$rubrics.rubricIdPortab"
+            ],
+            [
+              "$rubrics.rubricIdResgUnicoBruto"
+            ],
+            "$rubrics.otherRubrics"
+          ]
+        },
+        "getDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricsProject",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubricsProject",
+        "foreignField": "_id",
+        "as": "rubricsProject",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricsProject",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "installments": 1,
+        "instituteTypeId": "$instituteType",
+        "payrollPlanning": {
+          "_id": "$_id",
+          "payrollType": "$payrollPlanning.payrollType",
+          "competenceDate": "$payrollPlanning.competenceDate",
+          "paymentDate": "$payrollPlanning.paymentDate",
+          "status": "$payrollPlanning.status"
+        },
+        "participation": {
+          "_id": "$participations._id",
+          "number": "$participations.number",
+          "participationClass": {
+            "_id": "$participations.participationClass._id",
+            "plan": "$participations.participationClass.plan"
+          }
+        },
+        "person": {
+          "_id": "$_id",
+          "name": "$name",
+          "documents": "$documents",
+          "participation": {
+            "_id": "$participations._id",
+            "number": "$participations.number",
+            "participationClass": {
+              "_id": "$participations.participationClass._id",
+              "plan": "$participations.participationClass.plan"
+            }
+          }
+        },
+        "numberOfInstallments": "$bundle.receivingMethods.installment.quantity",
+        "payrollItemsFirstInstallment": {
+          "rubric": "$rubricsProject",
+          "status": "SIMULATED",
+          "type": "SIMULATED",
+          "amount": {
+            "$switch": {
+              "branches": [
+                {
+                  "case": {
+                    "$and": [
+                      {
+                        "$eq": [
+                          "$rubricsProject._id",
+                          "$rubrics.rubricIdPortab"
+                        ]
+                      },
+                      {
+                        "$eq": [
+                          "$isInstallments",
+                          false
+                        ]
+                      }
+                    ]
+                  },
+                  "then": {
+                    "$subtract": [
+                      "$saldoResgatavel",
+                      "$valueWithDrawalInPortab.amount"
+                    ]
+                  }
+                },
+                {
+                  "case": {
+                    "$and": [
+                      {
+                        "$eq": [
+                          "$rubricsProject._id",
+                          "$rubrics.rubricIdResgUnicoBruto"
+                        ]
+                      },
+                      {
+                        "$eq": [
+                          "$isInstallments",
+                          false
+                        ]
+                      }
+                    ]
+                  },
+                  "then": "$valueWithDrawalInPortab.amount"
+                },
+                {
+                  "case": {
+                    "$and": [
+                      {
+                        "$eq": [
+                          "$rubricsProject._id",
+                          "$loanValue.rubric"
+                        ]
+                      },
+                      {
+                        "$eq": [
+                          "$isInstallments",
+                          false
+                        ]
+                      }
+                    ]
+                  },
+                  "then": "$loanValue.amount"
+                },
+                {
+                  "case": {
+                    "$and": [
+                      {
+                        "$eq": [
+                          "$rubricsProject._id",
+                          "$incomeTaxGrossInstallment.rubric"
+                        ]
+                      },
+                      {
+                        "$eq": [
+                          "$isInstallments",
+                          false
+                        ]
+                      }
+                    ]
+                  },
+                  "then": "$incomeTaxGrossInstallment.amount"
+                }
+              ],
+              "default": 0
+            }
+          },
+          "payrollReferenceBases": {
+            "$cond": {
+              "if": {
+                "$eq": [
+                  "$rubricsProject._id",
+                  "$incomeTaxGrossInstallment.rubric"
+                ]
+              },
+              "then": [
+                {
+                  "percentage": "$percentage_aliquot.track.aliquot",
+                  "deduction": "$percentage_aliquot.track.deduction",
+                  "rubricList": [
+                    {
+                      "rubric": "$rubricsProject",
+                      "amount": {
+                        "$switch": {
+                          "branches": [
+                            {
+                              "case": {
+                                "$and": [
+                                  {
+                                    "$eq": [
+                                      "$rubricsProject._id",
+                                      "$incomeTaxGrossInstallment.rubric"
+                                    ]
+                                  },
+                                  {
+                                    "$eq": [
+                                      "$isInstallments",
+                                      true
+                                    ]
+                                  }
+                                ]
+                              },
+                              "then": "$installments.taxBaseFirstInstallment.grossValue"
+                            },
+                            {
+                              "case": {
+                                "$and": [
+                                  {
+                                    "$eq": [
+                                      "$rubricsProject._id",
+                                      "$incomeTaxGrossInstallment.rubric"
+                                    ]
+                                  },
+                                  {
+                                    "$eq": [
+                                      "$isInstallments",
+                                      false
+                                    ]
+                                  }
+                                ]
+                              },
+                              "then": "$saldoResgatavel"
+                            }
+                          ],
+                          "default": 0
+                        }
+                      },
+                      "exceptionAmount": 0,
+                      "finalAmount": {
+                        "$switch": {
+                          "branches": [
+                            {
+                              "case": {
+                                "$and": [
+                                  {
+                                    "$eq": [
+                                      "$rubricsProject._id",
+                                      "$incomeTaxGrossInstallment.rubric"
+                                    ]
+                                  },
+                                  {
+                                    "$eq": [
+                                      "$isInstallments",
+                                      true
+                                    ]
+                                  }
+                                ]
+                              },
+                              "then": "$installments.taxBaseFirstInstallment.grossValue"
+                            },
+                            {
+                              "case": {
+                                "$and": [
+                                  {
+                                    "$eq": [
+                                      "$rubricsProject._id",
+                                      "$incomeTaxGrossInstallment.rubric"
+                                    ]
+                                  },
+                                  {
+                                    "$eq": [
+                                      "$isInstallments",
+                                      false
+                                    ]
+                                  }
+                                ]
+                              },
+                              "then": "$saldoResgatavel"
+                            }
+                          ],
+                          "default": 0
+                        }
+                      }
+                    }
+                  ]
+                }
+              ],
+              "else": []
+            }
+          },
+          "createdAt": "$getDate",
+          "updatedAt": "$getDate"
+        }
+      }
+    },
+    {
+      "$project": {
+        "payrollPlanning": 1,
+        "instituteTypeId": 1,
+        "participation": 1,
+        "person": 1,
+        "numberOfInstallments": 1,
+        "payrollItemsFirstInstallment": 1,
+        "payrollItemsOtherInstallments": {
+          "$map": {
+            "input": {
+              "$range": [
+                0,
+                "$installments.othersInstallments.remainingInstallments"
+              ]
+            },
+            "as": "i",
+            "in": "$payrollItemsOtherInstallments"
+          }
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id",
+        "root": {
+          "$first": "$$ROOT"
+        },
+        "payrollItemsFirstInstallment": {
+          "$push": "$payrollItemsFirstInstallment"
+        }
+      }
+    },
+    {
+      "$project": {
+        "payrollPlanning": "$root.payrollPlanning",
+        "instituteTypeId": "$root.instituteTypeId",
+        "participation": "$root.participation",
+        "person": "$root.person",
+        "numberOfInstallments": "$root.numberOfInstallments",
+        "payrollItemsFirstInstallment": "$payrollItemsFirstInstallment",
+        "payrollItemsOtherInstallments": "$root.payrollItemsOtherInstallments"
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "_id": "66d785816909823d77efe851",
+  "type": {
+    "_id": "66d78581847c78981aa616dc",
+    "name": "write_commands"
+  },
+  "name": "updateQuotedCollectiveMovements",
+  "description": "Atualiza movimentos coletivos cotizados",
+  "main_collection": "collective_account_movements",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "monetaryUnitValue": "$.$$.otp_getCollectiveMovementsToBeQuoted.monetaryUnitValue",
+          "amountQuotas": "$.$$.otp_getCollectiveMovementsToBeQuoted.amountQuotas",
+          "origin.collectionRecordProcess": "$.collectionRecordProcessId"
+        }
+      },
+      "filter": {
+        "_id": "$.$$.otp_getCollectiveMovementsToBeQuoted._id"
+      },
+      "upsert": true
+    }
+  }
+}

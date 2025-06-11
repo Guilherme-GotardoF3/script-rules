@@ -1,0 +1,47 @@
+{
+  "_id": "666076472e1b7e0319c35d42",
+  "name": "etp_getPortfolioPeople",
+  "description": "Etapa que busca os dados do participante ",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66607618ec3626f189eac6b9",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66609653934bfcc5c555442c",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "668706531b872f17e0077f7b",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6685b1d4829c87fd481abab2",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "668700023b2026e33e0f7c6e",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "668ec9c0cd71cde45b3cc74a",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-06-05T14:29:27.664Z",
+  "updatedAt": "2024-07-10T18:08:48.923Z",
+  "__v": 0
+}

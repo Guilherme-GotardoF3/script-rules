@@ -1,0 +1,14 @@
+{
+  "_id": "66e039d3c7bf7224fb123620",
+  "type": {
+    "_id": "66e039d3d0e7f4f32d0bf530",
+    "name": "parameters"
+  },
+  "name": "previsaoPlanId",
+  "description": "Parâmetro que guarda o id do plano PreVisão",
+  "data": {
+    "value": "665cd426d11b2a523e4708b8",
+    "type": "constant",
+    "isDefault": false
+  }
+}

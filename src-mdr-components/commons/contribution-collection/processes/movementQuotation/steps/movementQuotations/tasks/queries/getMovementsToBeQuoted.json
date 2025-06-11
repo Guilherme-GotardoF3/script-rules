@@ -1,0 +1,268 @@
+{
+  "_id": "64188293ae5a7bdeea35055d",
+  "type": {
+    "_id": "6418634f39aaa165f50f9922",
+    "name": "queries"
+  },
+  "name": "getMovementsToBeQuoted",
+  "description": "Listar todos os movimentos para cotização, identificar a conta previdenciária e a unidade monetária.",
+  "main_collection": "account_movements",
+  "output_name": "otp_getMovementsToBeQuoted",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participationsId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "collectionRecordProcessId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "monetary_unit_values"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$project": {
+        "competenceDate": 1,
+        "pensionAccount": 1,
+        "occurrenceDate": 1,
+        "person": 1,
+        "value": 1,
+        "monetaryUnitValue": 1
+      }
+    },
+    {
+      "$addFields": {
+        "bundle": {
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          },
+          "plan": "$.planId",
+          "participation": "$.participationsId",
+          "collectionRecordProcess": "$.collectionRecordProcessId"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$competenceDate",
+                "$bundle.competenceDate"
+              ]
+            },
+            {
+              "$eq": [
+                "$person.participation.participationClass.plan._id",
+                "$bundle.plan"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "endDate": {
+          "$dateAdd": {
+            "startDate": "$competenceDate",
+            "unit": "month",
+            "amount": 1
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "monetary_unit_values",
+        "localField": "pensionAccount.monetaryUnit._id",
+        "foreignField": "monetaryUnit._id",
+        "as": "monetary_unit_value",
+        "let": {
+          "begin": "$competenceDate",
+          "end": "$endDate",
+          "occurrenceDate": "$occurrenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$referenceDate",
+                      "$$occurrenceDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "referenceDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "value": 1,
+              "referenceDate": 1,
+              "monetaryUnit": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$monetary_unit_value",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "monetary_unit_values",
+        "localField": "monetaryUnitValue.referenceDate",
+        "foreignField": "referenceDate",
+        "as": "monetaryUnitValueExists",
+        "let": {
+          "plan": "$bundle.plan"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$monetaryUnit.plan._id",
+                      "$$plan"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "referenceDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "value": 1,
+              "referenceDate": 1,
+              "monetaryUnit": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$monetaryUnitValueExists",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "amountQuotas": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                {
+                  "$ifNull": [
+                    "$monetaryUnitValue",
+                    0
+                  ]
+                },
+                0
+              ]
+            },
+            "then": {
+              "$round": [
+                {
+                  "$divide": [
+                    "$value",
+                    "$monetary_unit_value.value"
+                  ]
+                },
+                8
+              ]
+            },
+            "else": {
+              "$round": [
+                {
+                  "$divide": [
+                    "$value",
+                    "$monetaryUnitValueExists.value"
+                  ]
+                },
+                8
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "amountQuotas": {
+          "$ne": null
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "monetaryUnitValue": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                {
+                  "$ifNull": [
+                    "$monetaryUnitValue.value",
+                    0
+                  ]
+                },
+                0
+              ]
+            },
+            "then": "$monetary_unit_value",
+            "else": "$monetaryUnitValue"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "monetaryUnitValue": 1,
+        "amountQuotas": 1,
+        "collectionRecordProcess": 1
+      }
+    }
+  ]
+}

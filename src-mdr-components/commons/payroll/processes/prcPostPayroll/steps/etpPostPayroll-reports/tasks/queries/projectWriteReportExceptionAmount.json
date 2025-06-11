@@ -1,0 +1,123 @@
+{
+  "_id": "63bd9e004a031d00085fa42f",
+  "type": {
+    "_id": "63bd9dc6455c8b0008b45769",
+    "name": "queries"
+  },
+  "name": "projectWriteReportExceptionAmount",
+  "description": "projectWriteReportExceptionAmount",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_trf_project_report_exceptionAmount",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId",
+        "judicialPension": {
+          "$exists": false
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "payrollPlanning": 1,
+        "participation": 1,
+        "payrollItems": 1
+      }
+    },
+    {
+      "$addFields": {
+        "payrollItem": "$payrollItems"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItem",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$and": [
+          {
+            "payrollItem.exceptionAmount": {
+              "$exists": true
+            }
+          },
+          {
+            "payrollItem.exceptionAmount": {
+              "$ne": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "participation._id",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participationId": "$participation._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "documents.document": 1,
+              "documents.type": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "participation": 1,
+        "person": 1,
+        "payrollPlanning": "$payrollPlanning._id",
+        "payroll": "$_id",
+        "reason": "$payrollItem.reason",
+        "payrollItem": [
+          "$payrollItem"
+        ]
+      }
+    }
+  ]
+}

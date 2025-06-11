@@ -1,0 +1,31 @@
+{
+  "_id": "67d576eaae2fb5ada3c65a34",
+  "type": {
+    "_id": "67d576eaae2fb5ada3c65a32",
+    "name": "write_commands"
+  },
+  "name": "writeCriticsIncorrectDocumentNumber",
+  "description": "Escrita para consulta de crítica comparando divergência no número de CPF cadastrado do participante em depara com o fornecido pelo arquivo de movimentação.",
+  "main_collection": "processed_collection_review",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpCriticsIncorrectDocumentNumber"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otpCriticsIncorrectDocumentNumber.person._id"
+          },
+          {
+            "person.participation._id": "$.$$.otpCriticsIncorrectDocumentNumber.person.participation._id"
+          },
+          {
+            "referenceDate": "$.$$.otpCriticsIncorrectDocumentNumber.referenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

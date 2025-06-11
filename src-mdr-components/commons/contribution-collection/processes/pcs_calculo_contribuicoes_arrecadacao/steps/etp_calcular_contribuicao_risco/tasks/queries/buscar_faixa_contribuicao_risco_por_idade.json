@@ -1,0 +1,66 @@
+{
+  "_id": "64345e9268e6d9af59e6e650",
+  "type": {
+    "_id": "64345e6023cc0729039ee98f",
+    "name": "queries"
+  },
+  "name": "buscar_faixa_contribuicao_risco_por_idade",
+  "description": "busca a taxa de contribuicao de risco com as faixas de idade",
+  "main_collection": "contribution_range_risks",
+  "output_name": "otp_trf_buscar_faixa_contribuicao_risco_por_idade",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "referenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "dateFilter": {
+          "$toDate": "$.referenceDate"
+        },
+        "finalDate": {
+          "$ifNull": [
+            "$finalDate",
+            "null"
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$lte": [
+                "$initialDate",
+                "$dateFilter"
+              ]
+            },
+            {
+              "$or": [
+                {
+                  "$gte": [
+                    "$finalDate",
+                    "$dateFilter"
+                  ]
+                },
+                {
+                  "$eq": [
+                    "$finalDate",
+                    "null"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

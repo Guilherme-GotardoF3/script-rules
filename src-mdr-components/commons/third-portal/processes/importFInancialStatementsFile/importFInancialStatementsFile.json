@@ -1,0 +1,30 @@
+{
+  "_id": "66c4de7cb4f1dcde42664bc0",
+  "name": "importFInancialStatementsFile",
+  "description": "Processo para importação dos dados das patrocinadoras para a ficha financeira.",
+  "context": "collection",
+  "steps": [
+    {
+      "step": "67d576eaae2fb5ada3c65a77",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "66c4de2cf4871338d3766c13",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-08-20T18:20:44.481Z",
+  "updatedAt": "2025-04-08T14:42:53.844Z",
+  "__v": 0,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "9a3a7b43-8347-4479-bc37-11e596047d8f",
+    "username": "ansilva@f3capital.com.br"
+  },
+  "isSync": false
+}

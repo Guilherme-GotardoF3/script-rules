@@ -1,0 +1,27 @@
+{
+  "_id": "66cf40c3b4f23d8d1132ad3c",
+  "type": {
+    "_id": "66cf40c39bce8bbfceed4eff",
+    "name": "write_commands"
+  },
+  "name": "updateContribuitionRecordProcessing-Processed",
+  "description": "Atualiza status da collection contribuitionRecordProcessing ",
+  "main_collection": "contribution_record_processing",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "status": "done"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.contributionRecordProcessingId"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

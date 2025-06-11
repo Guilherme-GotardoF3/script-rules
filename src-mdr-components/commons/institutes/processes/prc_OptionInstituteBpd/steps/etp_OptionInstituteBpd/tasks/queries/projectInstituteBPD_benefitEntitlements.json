@@ -1,0 +1,370 @@
+{
+  "_id": "676461e3be56be345bd4862c",
+  "type": {
+    "_id": "676461e37057879d219dcfa5",
+    "name": "queries"
+  },
+  "name": "projectInstituteBPD_benefitEntitlements",
+  "description": "Calcula ou projeta o saldo para o BPD e o benefício estimado quando o participante opta pelo instituto de BPD - referente à collection benefit_entitlements",
+  "main_collection": "people",
+  "output_name": "otp_projectInstituteBPD_benefitEntitlements",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "instituteTypeId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "elegibilityReceiptDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "minimumBenefit",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "origin",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "requestDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "institutes"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "participationId": "$.participationId",
+          "instituteTypeId": "$.instituteTypeId",
+          "benefitValueEstimate": 1450000,
+          "elegibilityReceiptDate": {
+            "$toDate": "$.elegibilityReceiptDate"
+          },
+          "minimumBenefit": "$.minimumBenefit",
+          "origin": "$.origin",
+          "requestDate": {
+            "$toDate": "$.requestDate"
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$participations._id",
+            "$bundle.participationId"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "institutes",
+        "localField": "bundle.participationId",
+        "foreignField": "person.participation._id",
+        "as": "institute",
+        "let": {
+          "instituteTypeId": "$bundle.instituteTypeId"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$type._id",
+                  "$$instituteTypeId"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$institute",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "valorBPDInicial": {
+          "$ifNull": [
+            {
+              "$round": [
+                {
+                  "$arrayElemAt": [
+                    {
+                      "$map": {
+                        "input": "$bundle.receivingMethods",
+                        "as": "method",
+                        "in": {
+                          "$switch": {
+                            "branches": [
+                              {
+                                "case": {
+                                  "$ne": [
+                                    "$$method.percentage",
+                                    0
+                                  ]
+                                },
+                                "then": {
+                                  "$multiply": [
+                                    {
+                                      "$multiply": [
+                                        "$bundle.benefitValueEstimate",
+                                        {
+                                          "$subtract": [
+                                            1,
+                                            {
+                                              "$divide": [
+                                                "$bundle.immediatePercentage",
+                                                100
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$divide": [
+                                        "$$method.percentage",
+                                        100
+                                      ]
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "case": {
+                                  "$and": [
+                                    {
+                                      "$ne": [
+                                        "$$method.fixedAmount.amountType",
+                                        null
+                                      ]
+                                    },
+                                    {
+                                      "$ne": [
+                                        "$$method.fixedAmount.list",
+                                        []
+                                      ]
+                                    },
+                                    {
+                                      "$ne": [
+                                        {
+                                          "$arrayElemAt": [
+                                            "$$method.fixedAmount.list.amount",
+                                            0
+                                          ]
+                                        },
+                                        null
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "then": {
+                                  "$arrayElemAt": [
+                                    "$$method.fixedAmount.list.amount",
+                                    0
+                                  ]
+                                }
+                              },
+                              {
+                                "case": {
+                                  "$ne": [
+                                    "$$method.installment.quantity",
+                                    0
+                                  ]
+                                },
+                                "then": {
+                                  "$divide": [
+                                    {
+                                      "$multiply": [
+                                        "$bundle.benefitValueEstimate",
+                                        {
+                                          "$subtract": [
+                                            1,
+                                            {
+                                              "$divide": [
+                                                {
+                                                  "$ifNull": [
+                                                    "$bundle.immediatePercentage",
+                                                    0
+                                                  ]
+                                                },
+                                                100
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$cond": {
+                                        "if": {
+                                          "$eq": [
+                                            "years",
+                                            "$$method.installment.type"
+                                          ]
+                                        },
+                                        "then": {
+                                          "$multiply": [
+                                            "$$method.installment.quantity",
+                                            12
+                                          ]
+                                        },
+                                        "else": "$$method.installment.quantity"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "case": {
+                                  "$ne": [
+                                    "$$method.actuarialFactorValue",
+                                    null
+                                  ]
+                                },
+                                "then": {
+                                  "$multiply": [
+                                    {
+                                      "$multiply": [
+                                        "$bundle.benefitValueEstimate",
+                                        {
+                                          "$subtract": [
+                                            1,
+                                            {
+                                              "$divide": [
+                                                {
+                                                  "$ifNull": [
+                                                    "$bundle.immediatePercentage",
+                                                    0
+                                                  ]
+                                                },
+                                                100
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$divide": [
+                                        "$$method.actuarialFactorValue",
+                                        100
+                                      ]
+                                    }
+                                  ]
+                                }
+                              }
+                            ],
+                            "default": null
+                          }
+                        }
+                      }
+                    },
+                    0
+                  ]
+                },
+                2
+              ]
+            },
+            0
+          ]
+        },
+        "valorImediato": {
+          "$ifNull": [
+            {
+              "$round": [
+                {
+                  "$multiply": [
+                    "$bundle.benefitValueEstimate",
+                    {
+                      "$divide": [
+                        {
+                          "$ifNull": [
+                            "$bundle.immediatePercentage",
+                            0
+                          ]
+                        },
+                        100
+                      ]
+                    }
+                  ]
+                },
+                2
+              ]
+            },
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": {
+          "_id": "$_id",
+          "name": "$name",
+          "documents": "$documents",
+          "participations": "$participations"
+        },
+        "type": "deferred_proportional_benefit",
+        "estimatedBenefit": {
+          "value": {
+            "$toDouble": "$valorBPDInicial"
+          },
+          "eligibilityDate": "$bundle.elegibilityReceiptDate",
+          "date": "$bundle.requestDate"
+        },
+        "institute": {
+          "type": "$institute.type",
+          "data": "$institute.data"
+        },
+        "benefit": null,
+        "entitlementBalance": {
+          "pensionAccount": {
+            "_id": "665d1bb6d11b2a523e533a9e",
+            "name": "CONTA DE BENEFÍCIO"
+          },
+          "value": "$bundle.benefitValueEstimate",
+          "competenceDate": "$bundle.requestDate"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$type._id",
+            "$bundle.instituteTypeId"
+          ]
+        }
+      }
+    }
+  ]
+}

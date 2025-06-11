@@ -1,0 +1,29 @@
+{
+  "_id": "67e454335d86be53860f502f",
+  "type": {
+    "_id": "67e4543318b3243ca784ed3e",
+    "name": "write_commands"
+  },
+  "name": "writeProjectNewFieldsBeneficiaries",
+  "description": "Escreve na people do beneficiário que solicitou via Oceano, a alteração dos dados bancários, do phone e email",
+  "main_collection": "people",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "bankAccounts": "$.$$.otp_projectNewFieldsBeneficiaries.bankAccounts",
+          "phones": "$.$$.otp_projectNewFieldsBeneficiaries.phones",
+          "emails": "$.$$.otp_projectNewFieldsBeneficiaries.emails"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_projectNewFieldsBeneficiaries._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

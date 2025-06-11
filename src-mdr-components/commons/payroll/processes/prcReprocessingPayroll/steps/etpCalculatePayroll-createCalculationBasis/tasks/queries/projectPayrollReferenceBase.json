@@ -1,0 +1,236 @@
+{
+  "_id": "63ebdd3a7194600008215c29",
+  "type": {
+    "_id": "63ebdcd95dacab15497540cd",
+    "name": "queries"
+  },
+  "name": "projectPayrollReferenceBase",
+  "description": "adiciona o payrollReferenceBases nos itens da folha",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otpProjectPayrollReferenceBase",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "calculation_series",
+    "payrolls_RMDRC"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "person": 1,
+        "payrollItem": "$payrollItems"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItem",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "calculation_series",
+        "localField": "payrollItem.rubric._id",
+        "foreignField": "referenceRubric._id",
+        "as": "calculationSeries"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$calculationSeries",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$or": [
+            {
+              "$ne": [
+                {
+                  "$size": "$calculationSeries.simpleCalculationSerie"
+                },
+                0
+              ]
+            },
+            {
+              "$ne": [
+                {
+                  "$size": "$calculationSeries.multipleCalculationSerie"
+                },
+                0
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$calculationSeries.multipleCalculationSerie",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "calculationSeries.multipleCalculationSerie": {
+          "$ifNull": [
+            "$calculationSeries.multipleCalculationSerie",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "payroll": "$_id",
+          "payrollItem": "$payrollItems._id",
+          "referenceRubric": "$calculationSeries.referenceRubric._id"
+        },
+        "root": {
+          "$first": "$$ROOT"
+        },
+        "base": {
+          "$first": {
+            "$concatArrays": [
+              "$calculationSeries.simpleCalculationSerie",
+              "$calculationSeries.multipleCalculationSerie.monthlyRubrics"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id.payroll",
+        "foreignField": "_id",
+        "as": "rubricList",
+        "let": {
+          "rubric": "$base.rubric._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payrollItems",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$in": [
+                  "$payrollItems.rubric._id",
+                  "$$rubric"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "rubric": "$payrollItems.rubric",
+              "amount": "$payrollItems.amount",
+              "exceptionAmount": "$payrollItems.exceptionAmount",
+              "finalAmount": "$payrollItems.finalAmount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "root.payrollItem.payrollReferenceBases": [
+          {
+            "payrollItem": "$_id.payrollItem",
+            "percentage": null,
+            "deduction": null,
+            "rubricList": "$rubricList"
+          }
+        ]
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id.payroll",
+        "newPayrollItems": {
+          "$push": "$root.payrollItem"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "_id",
+        "as": "payroll",
+        "let": {
+          "rubricIds": "$newPayrollItems.rubric._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payrollItems"
+            }
+          },
+          {
+            "$addFields": {
+              "isValid": {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$in": [
+                          "$payrollItems.rubric._id",
+                          "$$rubricIds"
+                        ]
+                      },
+                      "then": false
+                    }
+                  ],
+                  "default": true
+                }
+              }
+            }
+          },
+          {
+            "$match": {
+              "isValid": true
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$project": {
+        "_id": "$_id",
+        "payrollItems": {
+          "$concatArrays": [
+            "$newPayrollItems",
+            "$payroll.payrollItems"
+          ]
+        }
+      }
+    }
+  ]
+}

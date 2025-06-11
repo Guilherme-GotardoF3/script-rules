@@ -1,0 +1,25 @@
+{
+  "_id": "674df2476469189969fddea3",
+  "type": {
+    "_id": "674df247310f76b9e89dc370",
+    "name": "write_commands"
+  },
+  "name": "writeEndedAtIndividualParameters",
+  "description": "Tem como objetivo colocar uma data fim no documento da colllection individual_collections_parameters conforme a data de alteração solicitada pelo participante no oceano",
+  "main_collection": "individual_collections_parameters",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpUpdateEndedAtIndividualCollectionsParameters"
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otpUpdateEndedAtIndividualCollectionsParameters._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

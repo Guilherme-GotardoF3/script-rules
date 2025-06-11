@@ -1,0 +1,44 @@
+{
+  "_id": "653289160982a7e972259806",
+  "name": "prc_relatorio_concessao_bi",
+  "description": "o processo consulta e guarda os dados de concessao para o relatorio em BI",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "collection",
+  "owners": [
+    {
+      "ref": "be713bcb-315d-47f6-ac7c-e933189010fb",
+      "type": "user"
+    },
+    {
+      "ref": "2df23a72-bd8c-4ebc-8f41-eff1b1ae64ca",
+      "type": "user"
+    },
+    {
+      "ref": "3e4a8b63-52f1-40b9-8f13-4e6752c1eaa2",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "6532887c55ac53621c2ef97a",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2023-10-20T14:05:10.511Z",
+  "updatedAt": "2024-07-18T15:36:30.477Z",
+  "__v": 0,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false
+}

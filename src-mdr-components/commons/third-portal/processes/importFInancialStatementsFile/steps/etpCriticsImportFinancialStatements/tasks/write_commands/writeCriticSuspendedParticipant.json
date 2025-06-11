@@ -1,0 +1,31 @@
+{
+  "_id": "67d576eaae2fb5ada3c65a74",
+  "type": {
+    "_id": "67d576eaae2fb5ada3c65a72",
+    "name": "write_commands"
+  },
+  "name": "writeCriticSuspendedParticipant",
+  "description": "Escrita da consulta de crítica comparando divergência no depara do status \"suspenso\" do participante entre o arquivo de movimentação e o cadastro.\n",
+  "main_collection": "processed_collection_review",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpCriticSuspendedParticipant"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otpCriticSuspendedParticipant.person._id"
+          },
+          {
+            "person.participation._id": "$.$$.otpCriticSuspendedParticipant.person.participation._id"
+          },
+          {
+            "referenceDate": "$.$$.otpCriticSuspendedParticipant.referenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "_id": "672573fa61bb1414d451e3c1",
+  "type": {
+    "_id": "672573f9c6e9f28beb0c46c8",
+    "name": "parameters"
+  },
+  "name": "id_beneficio_saldado",
+  "description": "id do tipo de benefício \"Benefício Saldado\"",
+  "data": {
+    "value": "6732671e11e1d84832e0ad32",
+    "type": "constant",
+    "isDefault": false
+  }
+}

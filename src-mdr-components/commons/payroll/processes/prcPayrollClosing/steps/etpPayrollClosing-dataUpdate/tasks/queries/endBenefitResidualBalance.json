@@ -1,0 +1,199 @@
+{
+  "_id": "66ff04997f8de3ec957f3fe0",
+  "type": {
+    "_id": "66ff0499116081d8b8a267ef",
+    "name": "queries"
+  },
+  "name": "endBenefitResidualBalance",
+  "description": "Encerra o benefício da pessoa que receber a rubrica de saldo residual",
+  "main_collection": "benefits",
+  "output_name": "otp_endBenefitResidualBalance",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "rubricResidualBalance",
+      "type": "Parameter",
+      "description": "id da rubrica de resíduo - quando acontece o pagamento residual do saldo de conta",
+      "value": "674e6e9f519c6b3b81a2d31e"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "payrollPlanningId": "$.payrollPlanningId"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "bundle": 1,
+        "history": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "benefit._id",
+        "as": "payroll",
+        "let": {
+          "payrollPlanningId": "$bundle.payrollPlanningId"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollPlanning._id",
+                  "$$payrollPlanningId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "person": 1,
+              "payrollPlanning": 1,
+              "benefit": 1,
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll.payrollItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$payroll.payrollItems.rubric._id",
+                "p:66feefcf3a27cebc4c998760"
+              ]
+            },
+            {
+              "$ne": [
+                "$payroll.payrollItems.finalAmount",
+                0
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "lastHistory": "$history"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$lastHistory",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$sort": {
+        "lastHistory.effectiveDate": -1
+      }
+    },
+    {
+      "$addFields": {
+        "newEffectiveDate": {
+          "$dateAdd": {
+            "startDate": "$payroll.payrollPlanning.paymentDate",
+            "unit": "day",
+            "amount": 1
+          }
+        },
+        "newBenefitStartDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        },
+        "newPaymentStartDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        },
+        "lastHistory.expirationDate": "$payroll.payrollPlanning.paymentDate"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$lastHistory.status",
+            "Ativo"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "newHistory": {
+          "_id": "$_id",
+          "history": {
+            "$concatArrays": [
+              [
+                "$lastHistory"
+              ],
+              [
+                {
+                  "optingExemption": "$lastHistory.optingExemption",
+                  "immediatePercentage": "$lastHistory.immediatePercentage",
+                  "quotaImmediateParcelValue": "$lastHistory.quotaImmediateParcelValue",
+                  "cashImmediateParcelValue": "$lastHistory.cashImmediateParcelValue",
+                  "accountQuotaBalance": "$lastHistory.accountQuotaBalance",
+                  "accountCashBalance": "$lastHistory.accountCashBalance",
+                  "monthlyValueInCash": "$lastHistory.monthlyValueInCash",
+                  "monthlyValueInQuotas": "$lastHistory.monthlyValueInQuotas",
+                  "paymentMethods": "$lastHistory.paymentMethods",
+                  "status": "Encerrado",
+                  "effectiveDate": "$newEffectiveDate",
+                  "expirationDate": null,
+                  "updatedBy": null,
+                  "statusReason": "Encerrado pelo recebimento do resíduo do saldo"
+                }
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$_id",
+        "history": "$newHistory.history"
+      }
+    }
+  ]
+}

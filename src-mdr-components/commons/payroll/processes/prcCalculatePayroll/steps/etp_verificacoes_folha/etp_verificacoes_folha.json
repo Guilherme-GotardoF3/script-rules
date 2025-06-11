@@ -1,0 +1,41 @@
+{
+  "_id": "644c0b782ca68f53b28b21e3",
+  "name": "etp_verificacoes_folha",
+  "description": "Etapa para realizar as verificacoes da folha",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "65171ac5c7bc167019ee8a8c",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "644c0bacb92ff3ef0d2d8202",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "644c1afae6c589b47dde7eb3",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "650ca2d091399913711bb623",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "64da76f5ba01c1820abdb506",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2023-04-28T18:07:52.295Z",
+  "updatedAt": "2024-07-29T18:51:30.997Z",
+  "__v": 0
+}

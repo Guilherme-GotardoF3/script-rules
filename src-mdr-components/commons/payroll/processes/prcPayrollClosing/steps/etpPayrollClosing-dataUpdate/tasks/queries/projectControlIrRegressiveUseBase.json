@@ -1,0 +1,216 @@
+{
+  "_id": "646bc3d5be7df87f21e015d2",
+  "type": {
+    "_id": "646bc3b6ed22b8f9c76ed1fb",
+    "name": "queries"
+  },
+  "name": "projectControlIrRegressiveUseBase",
+  "description": "Projecao de controle da base de calculo do ir regressivo",
+  "main_collection": "payroll_ir_regressive_peps",
+  "output_name": "otp_projectControlIrRegressiveUseBase",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_rubrica_pensao_por_morte",
+      "type": "Parameter",
+      "description": "Id da rubrica do provento da pensão por morte",
+      "value": "674e6d8e519c6b3b81a2d136"
+    },
+    {
+      "name": "id_tipo_ir_regressivo",
+      "type": "Parameter",
+      "description": "Id do ir regressivo",
+      "value": "66bd44764eb4534a4f834c3d"
+    },
+    {
+      "name": "regressiveRubricBenefitId",
+      "type": "Parameter",
+      "description": "id da rubrica de provento de beneficio regressivo",
+      "value": "674e6d67519c6b3b81a2d0d0"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payroll_plannings",
+    "payrolls_RMDRC",
+    "benefits"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "errorVerification": "$.otp_trf_verificar_erro_folha"
+      }
+    },
+    {
+      "$match": {
+        "errorVerification.status": {
+          "$ne": "ERROR"
+        },
+        "payrollPlanning._id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$listContribuitions",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payroll_plannings",
+        "localField": "payrollPlanning._id",
+        "foreignField": "_id",
+        "as": "payrollPlanning",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "referenceDate": "$competenceDate",
+              "creditDate": 1,
+              "paymentDate": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollPlanning",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "listContribuitions.collectionRecords": "$listContribuitions._id"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "payroll",
+        "foreignField": "_id",
+        "as": "payrolls",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payrollItems"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$in": [
+                  "$payrollItems.rubric._id",
+                  [
+                    "p:66eb7ceff772590b47bef18f",
+                    "p:6418be6a6dcafc9b25c167a4"
+                  ]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrolls",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "payrolls.benefit._id",
+        "foreignField": "_id",
+        "as": "benefits",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$taxRegimeTypes"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$taxRegimeTypes.type._id",
+                  "p:646d2faf0c6ae3bd9fdaa44c"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "taxRegimeTypes": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefits",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "benefits.taxRegimeTypes.percentage": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$ne": [
+                    "$benefits.taxRegimeTypes.percentual",
+                    null
+                  ]
+                },
+                "then": "$benefits.taxRegimeTypes.percentual"
+              }
+            ],
+            "default": "$benefits.taxRegimeTypes.percentage"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "qtdQuotas": {
+          "$divide": [
+            "$payrolls.payrollItems.finalAmount",
+            "$payrolls.payrollItems.quota.value"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "collectionRecord": "$listContribuitions.collectionRecords",
+        "participation": "$participation._id",
+        "payrollPlanning": "$payrollPlanning",
+        "benefit": "$benefit",
+        "payroll": "$payroll",
+        "payrollItem": "$payrollItem",
+        "competenceDate": "$listContribuitions.competenceDate",
+        "referenceDate": "$listContribuitions.referenceDate",
+        "qtdQuotas": "$listContribuitions.qtdQuotas",
+        "unusedQuotas": "$listContribuitions.unusedQuotas",
+        "usedQuotas": {
+          "$divide": [
+            "$listContribuitions.usedValue",
+            "$listContribuitions.quotaValue"
+          ]
+        },
+        "createdAt": "$createdAt",
+        "updatedAt": "$updatedAt"
+      }
+    }
+  ]
+}

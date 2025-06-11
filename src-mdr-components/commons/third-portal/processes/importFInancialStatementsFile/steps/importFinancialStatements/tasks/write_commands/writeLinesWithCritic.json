@@ -1,0 +1,27 @@
+{
+  "_id": "67ed889e256f47eff2cf3881",
+  "type": {
+    "_id": "67ed889e256f47eff2cf387f",
+    "name": "write_commands"
+  },
+  "name": "writeLinesWithCritic",
+  "description": "Escrita da consulta feita na processed_collection_review para verificar se houve críticas durante o processo de importação de arquivo de movimento.",
+  "main_collection": "files_lines_contents",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "status": "$.$$.otpVerifyLinesWithCritic.status"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otpVerifyLinesWithCritic._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

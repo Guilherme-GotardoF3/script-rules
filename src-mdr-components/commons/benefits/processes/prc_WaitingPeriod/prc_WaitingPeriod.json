@@ -1,0 +1,25 @@
+{
+  "_id": "677d7c34ca0f014350fef612",
+  "name": "prc_WaitingPeriod",
+  "description": "Busca etapa e tarefas que vão checar as carências de um benefício, resgate, portabilidade",
+  "context": "benefit",
+  "steps": [
+    {
+      "step": "677d7be1ebbb7fc26a621e1e",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "fe66bca9-90de-4909-8c1a-966f21a824bc",
+    "username": "dpitol@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "fe66bca9-90de-4909-8c1a-966f21a824bc",
+    "username": "dpitol@f3capital.com.br"
+  },
+  "isSync": true,
+  "createdAt": "2025-01-07T19:10:44.654Z",
+  "updatedAt": "2025-01-08T13:57:57.701Z",
+  "__v": 0
+}

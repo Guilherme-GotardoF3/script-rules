@@ -1,0 +1,27 @@
+{
+  "_id": "64d54de85c4165b76ade8ff9",
+  "type": {
+    "_id": "64d521f55c4165b76ade8fee",
+    "name": "write_commands"
+  },
+  "name": "calcularRubricasDeducoesuuuuuu",
+  "description": "Escrita para os calculos de deducoes da folhakk",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payrollItems": "$.$$.otp_trf_projectDeductionItemsToWrite.payrollItems"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_trf_projectDeductionItemsToWrite._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

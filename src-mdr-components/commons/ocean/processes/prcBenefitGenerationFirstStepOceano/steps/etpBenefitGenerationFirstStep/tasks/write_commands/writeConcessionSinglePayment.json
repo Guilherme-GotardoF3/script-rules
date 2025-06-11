@@ -1,0 +1,25 @@
+{
+  "_id": "6614042e3913a228df3955ab",
+  "type": {
+    "_id": "661401e324d2e9b3a0ef17ba",
+    "name": "write_commands"
+  },
+  "name": "writeConcessionSinglePayment",
+  "description": "Projeta a concessão de benefício do tipo pagamento único, onde apura o valor do último salário e multiplica por XX.",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_concessionSinglePayment"
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_trf_concessionSinglePayment._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

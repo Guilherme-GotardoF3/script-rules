@@ -1,0 +1,82 @@
+{
+  "_id": "67ed889e256f47eff2cf387d",
+  "type": {
+    "_id": "67ed889e256f47eff2cf387b",
+    "name": "queries"
+  },
+  "name": "verifyLinesWithCritic",
+  "description": "Verifica se determinadas linhas durante o processo de importação do arquivo de movimento (painel de terceiros) possuí crítica. ",
+  "main_collection": "processed_collection_review",
+  "output_name": "otpVerifyLinesWithCritic",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_ImportFinancialStatementsFile",
+      "type": "Parameter",
+      "description": "Parâmetro para o id do tipo de importação do arquivo de movimento da. Usado para gerar críticas durante o processo de importação do arquivo de movimento no painel de terceiros.",
+      "value": "67d3218cd61a29ba7b25b441"
+    },
+    {
+      "name": "startedAt",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "$expr": {
+          "$in": [
+            {
+              "$toDate": "$.startedAt"
+            },
+            "$reviewCollections.validation.date"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": "$reviewCollections"
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$reviewCollections.origin.name",
+                "files_lines_contents"
+              ]
+            },
+            {
+              "$eq": [
+                "$reviewCollections.reviewCollection.type._id",
+                "p:67d42a8e98c3896283cd9c4b"
+              ]
+            },
+            {
+              "$eq": [
+                "$reviewCollections.validation.date",
+                {
+                  "$toDate": "$.startedAt"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "$toObjectId": "$reviewCollections.origin._id"
+        },
+        "status": {
+          "$first": "error"
+        }
+      }
+    }
+  ]
+}

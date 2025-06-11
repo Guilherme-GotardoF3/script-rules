@@ -1,0 +1,31 @@
+{
+  "_id": "642b10f096f7240bc0901a11",
+  "name": "etp_listar_participantes_ativos",
+  "description": "através dos filtros passados no bundle, é obtida a lista dos participantes que estão ativos",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6426eb0187c4ec5a99bb7c4e",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "63bc4e7dedaf2600087f0d26",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    }
+  ],
+  "createdAt": "2023-04-03T17:46:24.519Z",
+  "updatedAt": "2023-10-11T17:07:03.422Z",
+  "__v": 0
+}

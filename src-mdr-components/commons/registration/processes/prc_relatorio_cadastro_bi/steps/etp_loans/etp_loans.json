@@ -1,0 +1,31 @@
+{
+  "_id": "6605ba76b043c6a0b16c84ad",
+  "name": "etp_loans",
+  "description": "etapa que traz valores de emprestimo",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "63bc4e7dedaf2600087f0d26",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "6605b780b0d6cd2559eec3a5",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    }
+  ],
+  "createdAt": "2024-03-28T18:44:06.683Z",
+  "updatedAt": "2024-03-28T18:51:52.917Z",
+  "__v": 0
+}

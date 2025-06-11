@@ -1,0 +1,28 @@
+{
+  "_id": "675990dbc489b2d70b6b04e7",
+  "type": {
+    "_id": "675990db8d19baa45252a5b3",
+    "name": "write_commands"
+  },
+  "name": "writeRuleMovement",
+  "description": "Regra de movimentação",
+  "main_collection": "account_movements",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_ruleMovement"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otp_ruleMovement.person._id"
+          },
+          {
+            "pensionAccount._id": "$.$$.otp_ruleMovement.pensionAccount._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

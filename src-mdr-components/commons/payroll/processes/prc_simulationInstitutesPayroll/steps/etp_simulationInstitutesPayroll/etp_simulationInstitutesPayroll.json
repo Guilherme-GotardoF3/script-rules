@@ -1,0 +1,23 @@
+{
+  "_id": "675a19895e0ae8aa55e07c0e",
+  "name": "etp_simulationInstitutesPayroll",
+  "description": "Seleciona a tarefa que simula uma folha de institutos (resgate e portabilidade)",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "675a18abfb2ce9fe4554370a",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67929a5882a85d628b9f8cdd",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-12-11T23:00:25.727Z",
+  "updatedAt": "2025-02-04T18:32:47.386Z",
+  "__v": 0
+}

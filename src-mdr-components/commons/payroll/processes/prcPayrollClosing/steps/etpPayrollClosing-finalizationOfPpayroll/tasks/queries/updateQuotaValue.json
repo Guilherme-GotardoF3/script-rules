@@ -1,0 +1,267 @@
+{
+  "_id": "671baaebd2b50f533cd2f380",
+  "type": {
+    "_id": "671baaebca9cdc878ce7994b",
+    "name": "queries"
+  },
+  "name": "updateQuotaValue",
+  "description": "Atualiza o valor da quota a ser utilizada pela baixa de pagamento de beneficio ",
+  "main_collection": "payroll_plannings",
+  "output_name": "otpUpdateQuotaValue",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "rubricResidualBalance",
+      "type": "Parameter",
+      "description": "id da rubrica de resíduo - quando acontece o pagamento residual do saldo de conta",
+      "value": "674e6e9f519c6b3b81a2d31e"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "plans",
+    "investment_profiles",
+    "monetary_unit_values",
+    "payrolls_RMDRC"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "competenceDate": 1,
+        "paymentDate": 1,
+        "plan": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "plans",
+        "localField": "plan._id",
+        "foreignField": "_id",
+        "as": "plan",
+        "pipeline": [
+          {
+            "$project": {
+              "investmentProfiles": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "investment_profiles",
+        "localField": "plan.investmentProfiles._id",
+        "foreignField": "_id",
+        "as": "investment_profiles",
+        "pipeline": [
+          {
+            "$project": {
+              "monetaryUnits": 1,
+              "_id": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "monetary_unit_values",
+        "localField": "investment_profiles.monetaryUnits.monetaryUnit._id",
+        "foreignField": "monetaryUnit._id",
+        "let": {
+          "filter_date": {
+            "$dateToString": {
+              "format": "%Y-%m-%d",
+              "date": "$paymentDate"
+            }
+          },
+          "planId": "$plan._id"
+        },
+        "as": "monetaryUnitValues",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      {
+                        "$dateToString": {
+                          "format": "%Y-%m-%d",
+                          "date": "$referenceDate"
+                        }
+                      },
+                      "$$filter_date"
+                    ]
+                  },
+                  {
+                    "$in": [
+                      "$monetaryUnit.plan._id",
+                      "$$planId"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$monetaryUnitValues",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "payrollPlanning._id",
+        "as": "payroll",
+        "pipeline": [
+          {
+            "$match": {
+              "payrollItems.rubric._id": {
+                "$nin": [
+                  "p:66feefcf3a27cebc4c998760"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$payrollItems",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "payrollItems.rubric.configurations.isDiscount": false
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "payroll.payrollItems.quota": {
+          "_id": "$monetaryUnitValues._id",
+          "value": "$monetaryUnitValues.value",
+          "referenceDate": {
+            "$ifNull": [
+              "$monetaryUnitValues.referenceDate",
+              "$paymentDate"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$payroll._id",
+        "payrollItems": {
+          "$push": "$payroll.payrollItems"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "_id",
+        "as": "otherPayrollItems",
+        "let": {
+          "rubricIds": "$payrollItems.rubric._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payrollItems",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$addFields": {
+              "isValid": {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$in": [
+                          "$payrollItems.rubric._id",
+                          "$$rubricIds"
+                        ]
+                      },
+                      "then": false
+                    }
+                  ],
+                  "default": true
+                }
+              }
+            }
+          },
+          {
+            "$match": {
+              "isValid": true
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "payrollItems": 1
+            }
+          },
+          {
+            "$replaceRoot": {
+              "newRoot": "$payrollItems"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "otherPayrollItems": {
+          "$ifNull": [
+            "$otherPayrollItems",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "payrollItems": {
+          "$concatArrays": [
+            "$payrollItems",
+            "$otherPayrollItems"
+          ]
+        }
+      }
+    }
+  ]
+}

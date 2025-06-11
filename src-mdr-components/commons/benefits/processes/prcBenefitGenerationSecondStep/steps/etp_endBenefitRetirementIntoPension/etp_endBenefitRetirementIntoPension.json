@@ -1,0 +1,35 @@
+{
+  "_id": "66f2e1f04bf7084385945f5e",
+  "name": "etp_endBenefitRetirementIntoPension",
+  "description": "Encerra o beneficio de aposentadoria do falecido, após a concessão dos novos benefícios de pensão por morte para os beneficiários",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66f2cc14a03e096aebd8194d",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66f2ce15a47b3c489c35b4a8",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e7177c24492fdc385027b0",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e71aa8791477fcb48ab38f",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-09-24T15:59:44.632Z",
+  "updatedAt": "2025-03-28T21:55:59.814Z",
+  "__v": 0
+}

@@ -1,0 +1,27 @@
+{
+  "_id": "66d8fa8773b0b6e1c470709e",
+  "type": {
+    "_id": "66d8fa8759cf33d46abd308e",
+    "name": "write_commands"
+  },
+  "name": "putQuotedCollectiveMovementsInCollRecords",
+  "description": "Atualiza movimentos coletivos cotizados na collection de contribuição",
+  "main_collection": "collection_records",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "rubrics": "$.$$.otp_getDataToCollectionRecordsQuotationCollective.rubrics"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_getDataToCollectionRecordsQuotationCollective._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

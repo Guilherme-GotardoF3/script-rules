@@ -1,0 +1,31 @@
+{
+  "_id": "642eec17c87efb491aa74430",
+  "name": "etp_calcular_contribuicao_participante",
+  "description": "calcula e validar qual o valor da contribuição do participante",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "642eebec4ab42e0066e7714b",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "645bf086c45d845b1658a9ca",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    }
+  ],
+  "createdAt": "2023-04-06T15:58:15.842Z",
+  "updatedAt": "2023-10-02T18:38:28.960Z",
+  "__v": 0
+}

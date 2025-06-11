@@ -1,0 +1,28 @@
+{
+  "_id": "64340debaa1f1d95751ea3f8",
+  "type": {
+    "_id": "65201379a2da4282abfcddd8",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReportIRValidationMultipleActiveBenefits",
+  "description": "Componente de escrita relatório payroll_report_ir_validation_multiple_active_benefits",
+  "main_collection": "payroll_report_ir_validation_multiple_active_benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_write_report_cpf_multipos_benefits"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_trf_project_write_report_cpf_multipos_benefits.participation._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_write_report_cpf_multipos_benefits.payrollPlanning"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "_id": "65171ac5c7bc167019ee8a8c",
+  "type": {
+    "_id": "65171881afb01308774aaa82",
+    "name": "api_requests"
+  },
+  "name": "cleanSheetProcessingVerification",
+  "description": "Limpa a collection sheet-processing-verification",
+  "method": "delete",
+  "headers": {
+    "tenant-id": "$.tenantId",
+    "authorization": "Bearer $.opt_trf_request_token.payload.accessToken"
+  },
+  "pathParameters": {
+    "listOfGeneratedBenefit": "$.benefits"
+  },
+  "queryParameters": {},
+  "Url": "$.navegaApiUrl /payrolls/payroll-planning/$.payrollPlanningId /payroll-planning-verification",
+  "Body": {
+    "type": "json",
+    "data": {
+      "listOfGeneratedBenefit": "$.benefits"
+    }
+  }
+}

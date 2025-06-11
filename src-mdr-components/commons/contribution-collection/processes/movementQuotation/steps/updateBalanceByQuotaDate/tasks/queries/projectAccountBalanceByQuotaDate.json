@@ -1,0 +1,288 @@
+{
+  "_id": "66eb526621a089419389dd2d",
+  "type": {
+    "_id": "66eb5266bf661c86c3f8f3d3",
+    "name": "queries"
+  },
+  "name": "projectAccountBalanceByQuotaDate",
+  "description": "Projeta novo saldo de conta, atualizado de acordo com a data da cota",
+  "main_collection": "account_balances_rmdrc",
+  "output_name": "projectAccountBalanceByQuotaDate",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "monetaryUnitValueReferenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "account_balances_rmdrc",
+    "monetary_unit_values"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "planId": "$.planId",
+          "quotaDate": {
+            "$toDate": "$.monetaryUnitValueReferenceDate"
+          },
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          },
+          "getdate": {
+            "$function": {
+              "body": "function () { return new Date() }",
+              "args": [],
+              "lang": "js"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$person.participation.participationClass.plan._id",
+            "$bundle.planId"
+          ]
+        }
+      }
+    },
+    {
+      "$sort": {
+        "date": -1
+      }
+    },
+    {
+      "$group": {
+        "_id": "$person",
+        "maxData": {
+          "$max": "$date"
+        },
+        "accountBalancesId": {
+          "$first": "$_id"
+        },
+        "bundle": {
+          "$first": "$bundle"
+        }
+      }
+    },
+    {
+      "$sort": {
+        "_id.name": 1,
+        "maxData": -1
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id.name",
+        "root": {
+          "$first": "$$ROOT"
+        },
+        "bundle": {
+          "$first": "$bundle"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": "$root._id",
+        "maxData": "$root.maxData",
+        "accountBalancesId": "$root.accountBalancesId",
+        "bundle": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "account_balances_rmdrc",
+        "localField": "accountBalancesId",
+        "foreignField": "_id",
+        "as": "account_balances_rmdrc"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$account_balances_rmdrc"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$ne": [
+                "$maxData",
+                "$bundle.quotaDate"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "bundle": 1,
+        "competenceDate": "$account_balances_rmdrc.competenceDate",
+        "operationDate": "$bundle.getdate",
+        "date": "$bundle.quotaDate",
+        "value": "$account_balances_rmdrc.value",
+        "person": "$account_balances_rmdrc.person",
+        "pensionAccountList": "$account_balances_rmdrc.pensionAccountList"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$pensionAccountList"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$gte": [
+            "$pensionAccountList.totalValue.amountQuotas",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "monetary_unit_values",
+        "localField": "pensionAccountList.monetaryUnitValue._id",
+        "foreignField": "_id",
+        "as": "monetary_unit_values"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$monetary_unit_values"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "monetary_unit_values",
+        "localField": "monetary_unit_values.monetaryUnit._id",
+        "foreignField": "monetaryUnit._id",
+        "as": "monetaryUnitValues",
+        "let": {
+          "referenceDate": "$bundle.quotaDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$referenceDate",
+                  "$$referenceDate"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$monetaryUnitValues"
+      }
+    },
+    {
+      "$addFields": {
+        "newPensionAccountList": {
+          "movementsInValue": {
+            "value": 0,
+            "amountQuotas": 0
+          },
+          "movementsOutValue": {
+            "value": 0,
+            "amountQuotas": 0
+          },
+          "lastBalanceValue": "$pensionAccountList.totalValue",
+          "totalValue": {
+            "value": {
+              "$multiply": [
+                "$pensionAccountList.totalValue.amountQuotas",
+                "$monetaryUnitValues.value"
+              ]
+            },
+            "amountQuotas": "$pensionAccountList.totalValue.amountQuotas"
+          },
+          "pensionAccount": "$pensionAccountList.pensionAccount",
+          "monetaryUnitValue": {
+            "value": "$monetaryUnitValues.value",
+            "_id": "$monetaryUnitValues._id",
+            "referenceDate": "$monetaryUnitValues.referenceDate"
+          },
+          "movements": []
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "competenceDate": "$competenceDate",
+        "date": "$date",
+        "operationDate": "$operationDate",
+        "person": "$person",
+        "value": null,
+        "pensionAccountList": "$newPensionAccountList"
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "participation": "$person.participation._id"
+        },
+        "competenceDate": {
+          "$first": "$competenceDate"
+        },
+        "date": {
+          "$first": "$date"
+        },
+        "operationDate": {
+          "$first": "$operationDate"
+        },
+        "person": {
+          "$first": "$person"
+        },
+        "pensionAccountList": {
+          "$addToSet": "$pensionAccountList"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "value": {
+          "$function": {
+            "body": "function execute(list) { if (!list) return {}; let value = 0; for (const i of list) {value = value + i.totalValue.value;}; return value;}",
+            "args": [
+              "$pensionAccountList"
+            ],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "_id": "6621581898aa7f1ce49f12e7",
+  "type": {
+    "_id": "6621537fcaa53b6bb37577b2",
+    "name": "queries"
+  },
+  "name": "concessionSicknessBenefit",
+  "description": "Projeta o valor do benefício da concessão do tipo auxílio doença",
+  "main_collection": "benefits",
+  "output_name": "otp_trf_concessionSicknessBenefit",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "benefitSourceId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "salary_imports"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.benefitSourceId"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "salary_imports",
+        "localField": "participation",
+        "foreignField": "participation",
+        "as": "salary_imports",
+        "pipeline": [
+          {
+            "$project": {
+              "participation": 1,
+              "salaryBase": 1,
+              "competencyMonth": 1,
+              "competencyYear": 1,
+              "referencyMonth": 1,
+              "referencyYear": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$salary_imports",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "amountSRB": 10000,
+        "percent": 5,
+        "salaryAmount": {
+          "$divide": [
+            {
+              "$multiply": [
+                "$salary_imports.salaryBase",
+                "$lastParcel"
+              ]
+            },
+            "$lastParcel"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "coefficentAmount": {
+          "$round": [
+            {
+              "$multiply": [
+                "$salaryAmount",
+                0.91
+              ]
+            },
+            2
+          ]
+        },
+        "inicialValue": {
+          "$divide": [
+            {
+              "$multiply": [
+                "$salary_imports.salaryBase",
+                12
+              ]
+            },
+            12
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "type": 1,
+        "participation": 1,
+        "benefitStartDate": 1,
+        "paymentStartDate": 1,
+        "sheetEntryDate": 1,
+        "expirationDate": null,
+        "benefitSalary": {
+          "$cond": {
+            "if": {
+              "$lt": [
+                "$inicialValue",
+                "$coefficentAmount"
+              ]
+            },
+            "then": "$inicialValue",
+            "else": "$coefficentAmount"
+          }
+        },
+        "amountSRB": 1,
+        "percent": 1,
+        "note": "Concessão Auxílio Doença",
+        "updatedBy": "Rules"
+      }
+    }
+  ]
+}

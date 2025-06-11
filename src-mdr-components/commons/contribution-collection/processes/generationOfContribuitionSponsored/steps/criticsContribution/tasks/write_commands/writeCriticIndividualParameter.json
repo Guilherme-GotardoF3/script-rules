@@ -1,0 +1,31 @@
+{
+  "_id": "67deb115a29d1b5761dd2009",
+  "type": {
+    "_id": "67deb115a29d1b5761dd2007",
+    "name": "write_commands"
+  },
+  "name": "writeCriticIndividualParameter",
+  "description": "Tarefa que escreve a crítica de parâmetro individual",
+  "main_collection": "processed_collection_review",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpCriticIndividualParameter"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otpCriticIndividualParameter.person._id"
+          },
+          {
+            "person.participation._id": "$.$$.otpCriticIndividualParameter.person.participation._id"
+          },
+          {
+            "referenceDate": "$.$$.otpCriticIndividualParameter.referenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

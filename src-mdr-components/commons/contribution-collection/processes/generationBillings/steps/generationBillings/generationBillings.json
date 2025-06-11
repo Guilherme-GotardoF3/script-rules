@@ -1,0 +1,47 @@
+{
+  "_id": "66c358a96821b41c1abf7406",
+  "name": "generationBillings",
+  "description": "Etapa que gera contribuicao e altera seu status",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66c372170755ce936797a91b",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66c37326985275de295b60f0",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d57547ae2fb5ada3c6598e",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d57547ae2fb5ada3c65992",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67267df76e7a511108e8d7c0",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67267eb26e7a511108e8d805",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-08-19T14:37:29.645Z",
+  "updatedAt": "2025-04-25T19:58:15.022Z",
+  "__v": 0
+}

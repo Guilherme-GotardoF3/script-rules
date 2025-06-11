@@ -1,0 +1,35 @@
+{
+  "_id": "66a8ef9d8082256a91fad8ce",
+  "name": "criticsContribution",
+  "description": "Etapa para geração da críticas da contribuição.",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "67deb115a29d1b5761dd2005",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67deb115a29d1b5761dd2009",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66fae2b372b625f870957646",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66fae33a72b625f870957669",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-07-30T13:50:21.472Z",
+  "updatedAt": "2025-03-29T14:50:51.536Z",
+  "__v": 0
+}

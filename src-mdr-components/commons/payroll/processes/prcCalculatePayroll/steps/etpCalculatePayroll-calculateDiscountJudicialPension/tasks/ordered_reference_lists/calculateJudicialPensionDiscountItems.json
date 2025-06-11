@@ -1,0 +1,12 @@
+{
+  "_id": "6601963edb6266e84ce9dd56",
+  "type": {
+    "_id": "66019764db6266e84ce9dd5b",
+    "name": "ordered_reference_lists"
+  },
+  "name": "calculateJudicialPensionDiscountItems",
+  "description": "Calcula as rubricas de descontos de pensao judicial acordo com o benefício gerado.",
+  "outputName": "otp_trf_calculateJudicialPensionDiscountItems",
+  "rulePath": "$.rule",
+  "referenceListPath": "$.$$.otp_trf_getAllRubricsJudicialPensionForPerson..br_rubric[0]"
+}

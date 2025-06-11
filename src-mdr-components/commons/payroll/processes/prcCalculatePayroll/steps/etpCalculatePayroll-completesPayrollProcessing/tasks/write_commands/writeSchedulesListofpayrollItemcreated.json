@@ -1,0 +1,25 @@
+{
+  "_id": "66030aa3fd8a5b6311682eb3",
+  "type": {
+    "_id": "6601d27d27562244863a46d2",
+    "name": "write_commands"
+  },
+  "name": "writeSchedulesListofpayrollItemcreated",
+  "description": "writeSchedulesListofpayrollItemcreated",
+  "main_collection": "payroll_item_exception_schedules",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_projectSchedulesListofpayrollItemcreated"
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_projectSchedulesListofpayrollItemcreated._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

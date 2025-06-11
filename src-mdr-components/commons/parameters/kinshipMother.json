@@ -1,0 +1,14 @@
+{
+  "_id": "67101d1cf371b8f49a808759",
+  "type": {
+    "_id": "67101d1c14c324ef916f14f4",
+    "name": "parameters"
+  },
+  "name": "kinshipMother",
+  "description": "id do parentesco \"mâe\" da collection kinships",
+  "data": {
+    "value": "65f0a9570b8bfc37fa207720",
+    "type": "constant",
+    "isDefault": false
+  }
+}

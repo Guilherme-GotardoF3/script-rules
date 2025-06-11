@@ -1,0 +1,23 @@
+//_id: {'$oid': '6709897f3efdc4410126c4b2'}
+//_tenant: sandbox-cs
+//name: writeFamilyGroupMigration
+//description: Escrita da migração da family_groups
+//collection: family_groups
+
+{
+	command: {
+        "updateOne": {
+            "update": {
+                "$set": "$.$$.otpFamilyGroupMigration"
+            },
+            "filter": {
+                "$and": [
+                    {
+                        "person": "$.$$.otpFamilyGroupMigration.person"
+                    }
+                ]
+            },
+            "upsert": true
+        }
+    }
+}

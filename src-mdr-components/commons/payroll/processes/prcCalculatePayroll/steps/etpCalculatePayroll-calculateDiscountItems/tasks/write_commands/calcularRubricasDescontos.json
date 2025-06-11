@@ -1,0 +1,27 @@
+{
+  "_id": "64d54dd55c4165b76ade8ff8",
+  "type": {
+    "_id": "64d521a55c4165b76ade8fed",
+    "name": "write_commands"
+  },
+  "name": "calcularRubricasDescontos",
+  "description": "Escrita para os calculos de descontos da folha",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payrollItems": "$.$$.otp_trf_projectDiscountItemsToWrite.payrollItems"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_trf_projectDiscountItemsToWrite._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

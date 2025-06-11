@@ -1,0 +1,313 @@
+//_id: {"$oid": "670434f07e1abb472559f5b1"}
+//_tenant: sandbox-cs
+//name: collectionRecordsMigration
+//description: conforme o arquivo de contribuições, a tarefa projeta no schema correto para a gravação na collection 
+//collection: CollectionIntegration_Collection_Records
+
+//use("sandbox-cs");
+
+//db.CollectionIntegration_Collection_Records.aggregate(
+  [
+    {
+       "$unwind": {
+         "path": "$rubricas", 
+         "preserveNullAndEmptyArrays": false
+       }
+     }, {
+       "$lookup": {
+         "from": "Collection_dictionary", 
+         "localField": "identificador_participacao", 
+         "foreignField": "id_origem", 
+         "as": "idParticipation", 
+         "pipeline": [
+           {
+             "$match": {
+               "$expr": {
+                 "$eq": [
+                   "$collection_name", "Participacao"
+                 ]
+               }
+             }
+           }
+         ]
+       }
+     }, {
+       "$unwind": {
+         "path": "$idParticipation", 
+         "preserveNullAndEmptyArrays": false
+       }
+     }, {
+       "$lookup": {
+         "from": "Collection_dictionary", 
+         "localField": "rubricas.identificador_rubrica", 
+         "foreignField": "id_origem", 
+         "as": "idRubricas", 
+         "pipeline": [
+           {
+             "$match": {
+               "$expr": {
+                 "$eq": [
+                   "$collection_name", "Rubricas"
+                 ]
+               }
+             }
+           }
+         ]
+       }
+     }, {
+       "$unwind": {
+         "path": "$idRubricas", 
+         "preserveNullAndEmptyArrays": true
+       }
+     }, {
+       "$lookup": {
+         "from": "rubrics", 
+         "localField": "idRubricas.id_destino", 
+         "foreignField": "_id", 
+         "as": "rubric"
+       }
+     }, {
+       "$unwind": {
+         "path": "$rubric", 
+         "preserveNullAndEmptyArrays": true
+       }
+     }, {
+       "$lookup": {
+         "from": "people", 
+         "localField": "idParticipation.id_destino", 
+         "foreignField": "participations._id", 
+         "as": "person", 
+         "let": {
+           "participationId": "$idParticipation.id_destino"
+         }, 
+         "pipeline": [
+           {
+             "$unwind": {
+               "path": "$participations", 
+               "preserveNullAndEmptyArrays": false
+             }
+           }, {
+             "$match": {
+               "$expr": {
+                 "$and": [
+                   {
+                     "$eq": [
+                       "$participations.participationClass.plan.name", "PreVisão"
+                     ]
+                   }, {
+                     "$eq": [
+                       "$participations._id", "$$participationId"
+                     ]
+                   }
+                 ]
+               }
+             }
+           }, {
+             "$project": {
+               "name": 1, 
+               "documents": 1, 
+               "participation": {
+                 "_id": "$participations._id", 
+                 "number": "$participations.number", 
+                 "participationClass": {
+                   "_id": "$participations.participationClass._id", 
+                   "plan": "$participations.participationClass.plan"
+                 }
+               }
+             }
+           }
+         ]
+       }
+     }, {
+       "$unwind": {
+         "path": "$person", 
+         "preserveNullAndEmptyArrays": false
+       }
+     }, {
+       "$unwind": {
+         "path": "$rubricas.movimentos", 
+         "preserveNullAndEmptyArrays": true
+       }
+     }, {
+       "$lookup": {
+         "from": "Collection_dictionary", 
+         "localField": "rubricas.movimentos.ocorrencia.identificador_ocorrencia", 
+         "foreignField": "id_origem", 
+         "as": "idOccurrence", 
+         "pipeline": [
+           {
+             "$match": {
+               "$expr": {
+                 "$eq": [
+                   "$collection_name", "Ocorrencia"
+                 ]
+               }
+             }
+           }
+         ]
+       }
+     }, {
+       "$unwind": {
+         "path": "$idOccurrence", 
+         "preserveNullAndEmptyArrays": true
+       }
+     }, {
+       "$lookup": {
+         "from": "occurrences", 
+         "localField": "idOccurrence.id_destino", 
+         "foreignField": "_id", 
+         "as": "occurrence"
+       }
+     }, {
+       "$unwind": {
+         "path": "$occurrence", 
+         "preserveNullAndEmptyArrays": true
+       }
+     }, {
+       "$project": {
+         "_id": 0, 
+         "paymentDate": {
+           "$cond": {
+             "if": {
+               "$eq": [
+                 "$data_pagamento._date", ""
+               ]
+             }, 
+             "then": null, 
+             "else": {
+               "$toDate": "$data_pagamento._date"
+             }
+           }
+         }, 
+         "person": 1, 
+         "referenceDate": {
+           "$cond": {
+             "if": {
+               "$eq": [
+                 "$data_referencia._date", ""
+               ]
+             }, 
+             "then": null, 
+             "else": {
+               "$toDate": "$data_referencia._date"
+             }
+           }
+         }, 
+         "rubrics": {
+           "rubric": {
+             "_id": "$rubric._id", 
+             "name": "$rubric.name", 
+             "configuration": {
+               "isDiscount": "$rubric.configurations.isDiscount"
+             }
+           }, 
+           "competenceDate": {
+             "$cond": {
+               "if": {
+                 "$eq": [
+                   "$rubricas.data_competencia._date", ""
+                 ]
+               }, 
+               "then": null, 
+               "else": {
+                 "$toDate": "$rubricas.data_competencia._date"
+               }
+             }
+           }, 
+           "movements": [
+             {
+               "occurrence": {
+                 "_id": "$occurrence._id", 
+                 "name": "$occurrence.name"
+               }, 
+               "occurrenceDate": {
+                 "$cond": {
+                   "if": {
+                     "$eq": [
+                       "$rubricas.movimentos.data_ocorrencia._date", ""
+                     ]
+                   }, 
+                   "then": null, 
+                   "else": {
+                     "$toDate": "$rubricas.movimentos.data_ocorrencia._date"
+                   }
+                 }
+               }, 
+               "value": {
+                 "$round": [
+                   "$rubricas.movimentos.valor", 2
+                 ]
+               }, 
+               "amountQuotas": "$rubricas.movimentos.valor_cotas", 
+               "operationDate": {
+                 "$cond": {
+                   "if": {
+                     "$eq": [
+                       "$rubricas.movimentos.data_operacao._date", ""
+                     ]
+                   }, 
+                   "then": null, 
+                   "else": {
+                     "$toDate": "$rubricas.movimentos.data_operacao._date"
+                   }
+                 }
+               }, 
+               "percentageMovement": {
+                 "$toInt": {
+                   "$replaceOne": {
+                     "input": "$rubricas.movimentos.porcentagem_movimento", 
+                     "find": "%", 
+                     "replacement": ""
+                   }
+                 }
+               }
+             }
+           ], 
+           "baseCalculation": [], 
+           "origin": null, 
+           "value": {
+             "$round": [
+               "$rubricas.valor", 2
+             ]
+           }, 
+           "review": null
+         }, 
+         "paymentMethods": []
+       }
+     }, {
+       "$group": {
+         "_id": {
+           "participation": "$person.participation._id", 
+           "competenceDate": "$competenceDate", 
+           "paymentDate": "$paymentDate"
+         }, 
+         "root": {
+           "$first": "$$ROOT"
+         }, 
+         "rubrics": {
+           "$push": "$rubrics"
+         }, 
+         "movements": {
+           "$push": "$rubrics.movements"
+         }
+       }
+     }, {
+       "$project": {
+         "_id": 0, 
+         "person": "$root.person", 
+         "competenceDate": "$root.competenceDate", 
+         "paymentDate": "$root.paymentDate", 
+         "referenceDate": "$root.referenceDate", 
+         "rubrics": "$rubrics", 
+         "paymentMethods": "$root.paymentMethods"
+       }
+     },{
+      "$merge": {
+        "into": "collection_records_RMDRC", 
+        "on": "_id", 
+        "whenMatched": "merge", 
+        "whenNotMatched": "insert"
+      }
+    }
+   ]
+            //);

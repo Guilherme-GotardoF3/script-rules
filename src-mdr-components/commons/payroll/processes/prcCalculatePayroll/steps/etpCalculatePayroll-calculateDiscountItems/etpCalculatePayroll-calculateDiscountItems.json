@@ -1,0 +1,71 @@
+{
+  "_id": "65d8f1b50ee692ef28d671d8",
+  "name": "etpCalculatePayroll-calculateDiscountItems",
+  "description": "Etapa para o calculo dos descontos a serem processados na folha de pagamento",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "639c763c6d002c0067c5bf7a",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "63a1af89837e8b00656b3f9b",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66193c6239efd23520300c6b",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "64d54dd55c4165b76ade8ff8",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66e48dbd9ce276e9defc3118",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66e496f39ce276e9defc31b7",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66e499799ce276e9defc31fd",
+      "type": "tasks",
+      "order": 7,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66e49a1f9ce276e9defc3220",
+      "type": "tasks",
+      "order": 8,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6465105af75096ada0ca7634",
+      "type": "tasks",
+      "order": 9,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "64651135dc4b3634c4ab75f6",
+      "type": "tasks",
+      "order": 10,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:27:49.233Z",
+  "updatedAt": "2024-10-11T12:21:01.186Z",
+  "__v": 0
+}

@@ -1,0 +1,20 @@
+{
+  "_id": "64eb61467f2344093be8fdaa",
+  "type": {
+    "_id": "662d3027be50c3d767771ddf",
+    "name": "queries"
+  },
+  "name": "relatorioFolha_copy",
+  "description": "relatorioFolha",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_trf_relatorioFolha",
+  "fixed_value": false,
+  "input_parameters": [],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$limit": 1
+    }
+  ]
+}

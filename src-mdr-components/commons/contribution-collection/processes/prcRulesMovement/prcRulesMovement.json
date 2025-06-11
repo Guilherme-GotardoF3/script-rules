@@ -1,0 +1,25 @@
+{
+  "_id": "675990109ebfb8ced24ae7eb",
+  "name": "prcRulesMovement",
+  "description": "Processo para que o produto possa fazer o levantamento dos valores de saldos e movimentações.",
+  "context": "collection",
+  "steps": [
+    {
+      "step": "67599004cf9cd9fcfcde1336",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false,
+  "createdAt": "2024-12-11T13:13:52.587Z",
+  "updatedAt": "2024-12-11T13:45:22.383Z",
+  "__v": 0
+}

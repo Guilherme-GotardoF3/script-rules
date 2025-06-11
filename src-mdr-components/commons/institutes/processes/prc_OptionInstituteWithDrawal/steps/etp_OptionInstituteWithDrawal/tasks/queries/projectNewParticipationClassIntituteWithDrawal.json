@@ -1,0 +1,300 @@
+{
+  "_id": "678adf764b5e57051494ad5d",
+  "type": {
+    "_id": "678adf7642598936a5b08a2e",
+    "name": "queries"
+  },
+  "name": "projectNewParticipationClassIntituteWithDrawal",
+  "description": "Inclui um novo tipo de participação (classe de participação) conforme escolhe pelo instituto do Resgate",
+  "main_collection": "people",
+  "output_name": "otp_projectNewParticipationClassIntituteWithDrawal",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_status_WithDrawal",
+      "type": "Parameter",
+      "description": "seleciona o id do status de Resgate",
+      "value": "66bd4cd94eb4534a4f85396f"
+    },
+    {
+      "name": "id_type_WithDrawal",
+      "type": "Parameter",
+      "description": "seleciona o tipo de participação Resgate",
+      "value": "66bd4ca74eb4534a4f8518fa"
+    },
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "instituteTypeId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "requestDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "participation_classes",
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "participationId": "$.participationId",
+          "instituteTypeId": "$.instituteTypeId",
+          "requestDate": "$.requestDate"
+        },
+        "newTypeIdWithDrawal": "p:678acdd07d8a0dcee10f5163",
+        "newStatusIdWithDrawal": "p:678accab7d8a0dcee10f5160"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$participations._id",
+            "$bundle.participationId"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "participation_classes",
+        "localField": "participations.participationClass.plan._id",
+        "foreignField": "plan._id",
+        "as": "classes",
+        "let": {
+          "newTypeIdWithDrawl": "$newTypeIdWithDrawal",
+          "newStatusIdWithDrawl": "$newStatusIdWithDrawal"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$status._id",
+                      "$$newStatusIdWithDrawl"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$type._id",
+                      "$$newTypeIdWithDrawl"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$classes",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "participations.history": {
+          "$ifNull": [
+            "$participations.history",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations.history",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "participationsHistory": "$participations.history"
+      }
+    },
+    {
+      "$match": {
+        "$or": [
+          {
+            "participations.history": {
+              "$size": 0
+            }
+          },
+          {
+            "$expr": {
+              "$and": [
+                {
+                  "$lt": [
+                    "$participations.history.effectiveDate.startedAt",
+                    "$bundle.requestDate"
+                  ]
+                },
+                {
+                  "$or": [
+                    {
+                      "$gt": [
+                        "$participations.history.effectiveDate.endedAt",
+                        "$bundle.requestDate"
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        "$participations.history.effectiveDate.endedAt",
+                        null
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "oldHistory": [
+          {
+            "participationClass": "$participations.participationClass",
+            "participationGroup": "$participations.participationGroup",
+            "effectiveDate": {
+              "startedAt": "$participations.effectiveDate.startedAt",
+              "endedAt": {
+                "$dateSubtract": {
+                  "startDate": "$bundle.requestDate",
+                  "unit": "day",
+                  "amount": 1
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "participations.number": "$participations.number",
+        "participations._id": "$participations._id",
+        "participations.participationGroup": "$participations.participationGroup",
+        "participations.tags": "$participations.tags",
+        "participations.taxRegimeType": "$participations.taxRegimeType",
+        "participations.participationSource": "$participations.participationSource",
+        "participations.customFields": "$participations.customFields",
+        "participations.createdAt": "$participations.createdAt",
+        "participations.updatedAt": "$bundle.requestDate",
+        "participations.participationClass": {
+          "_id": "$participations.participationClass._id",
+          "plan": "$participations.participationClass.plan",
+          "type": "$classes.type",
+          "status": "$classes.status"
+        },
+        "participations.effectiveDate": {
+          "startedAt": "$bundle.requestDate",
+          "endedAt": null
+        },
+        "participations.history": {
+          "$concatArrays": [
+            "$oldHistory",
+            [
+              "$participationsHistory"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "_id",
+        "foreignField": "_id",
+        "as": "person",
+        "let": {
+          "participationId": "$participations._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$ne": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "participations": {
+                "$push": "$participations"
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "participations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "person.participations": {
+          "$ifNull": [
+            "$person.participations",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "participations": {
+          "$concatArrays": [
+            [
+              "$participations"
+            ],
+            "$person.participations"
+          ]
+        }
+      }
+    }
+  ]
+}

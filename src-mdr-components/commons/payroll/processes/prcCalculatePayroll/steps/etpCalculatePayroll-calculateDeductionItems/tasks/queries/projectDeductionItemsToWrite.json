@@ -1,0 +1,112 @@
+{
+  "_id": "661075079a83e802d9a3b36d",
+  "type": {
+    "_id": "661074b3f63439f2d8d93cc1",
+    "name": "queries"
+  },
+  "name": "projectDeductionItemsToWrite",
+  "description": "projeta o calculo das deduções para escrita",
+  "main_collection": "payroll_plannings",
+  "output_name": "otp_trf_projectDeductionItemsToWrite",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1
+      }
+    },
+    {
+      "$addFields": {
+        "otp_trf_calcular_rubricas_deducao": "$.otp_trf_calcular_rubricas_deducao"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otp_trf_calcular_rubricas_deducao"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otp_trf_calcular_rubricas_deducao"
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payrollItems": "$otp_trf_calcular_rubricas_deducao.result"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems"
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "rubricId": "$payrollItems.rubric._id",
+          "payroll": "$payrollItems.payroll"
+        },
+        "newPayrollItems": {
+          "$first": "$payrollItems"
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "payroll": "$newPayrollItems.payroll"
+        },
+        "newPayrollItems": {
+          "$push": "$newPayrollItems"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id.payroll",
+        "foreignField": "_id",
+        "as": "payroll"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "newPayrollItems": {
+          "$concatArrays": [
+            "$newPayrollItems",
+            "$payroll.payrollItems"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$_id.payroll",
+        "payrollItems": "$newPayrollItems"
+      }
+    }
+  ]
+}

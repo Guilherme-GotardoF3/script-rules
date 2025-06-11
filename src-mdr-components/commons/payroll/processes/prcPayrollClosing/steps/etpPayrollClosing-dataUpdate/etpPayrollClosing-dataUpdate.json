@@ -1,0 +1,71 @@
+{
+  "_id": "65d8f2280ee692ef28d67278",
+  "name": "etpPayrollClosing-dataUpdate",
+  "description": "Etapa do processo de finalização da folha",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "646bc3d5be7df87f21e015d2",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6667058e77f28cb7cbbc324a",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "64f362580818f542d8d4c913",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "65f0a2227509c36c36416bb3",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "671bf04ad55fe0585b640c71",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "671bf1c1d55fe0585b640c96",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66ff04997f8de3ec957f3fe0",
+      "type": "tasks",
+      "order": 7,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66ff06d77f8de3ec957f4003",
+      "type": "tasks",
+      "order": 8,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "670ed6bb068142be279aa2ab",
+      "type": "tasks",
+      "order": 9,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "670fbb23bd9ed7c555665b88",
+      "type": "tasks",
+      "order": 10,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:29:44.585Z",
+  "updatedAt": "2025-04-16T18:11:09.309Z",
+  "__v": 0
+}

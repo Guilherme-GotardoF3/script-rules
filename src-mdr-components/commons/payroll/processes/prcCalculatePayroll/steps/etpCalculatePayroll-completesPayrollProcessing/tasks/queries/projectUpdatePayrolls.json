@@ -1,0 +1,288 @@
+{
+  "_id": "63bc8119f8bd7d0008b98950",
+  "type": {
+    "_id": "63bc7fb1b1787d00081dbd99",
+    "name": "queries"
+  },
+  "name": "projectUpdatePayrolls",
+  "description": "Atualiza os valores da folha",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_projectUpdatePayrolls",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "paymentMethodId",
+      "type": "Parameter",
+      "description": "id do método de pagamento \"Prazo certo em reais\"",
+      "value": "66bd4cdd4eb4534a4f853c6c"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefits",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "rubrics",
+    "payrolls_RMDRC",
+    "family_groups",
+    "benefits"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId",
+        "benefit._id": {
+          "$in": "$.benefits"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "person": 1,
+        "payrollPlanning": 1,
+        "benefit": 1,
+        "payrollItems": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefit.paymentMethods",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "payrollItems.rubric._id",
+        "foreignField": "_id",
+        "as": "definition_rubric"
+      }
+    },
+    {
+      "$addFields": {
+        "totalQuotas": {
+          "$reduce": {
+            "input": "$payrollItems",
+            "initialValue": 0,
+            "in": {
+              "$add": [
+                "$finalAmount",
+                "$finalAmount"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "calc_netAmount": {
+          "$round": [
+            {
+              "$sum": [
+                "$payrollItems.finalAmount"
+              ]
+            },
+            2
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "_id",
+        "as": "calc_grossAmount",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payrollItems"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollItems.rubric.configurations.isDiscount",
+                  false
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "grossAmount": {
+                "$sum": "$payrollItems.finalAmount"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$calc_grossAmount",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "actualParcel": 0,
+        "totalParcel": 0,
+        "grossAmount": {
+          "$toDouble": "$calc_grossAmount.grossAmount"
+        },
+        "netAmount": {
+          "$toDouble": "$calc_netAmount"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "family_groups",
+        "localField": "person._id",
+        "foreignField": "person",
+        "as": "familyGroups",
+        "let": {
+          "competenceDate": "$payrollPlanning.competenceDate"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$dependents"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$dependents.effectiveDate.startedAt",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$dependents.effectiveDate.endedAt",
+                          null
+                        ]
+                      },
+                      {
+                        "$gte": [
+                          "$dependents.effectiveDate.endedAt",
+                          "$$competenceDate"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "dependents.isTaxIncomeDependent": true
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "dependents": {
+                "$push": "$dependents"
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "dependents": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$familyGroups",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "familyGroups.dependents": {
+          "$ifNull": [
+            "$familyGroups.dependents",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "benefit._id",
+        "foreignField": "_id",
+        "as": "benefitParcels",
+        "pipeline": [
+          {
+            "$project": {
+              "lastParcel": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefitParcels",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "IRDependents": {
+          "$size": "$familyGroups.dependents"
+        },
+        "actualParcel": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$benefit.paymentMethods.method._id",
+                    "p:671fc8208df790b126e59bec"
+                  ]
+                },
+                "then": {
+                  "$sum": [
+                    "$benefitParcels.lastParcel",
+                    1
+                  ]
+                }
+              }
+            ],
+            "default": 0
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "IRDependents": 1,
+        "actualParcel": 1,
+        "totalParcel": 1,
+        "grossAmount": 1,
+        "netAmount": 1
+      }
+    }
+  ]
+}

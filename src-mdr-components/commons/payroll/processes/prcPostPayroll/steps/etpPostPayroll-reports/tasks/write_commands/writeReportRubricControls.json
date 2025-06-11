@@ -1,0 +1,31 @@
+{
+  "_id": "66b3777a16d020ea1ad60bad",
+  "type": {
+    "_id": "66b37779e23f9e9e1ccb06cd",
+    "name": "write_commands"
+  },
+  "name": "writeReportRubricControls",
+  "description": "Escrita do relatorio de controle de rubricas",
+  "main_collection": "payroll_report_rubric_controls",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_project_report_rubric_controls"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_project_report_rubric_controls.participation._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_project_report_rubric_controls.payrollPlanning"
+          },
+          {
+            "rubric._id": "$.$$.otp_project_report_rubric_controls.rubric._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

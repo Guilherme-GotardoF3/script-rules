@@ -1,0 +1,42 @@
+{
+  "_id": "65de286a7097ae3312744359",
+  "name": "prcBenefitGenerationSecondStep",
+  "description": "Processo da segunda etapa de geração da concessão do benefício",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "benefit",
+  "owners": [
+    {
+      "ref": "d60dcbab-9e19-4aef-9c34-42b349e373a5",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "660312afeb5332f7a854c326",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "66f2e1f04bf7084385945f5e",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-27T18:22:34.965Z",
+  "updatedAt": "2024-09-24T16:00:43.861Z",
+  "__v": 0,
+  "dueDate": null,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false
+}

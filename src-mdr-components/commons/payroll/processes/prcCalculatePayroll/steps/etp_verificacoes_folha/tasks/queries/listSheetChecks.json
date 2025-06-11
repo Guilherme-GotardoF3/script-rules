@@ -1,0 +1,49 @@
+{
+  "_id": "644c0bacb92ff3ef0d2d8202",
+  "type": {
+    "_id": "644c0e169f9a3798d55e6bfd",
+    "name": "queries"
+  },
+  "name": "listSheetChecks",
+  "description": "Lista as verificacoes da folha a serem executadas",
+  "main_collection": "sheet_verifications",
+  "output_name": "otp_trf_buscar_verificacoes_folha",
+  "fixed_value": false,
+  "input_parameters": [],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "payrollPlannings": "$.opt_trf_buscar_planejamento_folha[0]"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollPlannings.plan",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$plan._id",
+                "$payrollPlannings.plan._id"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "plan": "$plan._id",
+        "verifications": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "_id": "6470e2e03f0a2e63f7b3243e",
+  "type": {
+    "_id": "6470e27d6a788b4c644ab4ac",
+    "name": "queries"
+  },
+  "name": "check_contribuition_error",
+  "description": "checa as contribuições que tem erros",
+  "main_collection": "collection_records_reviews",
+  "output_name": "otp_check_contribuition_error",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "collectionRecordProcessId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "collectionRecordProcess": "$.collectionRecordProcessId"
+      }
+    },
+    {
+      "$project": {
+        "_id": "$person._id"
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "_id": "$id"
+        }
+      }
+    },
+    {
+      "$replaceRoot": {
+        "newRoot": "$_id"
+      }
+    }
+  ]
+}

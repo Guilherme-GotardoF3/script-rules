@@ -1,0 +1,222 @@
+{
+  "_id": "6685b1d4829c87fd481abab2",
+  "type": {
+    "_id": "6685b1d4a84343a1747e4a21",
+    "name": "queries"
+  },
+  "name": "getMovements",
+  "description": "pega as movimentações da pessoa dentro de um determinado período",
+  "main_collection": "people",
+  "output_name": "otp_getMovements",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "people",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "period",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "dateInitial",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "dateFinal",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "account_movements"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.people"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "participations": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "account_movements",
+        "localField": "_id",
+        "foreignField": "person._id",
+        "as": "movements",
+        "let": {
+          "participationId": "$participations._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$person.participation._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "dateFilter": {
+                "$dateSubtract": {
+                  "startDate": {
+                    "$toDate": "$.competenceDate"
+                  },
+                  "unit": "month",
+                  "amount": {
+                    "$toInt": "$.period"
+                  }
+                }
+              },
+              "competenceDate": {
+                "$toDate": {
+                  "$dateToString": {
+                    "format": "%Y-%m-%d",
+                    "date": "$competenceDate",
+                    "timezone": "GMT"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$or": [
+                  {
+                    "$and": [
+                      {
+                        "$eq": [
+                          "$competenceDate",
+                          {
+                            "$toDate": "$.competenceDate"
+                          }
+                        ]
+                      },
+                      {
+                        "$gte": [
+                          "$competenceDate",
+                          {
+                            "$toDate": "$dateFilter"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "$and": [
+                      {
+                        "$gte": [
+                          "$competenceDate",
+                          {
+                            "$toDate": "$.dateInitial"
+                          }
+                        ]
+                      },
+                      {
+                        "$lte": [
+                          "$competenceDate",
+                          {
+                            "$toDate": "$.dateFinal"
+                          }
+                        ]
+                      },
+                      {
+                        "$gte": [
+                          "$competenceDate",
+                          {
+                            "$toDate": "$dateFilter"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": {
+                "person": "$person._id",
+                "competenceDate": "$competenceDate"
+              },
+              "statement": {
+                "$push": "$$ROOT"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$movements",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "accountBalance": "$.otp_getBalancePortfolio"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$accountBalance",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$accountBalance.participation._id",
+            "$participations._id"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "competenceDate": "$movements._id.competenceDate",
+        "participation": {
+          "_id": "$participations._id",
+          "number": "$participations.number",
+          "participationClass._id": "$participations.participationClass._id",
+          "participationClass.plan": "$participations.participationClass.plan"
+        },
+        "balance": {
+          "$ifNull": [
+            "$accountBalance.balance",
+            null
+          ]
+        },
+        "statement": "$movements.statement"
+      }
+    }
+  ]
+}

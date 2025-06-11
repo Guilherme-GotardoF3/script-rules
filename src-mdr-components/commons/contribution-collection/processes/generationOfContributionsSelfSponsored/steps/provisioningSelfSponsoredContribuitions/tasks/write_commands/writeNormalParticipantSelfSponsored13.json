@@ -1,0 +1,34 @@
+{
+  "_id": "67e831a52e7ee50b6201b112",
+  "type": {
+    "_id": "67e831a5a008800842c1ea18",
+    "name": "write_commands"
+  },
+  "name": "writeNormalParticipantSelfSponsored13",
+  "description": "escrita da contribuição 13º de Autopatrocinio",
+  "main_collection": "contribution_provisioning_temp",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpCalculateNormalParticipantSelfSponsored13"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otpCalculateNormalParticipantSelfSponsored13.person._id"
+          },
+          {
+            "person.participation._id": "$.$$.otpCalculateNormalParticipantSelfSponsored13.person.participation._id"
+          },
+          {
+            "referenceDate": "$.$$.otpCalculateNormalParticipantSelfSponsored13.referenceDate"
+          },
+          {
+            "directContributionCalculation": "$.$$.otpCalculateNormalParticipantSelfSponsored13.directContributionCalculation"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

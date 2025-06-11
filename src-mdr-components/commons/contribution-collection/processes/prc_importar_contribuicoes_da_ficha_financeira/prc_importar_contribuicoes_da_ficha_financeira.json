@@ -1,0 +1,46 @@
+{
+  "_id": "642b15ce6355b2c2949ef038",
+  "name": "prc_importar_contribuicoes_da_ficha_financeira",
+  "description": "importa as contribuicoes da ficha financeira e salva em collection_records",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "collection",
+  "owners": [
+    {
+      "ref": "85cf58b9-4bdb-47ab-b030-a91889a73ace",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "642b10f096f7240bc0901a11",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "642b38adfdc49f777a25822e",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "642d85c4871e136b30b464bc",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2023-04-03T18:07:10.236Z",
+  "updatedAt": "2024-07-18T15:36:30.477Z",
+  "__v": 0,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false
+}

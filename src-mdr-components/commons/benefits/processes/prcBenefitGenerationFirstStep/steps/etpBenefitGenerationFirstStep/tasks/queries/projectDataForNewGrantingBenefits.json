@@ -1,0 +1,181 @@
+{
+  "_id": "6603326ddb6266e84ce9dd96",
+  "type": {
+    "_id": "66033127dc286cb8016b81fe",
+    "name": "queries"
+  },
+  "name": "projectDataForNewGrantingBenefits",
+  "description": "Projeta os dados para concessão de benefício das pensões",
+  "main_collection": "people",
+  "output_name": "otp_trf_projectDataForNewGrantingBenefits",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefitSourceId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefitTypeId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "beneficiaries",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "benefits",
+    "family_groups",
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "participations._id": "$.participationId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "participations": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations"
+      }
+    },
+    {
+      "$match": {
+        "participations._id": "$.participationId"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "participations._id",
+        "foreignField": "participation",
+        "as": "benefit"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefit",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "benefit._id": "$.benefitSourceId"
+      }
+    },
+    {
+      "$addFields": {
+        "originalBenefitId": "$benefit.type._id",
+        "destinationBenefits": "$.benefitTypeId",
+        "beneficiaries": "$.beneficiaries",
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$beneficiaries"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "family_groups",
+        "localField": "_id",
+        "foreignField": "person",
+        "as": "familyGroups",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$dependents"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$ne": [
+                  "$dependents.beneficiaries",
+                  []
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$dependents.beneficiaries"
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "person": 1,
+              "dependents": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$familyGroups"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$beneficiaries._id",
+            "$familyGroups.dependents.person._id"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "familyGroups.dependents.person._id",
+        "foreignField": "_id",
+        "as": "peopleDependent",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 0,
+              "participations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$peopleDependent"
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "familyGroups": 1,
+        "peopleDependent": 1
+      }
+    }
+  ]
+}

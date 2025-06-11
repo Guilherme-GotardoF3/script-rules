@@ -1,0 +1,15 @@
+{
+  "_id": "6825e8022fb4162954ef748a",
+  "type": {
+    "_id": "6825e8020209d6e1e9aa106b",
+    "name": "write_commands"
+  },
+  "name": "writeProfileMovementsIn",
+  "description": "Escrita da consulta para geração de movimentos na account balance de entrada de saldo nas novas contas previdenciárias. ",
+  "main_collection": "account_movements",
+  "Command": {
+    "insertOne": {
+      "document": "$.$$.otpInvestmentProfileMovementsIn"
+    }
+  }
+}

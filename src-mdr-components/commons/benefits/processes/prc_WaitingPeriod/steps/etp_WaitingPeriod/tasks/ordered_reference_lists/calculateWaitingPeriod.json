@@ -1,0 +1,12 @@
+{
+  "_id": "677d77a8fefb8cfd1daff804",
+  "type": {
+    "_id": "677d77a87cc1d1eba627ba8e",
+    "name": "ordered_reference_lists"
+  },
+  "name": "calculateWaitingPeriod",
+  "description": "Busca a carência que vem no bundle do processo",
+  "outputName": "otp_calculateWaitingPeriod",
+  "rulePath": "$.rule",
+  "referenceListPath": "$.$$.otp_getWaitingPeriod..referenceRules[0]"
+}

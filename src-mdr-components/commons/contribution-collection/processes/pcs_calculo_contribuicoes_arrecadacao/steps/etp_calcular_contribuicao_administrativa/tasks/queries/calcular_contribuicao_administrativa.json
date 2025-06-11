@@ -1,0 +1,325 @@
+{
+  "_id": "6441952d930a55691bf72338",
+  "type": {
+    "_id": "644194e8f0f247df68ca3686",
+    "name": "queries"
+  },
+  "name": "calcular_contribuicao_administrativa",
+  "description": "calcular a contribuição administrativa",
+  "main_collection": "people",
+  "output_name": "otp_calcular_contribuicao_administrativa",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "referenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "costing_plans",
+    "costing_plan_configurations"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$project": {
+        "_id": 1,
+        "birthDate": 1,
+        "firstName": 1,
+        "lastName": 1
+      }
+    },
+    {
+      "$addFields": {
+        "dateFilter": {
+          "$toDate": "$.referenceDate"
+        },
+        "planIdFilter": "$.planId",
+        "rubricFilter": [
+          "p:6463d59e9fd8782f64d0a2d5",
+          "p:64e6504d062e3096a59dc3c6"
+        ],
+        "person": "$.otp_calcular_saldo"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricFilter",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$person._id",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$replaceRoot": {
+        "newRoot": {
+          "$mergeObjects": [
+            "$person",
+            "$$ROOT"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "person": 0,
+        "_id": 0
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plans",
+        "localField": "planIdFilter",
+        "foreignField": "plan",
+        "as": "costingPlans",
+        "let": {
+          "rubricFilter": "$rubricFilter"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$rubric",
+                  "$$rubricFilter"
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$costingPlans",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plan_configurations",
+        "localField": "planIdFilter",
+        "foreignField": "plan._id",
+        "as": "costingPlanConfiguration",
+        "let": {
+          "dateFilter": "$dateFilter",
+          "rubricId": "$rubricFilter"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "effectiveDate.endedAt": {
+                "$ifNull": [
+                  "$effectiveDate.endedAt",
+                  ""
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "type": "BALANCE"
+                  },
+                  {
+                    "$gte": [
+                      "$$dateFilter",
+                      "$effectiveDate.startedAt"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          ""
+                        ]
+                      },
+                      {
+                        "$lte": [
+                          "$$dateFilter",
+                          "$effectiveDate.endedAt"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": "$rubrics"
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$rubrics.destiny._id",
+                  "$$rubricId"
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "rangeItems": {
+                "$first": "$rangeItems"
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$costingPlanConfiguration",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "administrativeValue": {
+          "$round": [
+            {
+              "$function": {
+                "body": "function (rangeItems, balance) {if (!rangeItems) return 0;const item = rangeItems.find(  (item) =>    balance >= item.initialValue &&    balance <= item.finalValue);if (!item) return 0;if (item.type === 'VALUE')  return item.value;else  return (    item.value * balance -    item.deductionValue  );}",
+                "args": [
+                  "$costingPlanConfiguration.rangeItems",
+                  "$balance"
+                ],
+                "lang": "js"
+              }
+            },
+            2
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plan_configurations",
+        "localField": "planIdFilter",
+        "foreignField": "plan._id",
+        "as": "rubricResult",
+        "let": {
+          "rubricFilter": "$rubricFilter",
+          "dateFilter": "$dateFilter"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "effectiveDate.endedAt": {
+                "$ifNull": [
+                  "$effectiveDate.endedAt",
+                  ""
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$in": [
+                      "$$rubricFilter",
+                      "$rubrics.destiny._id"
+                    ]
+                  },
+                  {
+                    "$gte": [
+                      "$$dateFilter",
+                      "$effectiveDate.startedAt"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          ""
+                        ]
+                      },
+                      {
+                        "$lte": [
+                          "$$dateFilter",
+                          "$effectiveDate.endedAt"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$addFields": {
+              "rubric": {
+                "$first": {
+                  "$filter": {
+                    "input": "$rubrics",
+                    "cond": {
+                      "$eq": [
+                        "$$rubric.destiny._id",
+                        "$$rubricFilter"
+                      ]
+                    },
+                    "as": "rubric"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricResult",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "rubric": "$rubricResult.rubric.destiny",
+        "rubricId": "$rubricFilter",
+        "personId": "$_id",
+        "participation": "$participation._id",
+        "administrativeValue": 1,
+        "balance": 1
+      }
+    }
+  ]
+}

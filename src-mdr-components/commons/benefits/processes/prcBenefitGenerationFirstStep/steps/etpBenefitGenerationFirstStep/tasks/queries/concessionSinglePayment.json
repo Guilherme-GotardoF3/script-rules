@@ -1,0 +1,135 @@
+{
+  "_id": "661403d23913a228df3955a9",
+  "type": {
+    "_id": "661190cdc8e21fbdd06099df",
+    "name": "queries"
+  },
+  "name": "concessionSinglePayment",
+  "description": "Projeta a concessão de benefício do tipo pagamento único, onde apura o valor do último salário e multiplica por XX.",
+  "main_collection": "benefits",
+  "output_name": "otp_trf_concessionSinglePayment",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "benefitSourceId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "salary_imports"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.benefitSourceId"
+      }
+    },
+    {
+      "$addFields": {
+        "lastHistory": {
+          "$slice": [
+            "$history",
+            -1
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$lastHistory"
+      }
+    },
+    {
+      "$addFields": {
+        "getDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "salary_imports",
+        "localField": "participation",
+        "foreignField": "participation",
+        "as": "salary_imports"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$salary_imports",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "quota": 1.25,
+        "balance": 5000,
+        "finalAmount": {
+          "$multiply": [
+            "$salary_imports.salaryBase",
+            10
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "newHistory": {
+          "_id": "$lastHistory._id",
+          "optingExemption": "$lastHistory.optingExemption",
+          "immediatePercentage": "$lastHistory.immediatePercentage",
+          "quotaImmediateParcelValue": "$lastHistory.quotaImmediateParcelValue",
+          "cashImmediateParcelValue": "$lastHistory.cashImmediateParcelValue",
+          "accountQuotaBalance": "$lastHistory.accountQuotaBalance",
+          "accountCashBalance": "$lastHistory.accountCashBalance",
+          "monthlyValueInCash": "$lastHistory.monthlyValueInCash",
+          "monthlyValueInQuotas": "$lastHistory.monthlyValueInQuotas",
+          "paymentMethods": [
+            {
+              "method": "$lastHistory.paymentMethods.method",
+              "value": "$finalAmount",
+              "parcelsQuantity": 1,
+              "percentage": 100
+            }
+          ],
+          "status": "Inativo",
+          "effectiveDate": "$getDate",
+          "expirationDate": null,
+          "updateBy": "Rules",
+          "statusReason": "Concessão de Benefício"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "history": {
+          "$concatArrays": [
+            "$history",
+            [
+              "$newHistory"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "type": 1,
+        "participation": 1,
+        "benefitSource": 1,
+        "benefitStartDate": 1,
+        "paymentStartDate": 1,
+        "lastPaymentDate": 1,
+        "sheetEntryDate": 1,
+        "lifetimeBenefit": 1,
+        "history": 1
+      }
+    }
+  ]
+}

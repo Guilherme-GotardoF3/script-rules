@@ -1,0 +1,53 @@
+{
+  "_id": "678e3bfeab8f708ac7854994",
+  "name": "etp_OptionInstituteWithDrawal",
+  "description": "Etapa que executa várias tarefas e que registra a opção pelo instituto de Resgate de Contribuições",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "67895554daf3503be2fba4b9",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6789584fcd43158e0029e1a7",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "678ac57333b51b289e23d165",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "678ac68333b51b289e23d186",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "678adf764b5e57051494ad5d",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "678ae1c74b5e57051494adfb",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "675990dbc489b2d70b6b04e7",
+      "type": "tasks",
+      "order": 7,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2025-01-20T12:05:18.496Z",
+  "updatedAt": "2025-01-21T12:28:52.667Z",
+  "__v": 0
+}

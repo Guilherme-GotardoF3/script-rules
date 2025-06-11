@@ -1,0 +1,25 @@
+{
+  "_id": "6825e851391cf86c41a3ccd0",
+  "name": "investmentProfileChangeProcessing",
+  "description": "Efetivação do processo de solicitação do usuário em mudanças no perfil de investimento.",
+  "context": "benefit",
+  "steps": [
+    {
+      "step": "6825e851391cf86c41a3ccc2",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "7c8e55a6-7048-4a40-b944-3d9e2b0d27aa",
+    "username": "gsantos@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "7c8e55a6-7048-4a40-b944-3d9e2b0d27aa",
+    "username": "gsantos@f3capital.com.br"
+  },
+  "isSync": false,
+  "__v": 0,
+  "createdAt": "2025-05-15T13:12:49.157Z",
+  "updatedAt": "2025-05-23T14:32:21.177Z"
+}

@@ -1,0 +1,17 @@
+{
+  "_id": "66e494ba9ce276e9defc313d",
+  "type": {
+    "_id": "66e494ba74ad5606b2d8a5e5",
+    "name": "api_requests"
+  },
+  "name": "requestTokenProtheus",
+  "description": "Requisita token de acesso ao protheus",
+  "method": "post",
+  "headers": {},
+  "pathParameters": {},
+  "queryParameters": {},
+  "Url": "https://f3gestao148774.protheus.cloudtotvs.com.br:2206/rest/api/oauth2/v1/token?grant_type=password&password=RAw@6QHL&username=quando.integrador",
+  "Body": {
+    "data": null
+  }
+}

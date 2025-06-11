@@ -1,0 +1,27 @@
+{
+  "_id": "67e71aa8791477fcb48ab38f",
+  "type": {
+    "_id": "67e71aa8b1190965488c5fdc",
+    "name": "write_commands"
+  },
+  "name": "writeProjectNewParticipClassBenefitEndNavega",
+  "description": "Escreve na people a classe de participação para \"Benefício Encerrado\" deixando como a mais atual e inclui no history da participation a classe de participação anterior e atualiza da data de falecimento do assistido - Via Navega",
+  "main_collection": "people",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "participations": "$.$$.otp_projectNewParticipationClassBenefitEndNavega.participations"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_projectNewParticipationClassBenefitEndNavega._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

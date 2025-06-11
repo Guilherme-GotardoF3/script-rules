@@ -1,0 +1,198 @@
+{
+  "_id": "6440387871d386c53208ddbd",
+  "type": {
+    "_id": "64402e8f3716aff17a1676a4",
+    "name": "queries"
+  },
+  "name": "calcular_saldo",
+  "description": "calcular o saldo baseado na data informada",
+  "main_collection": "people",
+  "output_name": "otp_calcular_saldo",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "referenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "costing_plans",
+    "account_balances"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$project": {
+        "_id": 1,
+        "birthDate": 1,
+        "firstName": 1,
+        "lastName": 1
+      }
+    },
+    {
+      "$addFields": {
+        "dateFilter": {
+          "$toDate": "$.referenceDate"
+        },
+        "planIdFilter": "$.planId",
+        "rubricFilter": [
+          "p:6463d59e9fd8782f64d0a2d5",
+          "p:64e6504d062e3096a59dc3c6"
+        ],
+        "person": "$.otp_trf_buscar_participacoes_ativas"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricFilter",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$person._id",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plans",
+        "localField": "planIdFilter",
+        "foreignField": "plan",
+        "as": "costingPlans",
+        "let": {
+          "rubricFilter": "$rubricFilter"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$rubric",
+                  "$$rubricFilter"
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$costingPlans",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "account_balances",
+        "localField": "person.participation._id",
+        "foreignField": "participation",
+        "as": "balance",
+        "let": {
+          "dateFilter": "$dateFilter"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$lte": [
+                  "$occurrenceDate",
+                  "$$dateFilter"
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "occurrenceDate": -1
+            }
+          },
+          {
+            "$group": {
+              "_id": {
+                "pensionAccount": "$pensionAccount",
+                "participation": "$participation"
+              },
+              "lastBalance": {
+                "$first": "$$ROOT"
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id.participation",
+              "person": {
+                "$first": "$lastBalance"
+              },
+              "balance": {
+                "$sum": "$lastBalance.finalBalance"
+              }
+            }
+          },
+          {
+            "$project": {
+              "balance": {
+                "$round": [
+                  "$balance",
+                  2
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$balance",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "balance": {
+          "$ifNull": [
+            "$balance",
+            {
+              "balance": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$replaceRoot": {
+        "newRoot": {
+          "$mergeObjects": [
+            "$balance",
+            "$person"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0
+      }
+    }
+  ]
+}

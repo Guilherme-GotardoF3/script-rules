@@ -1,0 +1,31 @@
+{
+  "_id": "67d576eaae2fb5ada3c65a4c",
+  "type": {
+    "_id": "67d576eaae2fb5ada3c65a4a",
+    "name": "write_commands"
+  },
+  "name": "writeCriticsInactiveParticipants",
+  "description": "Escrita da consulta de crítica listando participantes com data de desligamento no arquivo de movimentação menor que no mês de competência.",
+  "main_collection": "processed_collection_review",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpCriticsInactiveParticipants"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otpCriticsInactiveParticipants.person._id"
+          },
+          {
+            "person.participation._id": "$.$$.otpCriticsInactiveParticipants.person.participation._id"
+          },
+          {
+            "referenceDate": "$.$$.otpCriticsInactiveParticipants.referenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

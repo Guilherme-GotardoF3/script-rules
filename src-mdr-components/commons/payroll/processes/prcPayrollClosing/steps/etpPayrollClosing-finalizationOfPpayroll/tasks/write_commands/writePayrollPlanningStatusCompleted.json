@@ -1,0 +1,28 @@
+{
+  "_id": "66a263184eb201ddd9af587f",
+  "type": {
+    "_id": "66a26318ed480ce5556d96ff",
+    "name": "write_commands"
+  },
+  "name": "writePayrollPlanningStatusCompleted",
+  "description": "Escrita da atualização do status do planejamento da folha ",
+  "main_collection": "payroll_plannings",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "status": "$.$$.otp_payrollPlanningStatusCompleted.status",
+          "finishProcess": "$.$$.otp_payrollPlanningStatusCompleted.finishProcess"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_payrollPlanningStatusCompleted._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

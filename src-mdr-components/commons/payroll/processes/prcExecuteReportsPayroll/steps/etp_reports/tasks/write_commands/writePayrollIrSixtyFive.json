@@ -1,0 +1,28 @@
+{
+  "_id": "63c1d30c759713000855d86d",
+  "type": {
+    "_id": "651ad51c34ad7041f5af441b",
+    "name": "write_commands"
+  },
+  "name": "writePayrollIrSixtyFive",
+  "description": "Componente de escrita relatório payroll_ir_sixty_five",
+  "main_collection": "payroll_report_ir_validation_over_sixty_five",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.opt_trf_project_write_payroll_ir_sixty_five"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.opt_trf_project_write_payroll_ir_sixty_five.participation._id"
+          },
+          {
+            "payrollPlanning": "$.$$.opt_trf_project_write_payroll_ir_sixty_five.payrollPlanning"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

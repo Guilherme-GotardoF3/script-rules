@@ -1,0 +1,29 @@
+{
+  "_id": "65d8f1820ee692ef28d67188",
+  "name": "etpCalculatePayroll-cleanData",
+  "description": "Etapa para limpeza das informações que por ventura ja foram processadas e serão agora reprocessadas",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6674a1d0ee09588fde97fd20",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6740f0d0be3cae28a65d4414",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "63bc4ec1edaf2600087f0d38",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:26:58.605Z",
+  "updatedAt": "2024-11-29T21:40:35.539Z",
+  "__v": 0
+}

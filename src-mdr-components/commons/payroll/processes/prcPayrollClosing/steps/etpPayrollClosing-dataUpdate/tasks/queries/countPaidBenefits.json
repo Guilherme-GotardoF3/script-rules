@@ -1,0 +1,103 @@
+{
+  "_id": "64f362580818f542d8d4c913",
+  "type": {
+    "_id": "65e717d6a7536e8048414c99",
+    "name": "queries"
+  },
+  "name": "countPaidBenefits",
+  "description": "Incrementa em lastParcel se o benefício for \"Prazo certo\" ",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_countPaidBenefits",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "benefits"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$addFields": {
+        "errorVerification": "$.otp_trf_verificar_erro_folha"
+      }
+    },
+    {
+      "$match": {
+        "errorVerification.status": {
+          "$ne": "ERROR"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "benefit._id",
+        "foreignField": "_id",
+        "as": "benefit",
+        "pipeline": [
+          {
+            "$project": {
+              "type": 1,
+              "lastParcel": 1,
+              "paymentMethods": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefit",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "benefit": 1,
+        "lastParcel": "$benefits.lastParcel"
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id",
+        "root": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$root.benefit.paymentMethods",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "_id": "$root.benefit._id",
+        "lastParcel": {
+          "$sum": [
+            "$root.benefit.lastParcel",
+            1
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$root.benefit._id",
+        "lastParcel": "$lastParcel"
+      }
+    }
+  ]
+}

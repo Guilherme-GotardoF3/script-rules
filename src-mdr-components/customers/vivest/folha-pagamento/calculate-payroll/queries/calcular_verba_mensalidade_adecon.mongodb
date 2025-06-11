@@ -1,0 +1,169 @@
+//_id: {'$oid': '6455431164a272cfea1834d3'}
+//_tenant: sandbox-cs
+//name: calcular_verba_mensalidade_adecon
+//description: mensalidade adecon
+//collection: benefits
+
+//use('sandbox-cs');
+
+//db.benefits.aggregate(
+  [
+    {
+      "$match": {
+        "_id": "$.opt_trf_buscar_beneficios_ativos._id"
+      }
+    }, {
+      "$addFields": {
+        "rubricId": "$._id", 
+        "benefitsheetprocessingId": "$.opt_trf_buscar_beneficios_ativos.planejamento_folha._id"
+      }
+    }, {
+      "$lookup": {
+        "from": "payrolls", 
+        "localField": "_id", 
+        "foreignField": "benefit._id", 
+        "as": "payroll", 
+        "let": {
+          "benefitsheetprocessingId": "$benefitsheetprocessingId"
+        }, 
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$benefitSheetProcessing._id", "$$benefitsheetprocessingId"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$payroll", 
+        "preserveNullAndEmptyArrays": false
+      }
+    }, {
+      "$lookup": {
+        "from": "recovery_temporal_indexes", 
+        "as": "indices", 
+        "let": {
+          "indice": "p:645a4c06a956449076589340"
+        }, 
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$_id", "$$indice"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$indices", 
+        "preserveNullAndEmptyArrays": false
+      }
+    }, {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$gte": [
+                "$payroll.benefitSheetProcessing.competenceDate", "$indices.effectiveDate.startedAt"
+              ]
+            }, {
+              "$or": [
+                {
+                  "$lte": [
+                    "$payroll.benefitSheetProcessing.competenceDate", "$indices.effectiveDate.endedAt"
+                  ]
+                }, {
+                  "$eq": [
+                    "$indices.effectiveDate.endedAt", null
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }, {
+      "$lookup": {
+        "from": "recovery_temporal_series", 
+        "localField": "indices._id", 
+        "foreignField": "index", 
+        "as": "indices.series"
+      }
+    }, {
+      "$unwind": {
+        "path": "$indices.series", 
+        "preserveNullAndEmptyArrays": false
+      }
+    }, {
+      "$addFields": {
+        "amount": "$indices.series.value"
+      }
+    }, {
+      "$addFields": {
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }", 
+            "args": [], 
+            "lang": "js"
+          }
+        }
+      }
+    }, {
+      "$addFields": {
+        "finalAmount": {
+          "$toDouble": {
+            "$multiply": [
+              "$amount", -1
+            ]
+          }
+        }, 
+        "exceptionAmount": 0, 
+        "competenceDate": "$payroll.benefitSheetProcessing.competenceDate"
+      }
+    }, {
+      "$lookup": {
+        "from": "rubrics", 
+        "localField": "rubricId", 
+        "foreignField": "_id", 
+        "as": "rubricId", 
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1, 
+              "name": 1, 
+              "number": 1, 
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$rubricId", 
+        "preserveNullAndEmptyArrays": false
+      }
+    }, {
+      "$project": {
+        "_id": 0, 
+        "payroll": "$payroll._id", 
+        "rubric": "$rubricId", 
+        "finalAmount": 1, 
+        "amount": "$finalAmount", 
+        "exceptionAmount": 1, 
+        "status": "CALCULATED", 
+        "type": "CALCULATED", 
+        "reason": " ", 
+        "competenceDate": 1
+      }
+    }
+  ]
+//);

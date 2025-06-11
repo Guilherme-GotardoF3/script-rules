@@ -1,0 +1,126 @@
+{
+  "_id": "682735e63113ed1a82e759bd",
+  "type": {
+    "_id": "682735e5d21fff1681f0699d",
+    "name": "queries"
+  },
+  "name": "newParticipationInvestmentProfile",
+  "description": "Consulta para definir novo documento referente ao perfil de investimento do participante solicitante.",
+  "main_collection": "participation_investment_profiles",
+  "output_name": "otpNewParticipationInvestmentProfile",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "currentInvestmentProfile",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participation",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "ticket",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "investment_profile_process_option"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$investmentProfile._id",
+                "$.currentInvestmentProfile"
+              ]
+            },
+            {
+              "$eq": [
+                "$person.participation._id",
+                "$.participation"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$sort": {
+        "effectiveDate.startedAt": -1
+      }
+    },
+    {
+      "$limit": 1
+    },
+    {
+      "$addFields": {
+        "ticketId": "$.ticket"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "investment_profile_process_option",
+        "localField": "ticketId",
+        "foreignField": "ticketInfo._id",
+        "as": "profilesInfo"
+      }
+    },
+    {
+      "$unwind": "$profilesInfo"
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "effectiveDate": {
+          "startedAt": {
+            "$dateAdd": {
+              "startDate": "$$NOW",
+              "unit": "day",
+              "amount": 1
+            }
+          },
+          "endedAt": null
+        },
+        "entryMonetaryUnit": "$profilesInfo.target.investmentProfile.monetaryUnit",
+        "history": {
+          "$concatArrays": [
+            "$history",
+            [
+              {
+                "monetaryUnits": "$monetaryUnits",
+                "entryMonetaryUnit": "$entryMonetaryUnit",
+                "effectiveDate": {
+                  "startedAt": "$effectiveDate.startedAt",
+                  "endedAt": "$$NOW"
+                }
+              }
+            ]
+          ]
+        },
+        "investmentProfile": "$profilesInfo.target.investmentProfile",
+        "monetaryUnits": {
+          "monetaryUnit": "$profilesInfo.target.investmentProfile.monetaryUnit",
+          "isPredefined": true,
+          "payrollExitOrder": 1,
+          "percentage": 100
+        },
+        "person": "$profilesInfo.person"
+      }
+    },
+    {
+      "$merge": {
+        "into": "participation_investment_profiles",
+        "on": "_id",
+        "whenMatched": "fail",
+        "whenNotMatched": "insert"
+      }
+    }
+  ]
+}

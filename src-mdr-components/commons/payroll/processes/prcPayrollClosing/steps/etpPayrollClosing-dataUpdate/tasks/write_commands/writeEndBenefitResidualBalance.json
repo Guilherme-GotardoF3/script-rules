@@ -1,0 +1,27 @@
+{
+  "_id": "66ff06d77f8de3ec957f4003",
+  "type": {
+    "_id": "66ff06d7380e2096c04ae78f",
+    "name": "write_commands"
+  },
+  "name": "writeEndBenefitResidualBalance",
+  "description": "Escreve na base o encerramento do benefício quando a pessoa recebe a rubrica de residuo do saldo",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "history": "$.$$.otp_endBenefitResidualBalance.history"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_endBenefitResidualBalance._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

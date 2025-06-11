@@ -1,0 +1,34 @@
+{
+  "_id": "677d78f6fefb8cfd1daff825",
+  "type": {
+    "_id": "677d78f53e898605ffc1e14d",
+    "name": "queries"
+  },
+  "name": "getWaitingPeriod",
+  "description": "Busca a carência que veio do bundle",
+  "main_collection": "waiting_periods",
+  "output_name": "otp_getWaitingPeriod",
+  "fixed_value": false,
+  "input_parameters": [],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.$$.waitingPeriod._id"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "name": 1,
+        "effectiveDate": 1,
+        "referenceRules": [
+          {
+            "rule": "$rule"
+          }
+        ]
+      }
+    }
+  ]
+}

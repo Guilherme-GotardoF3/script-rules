@@ -1,0 +1,77 @@
+{
+  "_id": "660209c9bc6bec92431e148a",
+  "name": "etpBenefitGenerationFirstStep",
+  "description": "Etapa para o processo de concessão de benefício",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66b10ffbee5cd549d1f84be2",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6603326ddb6266e84ce9dd96",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66020d76db6266e84ce9dd7a",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66020f53db6266e84ce9dd7b",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66044829839833eb2dd8f7c3",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6602116cdb6266e84ce9dd7e",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6602112ddb6266e84ce9dd7d",
+      "type": "tasks",
+      "order": 7,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "661403d23913a228df3955a9",
+      "type": "tasks",
+      "order": 8,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6614042e3913a228df3955ab",
+      "type": "tasks",
+      "order": 9,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6621581898aa7f1ce49f12e7",
+      "type": "tasks",
+      "order": 10,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6621589798aa7f1ce49f12e8",
+      "type": "tasks",
+      "order": 11,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-03-25T23:33:29.982Z",
+  "updatedAt": "2025-04-04T20:48:15.808Z",
+  "__v": 0
+}

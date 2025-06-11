@@ -1,0 +1,28 @@
+{
+  "_id": "66c37326985275de295b60f0",
+  "type": {
+    "_id": "66c373258800813457021be2",
+    "name": "write_commands"
+  },
+  "name": "writeGenerateBillingData",
+  "description": "Tarefa que escreve a contribuição na collection",
+  "main_collection": "collection_contributions",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_generateBillingData"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otp_generateBillingData.person._id"
+          },
+          {
+            "processingCollectionContribution._id": "$.$$.otp_generateBillingData.processingCollectionContribution._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

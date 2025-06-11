@@ -1,0 +1,228 @@
+{
+  "_id": "65e75ff6a20d7330d6234851",
+  "type": {
+    "_id": "65e72ee89476099415bc92f3",
+    "name": "queries"
+  },
+  "name": "getDeathRetireeBenefitEnds",
+  "description": "Encerramento do benefício por falecimento do aposentado.",
+  "main_collection": "payroll_plannings",
+  "output_name": "otp_trf_getDeathRetireeBenefitEnds",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "people",
+    "benefits"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "competenceDate": 1,
+        "payrollType": 1,
+        "plan": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "plan._id",
+        "foreignField": "participations.participationClass.plan._id",
+        "as": "person",
+        "let": {
+          "planId": "$plan._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations.participationClass.plan._id",
+                  "$$planId"
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "deathDate": {
+                "$ne": null
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "deathDate": 1,
+              "participationId": "$participations._id"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "currentDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "person.participationId",
+        "foreignField": "participation",
+        "as": "benefit",
+        "let": {
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "totalHistory": "$history"
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$history",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$sort": {
+              "history.effectiveDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$history.status",
+                  "Ativo"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "history": {
+                "_id": "$history._id",
+                "optingExemption": "$history.optingExemption",
+                "immediatePercentage": "$history.immediatePercentage",
+                "quotaImmediateParcelValue": "$history.quotaImmediateParcelValue",
+                "cashImmediateParcelValue": "$history.cashImmediateParcelValue",
+                "accountQuotaBalance": "$history.accountQuotaBalance",
+                "accountCashBalance": "$history.accountCashBalance",
+                "monthlyValueInCash": "$history.monthlyValueInCash",
+                "monthlyValueInQuotas": "$history.monthlyValueInQuotas",
+                "paymentMethods": "$history.paymentMethods",
+                "status": "$history.status",
+                "effectiveDate": "$history.effectiveDate",
+                "expirationDate": "$$competenceDate",
+                "note": "$history.note",
+                "updatedBy": "$history.updatedBy",
+                "statusReason": "$history.statusReason"
+              },
+              "totalHistory": 1
+            }
+          },
+          {
+            "$set": {
+              "newHistory": {
+                "$concatArrays": [
+                  {
+                    "$filter": {
+                      "input": "$totalHistory",
+                      "as": "totalHistory",
+                      "cond": {
+                        "$ne": [
+                          "$$totalHistory._id",
+                          "$history._id"
+                        ]
+                      }
+                    }
+                  },
+                  [
+                    "$history"
+                  ]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefit",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "history": [
+          {
+            "optingExemption": "$benefit.history.optingExemption",
+            "immediatePercentage": "$benefit.history.immediatePercentage",
+            "quotaImmediateParcelValue": "$benefit.history.quotaImmediateParcelValue",
+            "cashImmediateParcelValue": "$benefit.history.cashImmediateParcelValue",
+            "accountQuotaBalance": "$benefit.history.accountQuotaBalance",
+            "accountCashBalance": "$benefit.history.accountCashBalance",
+            "monthlyValueInCash": "$benefit.history.monthlyValueInCash",
+            "monthlyValueInQuotas": "$benefit.history.monthlyValueInQuotas",
+            "paymentMethods": "$benefit.history.paymentMethods",
+            "status": "Inativo",
+            "effectiveDate": "$currentDate",
+            "expirationDate": null,
+            "note": "Benefício finalizado decorrente preenchimento de falecimento",
+            "updatedBy": "rule",
+            "statusReason": "Aposentado falecido"
+          }
+        ]
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "benfitId": "$benefit._id",
+        "history": {
+          "$concatArrays": [
+            "$benefit.newHistory",
+            "$history"
+          ]
+        }
+      }
+    }
+  ]
+}

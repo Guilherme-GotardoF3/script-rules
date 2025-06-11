@@ -1,0 +1,391 @@
+{
+  "_id": "67e453355d86be53860f500e",
+  "type": {
+    "_id": "67e45335ae5c2b72198822e1",
+    "name": "queries"
+  },
+  "name": "projectNewFieldsBeneficiaries",
+  "description": "Projeta a inserção dos dados bancários, phones e emails dos beneficiários - vem do Oceano",
+  "main_collection": "people",
+  "output_name": "otp_projectNewFieldsBeneficiaries",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "beneficiaryId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "origin",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "requestDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "deathDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "bankAccount",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "phone",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "email",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$.beneficiaryId",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "bundle": {
+          "origin": "$.origin",
+          "requestDate": {
+            "$toDate": "$.requestDate"
+          },
+          "participationId": "$.participationId",
+          "beneficiaryId": "$.beneficiaryId",
+          "deathDate": {
+            "$toDate": "$.deathDate"
+          },
+          "bankAccount": "$.bankAccount",
+          "phone": "$.phone",
+          "email": "$.email"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$bankAccounts",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "oldBankAccounts": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                {
+                  "$ifNull": [
+                    "$bankAccounts",
+                    []
+                  ]
+                },
+                []
+              ]
+            },
+            "then": "$$REMOVE",
+            "else": {
+              "_id": "$bankAccounts._id",
+              "pix": "$bankAccounts.pix",
+              "purpose": "$bankAccounts.purpose",
+              "type": "$bankAccounts.type",
+              "bank": "$bankAccounts.bank",
+              "agency": "$bankAccounts.agency",
+              "account": "$bankAccounts.account",
+              "digit": "$bankAccounts.digit",
+              "isPrimary": false,
+              "createdAt": "$bankAccounts.createdAt",
+              "updatedAt": "$bundle.requestDate"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "bankAccounts": {
+          "$ifNull": [
+            "$bankAccounts",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "newBankAccount": [
+          "$bundle.bankAccount"
+        ]
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id",
+        "name": {
+          "$first": "$name"
+        },
+        "bankAccounts": {
+          "$first": "$bankAccounts"
+        },
+        "oldBankAccounts": {
+          "$push": "$oldBankAccounts"
+        },
+        "newBankAccount": {
+          "$first": "$newBankAccount"
+        },
+        "phones": {
+          "$first": "$phones"
+        },
+        "emails": {
+          "$first": "$emails"
+        },
+        "bundle": {
+          "$first": "$bundle"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "bundle": 1,
+        "bankAccounts": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$bankAccounts",
+                null
+              ]
+            },
+            "then": "$newBankAccount",
+            "else": {
+              "$concatArrays": [
+                "$oldBankAccounts",
+                "$newBankAccount"
+              ]
+            }
+          }
+        },
+        "phones": 1,
+        "emails": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$phones",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "oldPhones": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                {
+                  "$ifNull": [
+                    "$phones",
+                    []
+                  ]
+                },
+                []
+              ]
+            },
+            "then": "$$REMOVE",
+            "else": {
+              "_id": "$phones._id",
+              "type": "$phones.type",
+              "ddi": "$phones.ddi",
+              "ddd": "$phones.ddd",
+              "number": "$phones.number",
+              "extension": "$phones.extension",
+              "isPrimary": false,
+              "notification": "$phones.notification"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "phones": {
+          "$ifNull": [
+            "$phones",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "newPhone": [
+          "$bundle.phone"
+        ]
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id",
+        "bundle": {
+          "$first": "$bundle"
+        },
+        "bankAccounts": {
+          "$first": "$bankAccounts"
+        },
+        "phones": {
+          "$first": "$phones"
+        },
+        "oldPhones": {
+          "$push": "$oldPhones"
+        },
+        "newPhone": {
+          "$first": "$newPhone"
+        },
+        "emails": {
+          "$first": "$emails"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "phones": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$phones",
+                null
+              ]
+            },
+            "then": "$newPhone",
+            "else": {
+              "$concatArrays": [
+                "$oldPhones",
+                "$newPhone"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$emails",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "oldEmails": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                {
+                  "$ifNull": [
+                    "$emails",
+                    []
+                  ]
+                },
+                []
+              ]
+            },
+            "then": "$$REMOVE",
+            "else": {
+              "_id": "$emails._id",
+              "email": "$emails.email",
+              "type": "$emails.type",
+              "isPrimary": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "emails": {
+          "$ifNull": [
+            "$emails",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "newEmail": [
+          "$bundle.email"
+        ]
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id",
+        "bankAccounts": {
+          "$first": "$bankAccounts"
+        },
+        "phones": {
+          "$first": "$phones"
+        },
+        "emails": {
+          "$first": "$emails"
+        },
+        "oldEmails": {
+          "$push": "$oldEmails"
+        },
+        "newEmail": {
+          "$first": "$newEmail"
+        },
+        "bundle": {
+          "$first": "$bundle"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "emails": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$emails",
+                null
+              ]
+            },
+            "then": "$newEmail",
+            "else": {
+              "$concatArrays": [
+                "$oldEmails",
+                "$newEmail"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "bankAccounts": 1,
+        "phones": 1,
+        "emails": 1
+      }
+    }
+  ]
+}

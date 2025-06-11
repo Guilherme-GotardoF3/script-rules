@@ -1,0 +1,27 @@
+{
+  "_id": "66e49a1f9ce276e9defc3220",
+  "type": {
+    "_id": "66e49a1f31ec9f146a5f488d",
+    "name": "write_commands"
+  },
+  "name": "writeProjectIncomeTaxToWrite",
+  "description": "escreve os payrollItems de imposto de renda",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payrollItems": "$.$$.otpProjectIncomeTaxToWrite.payrollItems"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otpProjectIncomeTaxToWrite._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

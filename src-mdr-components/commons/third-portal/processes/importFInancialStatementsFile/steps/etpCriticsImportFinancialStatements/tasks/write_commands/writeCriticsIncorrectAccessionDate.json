@@ -1,0 +1,31 @@
+{
+  "_id": "67d576eaae2fb5ada3c65a44",
+  "type": {
+    "_id": "67d576eaae2fb5ada3c65a42",
+    "name": "write_commands"
+  },
+  "name": "writeCriticsIncorrectAccessionDate",
+  "description": "Escrita da consulta de crítica comparando divergência na data de adesão cadastrada do participante em depara com a fornecida pelo arquivo de movimentação.",
+  "main_collection": "processed_collection_review",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpCriticsIncorrectAccessionDate"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otpCriticsIncorrectAccessionDate.person._id"
+          },
+          {
+            "person.participation._id": "$.$$.otpCriticsIncorrectAccessionDate.person.participation._id"
+          },
+          {
+            "referenceDate": "$.$$.otpCriticsIncorrectAccessionDate.referenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

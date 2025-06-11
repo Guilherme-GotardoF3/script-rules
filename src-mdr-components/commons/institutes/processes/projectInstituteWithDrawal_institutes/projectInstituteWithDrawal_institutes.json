@@ -1,0 +1,23 @@
+{
+  "_id": "67895554daf3503be2fba4b9",
+  "name": "projectInstituteWithDrawal_institutes",
+  "description": "Seleciona os dados conforme a simulação do Resgate e prepara os dados para serem gravados na collection \"institutes\"",
+  "isDefault": false,
+  "outputName": "otp_projectInstituteWithDrawal_institutes",
+  "rule": {
+    "ref": "678955546ea01ab5cba5032b",
+    "type": "queries"
+  },
+  "type": "common",
+  "createdAt": "2025-01-16T18:52:04.729Z",
+  "updatedAt": "2025-01-21T12:14:32.928Z",
+  "__v": 0,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "_id": "676d9f029d07c5120ee5767a",
+  "name": "etp_OptionInstituteBpd",
+  "description": "Executa tarefas quando o participante faz a opção pelo instituto de BPD",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6769b325cd251e3a2dd63e96",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6769b57ab0490b84f86a77a6",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "676461e3be56be345bd4862c",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6764645cb7a616a9ec4fa18a",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "676d997a2695c1805f07d7df",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "676d9b82cf0f69b384e27dc5",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-12-26T18:22:58.365Z",
+  "updatedAt": "2024-12-26T18:24:28.410Z",
+  "__v": 0
+}

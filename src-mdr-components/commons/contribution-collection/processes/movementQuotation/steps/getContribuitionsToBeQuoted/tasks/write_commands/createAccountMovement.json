@@ -1,0 +1,15 @@
+{
+  "_id": "66d6157344c48757e9811ed7",
+  "type": {
+    "_id": "66d61573abab1db9e96f4211",
+    "name": "write_commands"
+  },
+  "name": "createAccountMovement",
+  "description": "Cria movimentos na account movement",
+  "main_collection": "account_movements",
+  "Command": {
+    "insertOne": {
+      "document": "$.$$.otp_getCollectionRecordsToBeQuoted"
+    }
+  }
+}

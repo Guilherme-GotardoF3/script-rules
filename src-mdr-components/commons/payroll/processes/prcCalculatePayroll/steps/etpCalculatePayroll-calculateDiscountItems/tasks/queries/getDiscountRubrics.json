@@ -1,0 +1,166 @@
+{
+  "_id": "639c763c6d002c0067c5bf7a",
+  "type": {
+    "_id": "639c75fe5bf604006363ecb1",
+    "name": "queries"
+  },
+  "name": "getDiscountRubrics",
+  "description": "buscar_Rubricas_Descontos",
+  "main_collection": "benefit_rubrics",
+  "output_name": "otp_trf_buscar_rubricas_descontos",
+  "fixed_value": false,
+  "input_parameters": [
+    {
+      "name": "rubrica_ir_progressivo",
+      "type": "Parameter",
+      "description": "Parâmetro que define a rubrica do IR Progressivo.",
+      "value": "674e6eb6519c6b3b81a2d330"
+    },
+    {
+      "name": "id_rubrica_ir_regressivo",
+      "type": "Parameter",
+      "description": "Id da rubrica de ir regressivo",
+      "value": "674e6d8e519c6b3b81a2d12d"
+    },
+    {
+      "name": "rubricGroupDiscountId",
+      "type": "Parameter",
+      "description": "id do grupo das rubricas de descontos (exceto pensão alimentícia)",
+      "value": "67d3247e09343c24f23846c7"
+    },
+    {
+      "name": "rubricCategoryPayrollId",
+      "type": "Parameter",
+      "description": "id da categoria das rubricas de folha de pagemento",
+      "value": "67d3245009343c24f23846c5"
+    },
+    {
+      "name": "idContributionRubricGroup",
+      "type": "Parameter",
+      "description": "_id do grupo de rubrica contribuição.",
+      "value": "67d33c8b09343c24f2774c17"
+    }
+  ],
+  "collections": [
+    "rubrics"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "benefitType._id": "$.$$.otp_getBenefitsInPayrollProcess.payload.benefit.type._id",
+        "plan._id": "$.$$.otp_getBenefitsInPayrollProcess.payload.person.participations.participationClass.plan._id"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubrics",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "rubrics._id": {
+          "$nin": [
+            "p:64eba498f423017333463bb0",
+            "p:63ebaf899db9eb4252c06e5a"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubrics._id",
+        "foreignField": "_id",
+        "as": "definition_rubric",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$or": [
+                  {
+                    "$and": [
+                      {
+                        "$eq": [
+                          "$support.group._id",
+                          "p:682b69c5857f12e8a7d66363"
+                        ]
+                      },
+                      {
+                        "$eq": [
+                          "$support.category._id",
+                          "p:680bdd9a92e9a251fd25e8d2"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "$and": [
+                      {
+                        "$eq": [
+                          "$configurations.isDiscount",
+                          true
+                        ]
+                      },
+                      {
+                        "$eq": [
+                          "$support.group._id",
+                          "p:6679dc812c592b5f1896b9a6"
+                        ]
+                      },
+                      {
+                        "$ne": [
+                          "$rule.ref",
+                          null
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "configurations": 1,
+              "number": 1,
+              "name": 1,
+              "description": 1,
+              "support": {
+                "category": "$support.category._id",
+                "type": "$support.type._id"
+              },
+              "status": "$status._id",
+              "months": 1,
+              "order": 1,
+              "rubricNumberSource": 1,
+              "accountingTarget": 1,
+              "rule": {
+                "ref": "$rule.ref",
+                "name": "$rule.name",
+                "type": "$rule.type"
+              },
+              "costingPlans": 1,
+              "updatedAt": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$match": {
+        "definition_rubric.rule.ref": {
+          "$exists": true
+        }
+      }
+    },
+    {
+      "$project": {
+        "plan": "$plan",
+        "br_rubric": "$definition_rubric"
+      }
+    }
+  ]
+}

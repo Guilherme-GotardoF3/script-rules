@@ -1,0 +1,28 @@
+{
+  "_id": "63aa0f285de5fe0071f5a30f",
+  "type": {
+    "_id": "64aee953cb38ab15ba0db911",
+    "name": "write_commands"
+  },
+  "name": "writePayrolls",
+  "description": "Componente de escrita da folha de pagamento",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.opt_projectWritePayrolls"
+      },
+      "filter": {
+        "$and": [
+          {
+            "payrollPlanning._id": "$.$$.opt_projectWritePayrolls.payrollPlanning._id"
+          },
+          {
+            "participation._id": "$.$$.opt_projectWritePayrolls.participation._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

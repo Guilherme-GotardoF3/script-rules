@@ -1,0 +1,1119 @@
+{
+  "_id": "67d57547ae2fb5ada3c6598e",
+  "type": {
+    "_id": "67d57547ae2fb5ada3c6598c",
+    "name": "queries"
+  },
+  "name": "calculateCharges",
+  "description": "Tarefa de calculo dos encargos de juros e multa para as contribuições em atraso",
+  "main_collection": "plans",
+  "output_name": "otpCalculateCharges",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "processingCollectionContributionId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "processing_collection_contributions",
+    "contribution_provisioning",
+    "people",
+    "collection_contributions",
+    "recovery_temporal_series",
+    "rubrics"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "processingCollectionContributionId": "$.processingCollectionContributionId"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "processing_collection_contributions",
+        "localField": "processingCollectionContributionId",
+        "foreignField": "_id",
+        "as": "processingCollectionContributions"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$processingCollectionContributions",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "bundle": {
+          "plan": "$processingCollectionContributions.plan._id",
+          "competenceDate": {
+            "$toDate": "$processingCollectionContributions.competenceDate"
+          },
+          "dueDate": {
+            "$toDate": {
+              "$ifNull": [
+                null,
+                null
+              ]
+            }
+          },
+          "participations": {
+            "$ifNull": [
+              null,
+              []
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$_id",
+            "$bundle.plan"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$operationalCollection.dueDateRule.dueDate",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "bundle": 1,
+        "operationalCollection": 1,
+        "processingCollectionContributionId": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "contribution_provisioning",
+        "localField": "_id",
+        "foreignField": "person.participation.participationClass.plan._id",
+        "as": "contributionProvisioning",
+        "let": {
+          "dateFilter": "$bundle.competenceDate",
+          "operationalCollection": "$operationalCollection",
+          "processingCollectionContributionId": "$processingCollectionContributionId",
+          "bundle": "$bundle"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "payment.amountPaid": {
+                "$ifNull": [
+                  "$payment.amountPaid",
+                  null
+                ]
+              },
+              "payment.paymentDate": {
+                "$ifNull": [
+                  "$payment.paymentDate",
+                  null
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$payment.paymentDate",
+                      null
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$lookup": {
+              "from": "people",
+              "localField": "person.participation._id",
+              "foreignField": "participations._id",
+              "as": "person",
+              "let": {
+                "participation": "$person.participation._id"
+              },
+              "pipeline": [
+                {
+                  "$unwind": {
+                    "path": "$participations",
+                    "preserveNullAndEmptyArrays": false
+                  }
+                },
+                {
+                  "$match": {
+                    "$expr": {
+                      "$eq": [
+                        "$$participation",
+                        "$participations._id"
+                      ]
+                    }
+                  }
+                },
+                {
+                  "$project": {
+                    "name": 1,
+                    "participation": "$participations"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$person",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$addFields": {
+              "newDueDate": {
+                "$cond": {
+                  "if": {
+                    "$or": [
+                      {
+                        "$ne": [
+                          "$$operationalCollection.dueDateRule.dueDate",
+                          null
+                        ]
+                      }
+                    ]
+                  },
+                  "then": {
+                    "$dateFromParts": {
+                      "year": {
+                        "$year": "$$bundle.competenceDate"
+                      },
+                      "month": {
+                        "$month": {
+                          "$dateAdd": {
+                            "startDate": "$$bundle.competenceDate",
+                            "unit": "month",
+                            "amount": 1
+                          }
+                        }
+                      },
+                      "day": "$$operationalCollection.dueDateRule.dueDate",
+                      "hour": {
+                        "$hour": "$$bundle.competenceDate"
+                      },
+                      "minute": {
+                        "$minute": "$$bundle.competenceDate"
+                      },
+                      "second": {
+                        "$second": "$$bundle.competenceDate"
+                      },
+                      "millisecond": {
+                        "$millisecond": "$$bundle.competenceDate"
+                      }
+                    }
+                  },
+                  "else": {
+                    "$cond": {
+                      "if": {
+                        "$or": [
+                          {
+                            "$eq": [
+                              "$person.participations.dueDate",
+                              null
+                            ]
+                          },
+                          {
+                            "$not": [
+                              "$person.participations.dueDate"
+                            ]
+                          }
+                        ]
+                      },
+                      "then": {
+                        "$toDate": "$dueDate"
+                      },
+                      "else": {
+                        "$dateFromParts": {
+                          "year": {
+                            "$year": "$$bundle.competenceDate"
+                          },
+                          "month": {
+                            "$month": {
+                              "$dateAdd": {
+                                "startDate": "$$bundle.competenceDate",
+                                "unit": "month",
+                                "amount": 1
+                              }
+                            }
+                          },
+                          "day": "$person.participations.dueDate",
+                          "hour": {
+                            "$hour": "$$bundle.competenceDate"
+                          },
+                          "minute": {
+                            "$minute": "$$bundle.competenceDate"
+                          },
+                          "second": {
+                            "$second": "$$bundle.competenceDate"
+                          },
+                          "millisecond": {
+                            "$millisecond": "$$bundle.competenceDate"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lt": [
+                      "$dueDate",
+                      "$newDueDate"
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$dueDate",
+                      null
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "dueDate": {
+                "$ifNull": [
+                  "$dueDate",
+                  null
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "amount": {
+                "$abs": {
+                  "$subtract": [
+                    {
+                      "$sum": "$rubrics.amount"
+                    },
+                    {
+                      "$ifNull": [
+                        "$payment.amountPaid",
+                        0
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "$lookup": {
+              "from": "collection_contributions",
+              "localField": "person.participation._id",
+              "foreignField": "person.participation._id",
+              "as": "collectionContributions",
+              "let": {
+                "competenceDate": "$$bundle.competenceDate",
+                "planId": "$$bundle.plan",
+                "processingCollectionContributionId": "$$processingCollectionContributionId"
+              },
+              "pipeline": [
+                {
+                  "$match": {
+                    "$expr": {
+                      "$eq": [
+                        "$processingCollectionContribution._id",
+                        "$$processingCollectionContributionId"
+                      ]
+                    }
+                  }
+                },
+                {
+                  "$match": {
+                    "$expr": {
+                      "$and": [
+                        {
+                          "$eq": [
+                            {
+                              "$dateToString": {
+                                "format": "%Y-%m-%d",
+                                "date": "$referenceDate"
+                              }
+                            },
+                            {
+                              "$dateToString": {
+                                "format": "%Y-%m-%d",
+                                "date": "$$competenceDate"
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "$eq": [
+                            "$$planId",
+                            "$person.participation.participationClass.plan._id"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$collectionContributions",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$set": {
+              "amount": {
+                "$sum": "$rubrics.amount"
+              },
+              "contributionProvisioningCharge": {
+                "_id": "$_id",
+                "rubrics": "$rubrics",
+                "dueDate": "$dueDate"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$contributionProvisioning",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$or": [
+            {
+              "$in": [
+                "$contributionProvisioning.person._id",
+                "$bundle.participations"
+              ]
+            },
+            {
+              "$eq": [
+                "$bundle.participations",
+                []
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "diffDias": {
+          "$multiply": [
+            {
+              "$toInt": {
+                "$dateDiff": {
+                  "startDate": "$contributionProvisioning.newDueDate",
+                  "endDate": "$contributionProvisioning.dueDate",
+                  "unit": "day"
+                }
+              }
+            },
+            -1
+          ]
+        },
+        "diffMonth": {
+          "$toInt": {
+            "$abs": {
+              "$dateDiff": {
+                "startDate": "$bundle.competenceDate",
+                "endDate": "$contributionProvisioning.referenceDate",
+                "unit": "month"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "diffDias": {
+          "$gte": 1
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "person": "$contributionProvisioning.person",
+        "dueDate": "$contributionProvisioning.newDueDate",
+        "collectionContributions": "$contributionProvisioning.collectionContributions",
+        "firstDayMonth": {
+          "$dateFromParts": {
+            "year": {
+              "$year": "$contributionProvisioning.dueDate"
+            },
+            "month": {
+              "$month": "$contributionProvisioning.dueDate"
+            },
+            "day": 1
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "daysToMilliseconds": {
+          "$subtract": [
+            {
+              "$dateFromParts": {
+                "year": {
+                  "$year": "$firstDayMonth"
+                },
+                "month": {
+                  "$add": [
+                    {
+                      "$month": "$firstDayMonth"
+                    },
+                    1
+                  ]
+                },
+                "day": 1
+              }
+            },
+            "$firstDayMonth"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "days": {
+          "$divide": [
+            {
+              "$abs": "$daysToMilliseconds"
+            },
+            86400000
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "dailyRate": {
+          "$toDecimal": {
+            "$divide": [
+              {
+                "$divide": [
+                  "$operationalCollection.interestRate.value",
+                  100
+                ]
+              },
+              "$days"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "amountUpdated": {
+          "$multiply": [
+            "$contributionProvisioning.amount",
+            {
+              "$pow": [
+                {
+                  "$add": [
+                    1,
+                    {
+                      "$divide": [
+                        "$operationalCollection.interestRate.value",
+                        100
+                      ]
+                    }
+                  ]
+                },
+                "$diffMonth"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "juros": {
+          "$subtract": [
+            "$amountUpdated",
+            "$contributionProvisioning.amount"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "recovery_temporal_series",
+        "localField": "operationalCollection.monetaryCorrection.recoveryTemporalIndex._id",
+        "foreignField": "index._id",
+        "as": "index",
+        "let": {
+          "dateFilterInitial": "$contributionProvisioning.referenceDate",
+          "dateFilterActual": "$bundle.competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$gte": [
+                      {
+                        "$dateToString": {
+                          "format": "%Y-%m",
+                          "date": "$date"
+                        }
+                      },
+                      {
+                        "$dateToString": {
+                          "format": "%Y-%m",
+                          "date": "$$dateFilterInitial"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "$lt": [
+                      {
+                        "$dateToString": {
+                          "format": "%Y-%m",
+                          "date": "$date"
+                        }
+                      },
+                      {
+                        "$dateToString": {
+                          "format": "%Y-%m",
+                          "date": "$$dateFilterActual"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "firstDayMonth": {
+                "$dateFromParts": {
+                  "year": {
+                    "$year": "$date"
+                  },
+                  "month": {
+                    "$month": "$date"
+                  },
+                  "day": 1
+                }
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "daysToMilliseconds": {
+                "$subtract": [
+                  {
+                    "$dateFromParts": {
+                      "year": {
+                        "$year": "$date"
+                      },
+                      "month": {
+                        "$add": [
+                          {
+                            "$month": "$date"
+                          },
+                          1
+                        ]
+                      },
+                      "day": 0
+                    }
+                  },
+                  "$date"
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "days": {
+                "$round": [
+                  {
+                    "$divide": [
+                      {
+                        "$abs": "$daysToMilliseconds"
+                      },
+                      86400000
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "dailyRate": {
+                "$divide": [
+                  "$value",
+                  30
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "isSameMonth": {
+                "$eq": [
+                  {
+                    "$dateToString": {
+                      "format": "%Y-%m",
+                      "date": "$date"
+                    }
+                  },
+                  {
+                    "$dateToString": {
+                      "format": "%Y-%m",
+                      "date": "$$dateFilterActual"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "proportionalDays": {
+                "$cond": {
+                  "if": {
+                    "$eq": [
+                      "$isSameMonth",
+                      true
+                    ]
+                  },
+                  "then": {
+                    "$round": [
+                      {
+                        "$divide": [
+                          {
+                            "$subtract": [
+                              "$$dateFilterActual",
+                              {
+                                "$dateFromParts": {
+                                  "year": {
+                                    "$year": "$$dateFilterActual"
+                                  },
+                                  "month": {
+                                    "$month": "$$dateFilterActual"
+                                  },
+                                  "day": 0
+                                }
+                              }
+                            ]
+                          },
+                          86400000
+                        ]
+                      },
+                      0
+                    ]
+                  },
+                  "else": null
+                }
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "dailyRateProportional": {
+                "$divide": [
+                  "$dailyRate",
+                  {
+                    "$divide": [
+                      {
+                        "$ifNull": [
+                          "$proportionalDays",
+                          "$days"
+                        ]
+                      },
+                      "$days"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "date": 1,
+              "index": 1,
+              "value": {
+                "$cond": {
+                  "if": {
+                    "$lt": [
+                      "$value",
+                      0
+                    ]
+                  },
+                  "then": 0,
+                  "else": "$value"
+                }
+              },
+              "days": 1,
+              "dailyRate": 1,
+              "dailyRateProportional": 1
+            }
+          },
+          {
+            "$group": {
+              "_id": "$index._id",
+              "value": {
+                "$push": "$value"
+              },
+              "dailyRate": {
+                "$push": "$dailyRate"
+              },
+              "dailyRateProportional": {
+                "$push": "$dailyRateProportional"
+              },
+              "rate": {
+                "$sum": "$dailyRateProportional"
+              },
+              "sumIndex": {
+                "$sum": "$value"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$index",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "correcao": {
+          "$round": [
+            {
+              "$multiply": [
+                "$contributionProvisioning.amount",
+                {
+                  "$divide": [
+                    "$index.sumIndex",
+                    100
+                  ]
+                }
+              ]
+            },
+            2
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "valorDevido": "$contributionProvisioning.amount",
+        "jurosCorrigido": {
+          "$sum": [
+            "$juros",
+            "$correcao"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "valorComJuros": {
+          "$sum": [
+            "$contributionProvisioning.amount",
+            "$jurosCorrigido"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "multa": {
+          "$subtract": [
+            {
+              "$sum": [
+                "$valorComJuros",
+                {
+                  "$multiply": [
+                    "$valorComJuros",
+                    {
+                      "$divide": [
+                        "$operationalCollection.fine.value",
+                        100
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "$valorComJuros"
+          ]
+        },
+        "valorTotal": {
+          "$sum": [
+            "$valorComJuros",
+            {
+              "$multiply": [
+                "$valorComJuros",
+                {
+                  "$divide": [
+                    "$operationalCollection.fine.value",
+                    100
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "as": "rubrics",
+        "let": {
+          "valorJuros": "$jurosCorrigido",
+          "valorMulta": "$multa",
+          "referenceDate": "$contributionProvisioning.referenceDate",
+          "baseCalculation": "$contributionProvisioning.rubrics",
+          "bundle": "$bundle"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$configurations.isTaxCalculated",
+                      true
+                    ]
+                  },
+                  {
+                    "$in": [
+                      "$name",
+                      [
+                        "Multa",
+                        "Juros"
+                      ]
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "value": {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$regexMatch": {
+                          "input": "$name",
+                          "regex": "multa",
+                          "options": "i"
+                        }
+                      },
+                      "then": "$$valorMulta"
+                    }
+                  ],
+                  "default": "$$valorJuros"
+                }
+              }
+            }
+          },
+          {
+            "$project": {
+              "rubric": {
+                "_id": "$_id",
+                "name": "$name",
+                "number": "$number",
+                "configurations": "$configurations"
+              },
+              "amount": {
+                "$round": [
+                  "$value",
+                  2
+                ]
+              },
+              "referenceDate": "$$referenceDate",
+              "baseCalculation": {
+                "$map": {
+                  "input": "$$baseCalculation",
+                  "as": "baseCalculation",
+                  "in": {
+                    "rubric": "$$baseCalculation.rubric",
+                    "value": {
+                      "$toDouble": "$$baseCalculation.amount"
+                    },
+                    "competenceDate": "$$referenceDate"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "amountCharge": {
+          "$sum": "$rubrics.amount"
+        },
+        "contributionProvisioningCharge": {
+          "contributionProvisioning": {
+            "_id": "$contributionProvisioning._id",
+            "rubrics": "$rubrics",
+            "dueDate": "$dueDate"
+          }
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "person": "$person.participation._id",
+          "collectionContributions": "$collectionContributions._id"
+        },
+        "contributionProvisioningCharge": {
+          "$push": "$contributionProvisioningCharge"
+        },
+        "amountCharge": {
+          "$sum": "$amountCharge"
+        },
+        "bundle": {
+          "$first": "$bundle"
+        },
+        "person": {
+          "$first": "$person"
+        },
+        "operationalCollection": {
+          "$first": "$operationalCollection"
+        },
+        "contributionProvisioning": {
+          "$push": "$contributionProvisioning"
+        },
+        "collectionContributions": {
+          "$first": "$collectionContributions"
+        },
+        "dueDate": {
+          "$first": "$dueDate"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$contributionProvisioning",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$group": {
+        "_id": "$contributionProvisioning._id",
+        "contributionProvisioningCharge": {
+          "$first": "$contributionProvisioningCharge"
+        },
+        "amountCharge": {
+          "$first": "$amountCharge"
+        },
+        "person": {
+          "$first": "$person"
+        },
+        "collectionContributions": {
+          "$first": "$collectionContributions"
+        },
+        "chargeContributionProvisioning": {
+          "$first": "$contributionProvisioning"
+        },
+        "dueDate": {
+          "$first": "$dueDate"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$chargeContributionProvisioning",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$group": {
+        "_id": "$person.participation._id",
+        "root": {
+          "$first": "$$ROOT"
+        },
+        "amountProvisioningCharge": {
+          "$sum": "$chargeContributionProvisioning.amount"
+        },
+        "chargeContributionProvisioning": {
+          "$push": "$chargeContributionProvisioning.contributionProvisioningCharge"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$root.collectionContributions._id",
+        "contributionProvisionings": {
+          "$concatArrays": [
+            "$root.collectionContributions.contributionProvisionings",
+            "$chargeContributionProvisioning"
+          ]
+        },
+        "contributionProvisioningsCharges": "$root.contributionProvisioningCharge",
+        "amount": {
+          "$round": [
+            {
+              "$sum": [
+                "$root.collectionContributions.amount",
+                "$amountProvisioningCharge"
+              ]
+            },
+            2
+          ]
+        },
+        "amountCharges": {
+          "$round": [
+            {
+              "$sum": "$root.amountCharge"
+            },
+            2
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,284 @@
+{
+  "_id": "646517e8727f348e7f0d16ff",
+  "type": {
+    "_id": "64651746e513c05aa9bb1464",
+    "name": "queries"
+  },
+  "name": "projectCalculateExceptionPercentage",
+  "description": "calcula os valores das excecoes pela porcentagem",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_projectCalculateExceptionPercentage",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefits",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payroll_item_exception_schedules",
+    "rubrics"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId",
+        "judicialPension": {
+          "$exists": false
+        },
+        "benefit._id": {
+          "$in": "$.benefits"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "competenceDate": "$payrollPlanning.competenceDate",
+        "status": "CALCULATED",
+        "type": "EXCEPTION"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payroll_item_exception_schedules",
+        "localField": "benefit._id",
+        "foreignField": "benefit",
+        "as": "payrollItemExceptionSchedule"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItemExceptionSchedule",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "payrollItemExceptionSchedule.endDate": {
+          "$toDate": {
+            "$dateToString": {
+              "format": "%Y-%m",
+              "date": "$payrollItemExceptionSchedule.endDate",
+              "timezone": "GMT"
+            }
+          }
+        },
+        "totalItems": "$payrollItems"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$in": [
+            "$payrollItems.rubric._id",
+            "$payrollItemExceptionSchedule.listOfPercentageRubrics"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "payrollItem": [
+          "$payrollItems"
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "payrollItem.rubric._id",
+        "foreignField": "_id",
+        "as": "rubrics"
+      }
+    },
+    {
+      "$match": {
+        "payrollItemExceptionSchedule.amountType": "PERCENTAGE",
+        "$expr": {
+          "$and": [
+            {
+              "$gte": [
+                {
+                  "$add": [
+                    {
+                      "$multiply": [
+                        {
+                          "$year": "$competenceDate"
+                        },
+                        100
+                      ]
+                    },
+                    {
+                      "$month": "$competenceDate"
+                    }
+                  ]
+                },
+                {
+                  "$add": [
+                    {
+                      "$multiply": [
+                        {
+                          "$year": "$payrollItemExceptionSchedule.competenceDate"
+                        },
+                        100
+                      ]
+                    },
+                    {
+                      "$month": "$payrollItemExceptionSchedule.competenceDate"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$lte": [
+                {
+                  "$add": [
+                    {
+                      "$multiply": [
+                        {
+                          "$year": "$competenceDate"
+                        },
+                        100
+                      ]
+                    },
+                    {
+                      "$month": "$competenceDate"
+                    }
+                  ]
+                },
+                {
+                  "$add": [
+                    {
+                      "$multiply": [
+                        {
+                          "$year": "$payrollItemExceptionSchedule.endDate"
+                        },
+                        100
+                      ]
+                    },
+                    {
+                      "$month": "$payrollItemExceptionSchedule.endDate"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "base_calculation": "$payrollItem",
+        "amount": {
+          "$function": {
+            "body": "function (payroll_item, rubrics) {  let result = 0;   if (rubrics.length > 0) {    payroll_item.forEach(  (x) => {  const res = rubrics.find( (y) =>  y._id.toString() === x.rubric.toString());   if (res && res.configurations.isDiscount) result -= parseFloat(x.amount); else result += parseFloat(x.amount); } ); }  return result; }",
+            "args": [
+              "$payrollItem",
+              "$rubrics"
+            ],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "totalAmount": {
+          "$multiply": [
+            "$amount",
+            {
+              "$divide": [
+                "$payrollItemExceptionSchedule.value",
+                100
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$payrollItemExceptionSchedule.rubric._id",
+        "rubric": {
+          "$first": "$payrollItemExceptionSchedule.rubric"
+        },
+        "payroll": {
+          "$first": "$_id"
+        },
+        "finalAmount": {
+          "$sum": "$totalAmount"
+        },
+        "amount": {
+          "$sum": "$totalAmount"
+        },
+        "exceptionAmount": {
+          "$sum": 0
+        },
+        "status": {
+          "$first": "$status"
+        },
+        "type": {
+          "$first": "$type"
+        },
+        "reason": {
+          "$first": "$reason"
+        },
+        "competenceDate": {
+          "$first": "$competenceDate"
+        },
+        "totalItems": {
+          "$first": "$totalItems"
+        },
+        "root": {
+          "$push": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$payroll",
+        "payrollItems": "$root.payrollItems",
+        "totalItems": 1,
+        "item": [
+          {
+            "payroll": "$payroll",
+            "rubric": "$rubric",
+            "finalAmount": "$finalAmount",
+            "amount": "$amount",
+            "exceptionAmount": "$exceptionAmount",
+            "status": "$status",
+            "type": "$type",
+            "reason": "$reason",
+            "competenceDate": "$competenceDate"
+          }
+        ]
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "payrollItems": {
+          "$concatArrays": [
+            "$totalItems",
+            "$item"
+          ]
+        }
+      }
+    }
+  ]
+}

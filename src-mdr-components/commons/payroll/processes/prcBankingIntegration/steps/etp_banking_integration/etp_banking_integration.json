@@ -1,0 +1,35 @@
+{
+  "_id": "66e499db1b53cf4e1775c481",
+  "name": "etp_banking_integration",
+  "description": "gerar a integração bancária com o Protheus",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66e395667d4c46fee9acb631",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66e494ba9ce276e9defc313d",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66e496f59ce276e9defc31da",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66e5d7bdbd14eb20e794e33d",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-09-13T20:00:27.316Z",
+  "updatedAt": "2024-09-14T19:25:35.273Z",
+  "__v": 0
+}

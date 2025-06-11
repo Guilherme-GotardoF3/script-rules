@@ -1,0 +1,28 @@
+{
+  "_id": "63e162d95ab8dc000808eaf9",
+  "type": {
+    "_id": "651d65a99aac026d92b91537",
+    "name": "write_commands"
+  },
+  "name": "writePayrollRRA",
+  "description": "Componente de escrita relatório payroll_report_ir_validation_rra",
+  "main_collection": "payroll_report_ir_validation_rra",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_write_report_rra"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_trf_project_write_report_rra.participation._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_write_report_rra.payrollPlanning"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

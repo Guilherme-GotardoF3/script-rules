@@ -1,0 +1,31 @@
+{
+  "_id": "66eb5322b667f2012c8662b1",
+  "type": {
+    "_id": "66eb53214708f68b62b50e50",
+    "name": "write_commands"
+  },
+  "name": "updateAccountBalanceByQuotaDate",
+  "description": "Atualiza novo saldo de conta, atualizado de acordo com a data da cota",
+  "main_collection": "account_balances_rmdrc",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.projectAccountBalanceByQuotaDate"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person.participation._id": "$.$$.projectAccountBalanceByQuotaDate.person.participation._id"
+          },
+          {
+            "competenceDate": "$.$$.projectAccountBalanceByQuotaDate.competenceDate"
+          },
+          {
+            "date": "$.$$.projectAccountBalanceByQuotaDate.date"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

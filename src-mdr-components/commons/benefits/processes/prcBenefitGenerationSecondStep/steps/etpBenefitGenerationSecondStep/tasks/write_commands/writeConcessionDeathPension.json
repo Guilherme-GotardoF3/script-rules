@@ -1,0 +1,25 @@
+{
+  "_id": "660316d2db6266e84ce9dd87",
+  "type": {
+    "_id": "66042189044dee2ca3d8abc5",
+    "name": "write_commands"
+  },
+  "name": "writeConcessionDeathPension",
+  "description": "Ao fim do processo de “Transformação do benefício“, deve ser acionado o segundo processo, onde o mesmo efetivará as alterações já iniciadas no primeiro processo.",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.opt_trf_activeBenefitGranted"
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.opt_trf_activeBenefitGranted._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

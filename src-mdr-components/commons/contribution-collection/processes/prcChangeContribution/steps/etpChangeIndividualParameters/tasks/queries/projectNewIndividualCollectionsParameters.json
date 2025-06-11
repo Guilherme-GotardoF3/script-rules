@@ -1,0 +1,152 @@
+{
+  "_id": "674de8fd0a9a44f79baa8014",
+  "type": {
+    "_id": "674de8fdcaecf37354f1339d",
+    "name": "queries"
+  },
+  "name": "projectNewIndividualCollectionsParameters",
+  "description": "Projeta um novo documento conforme a solicitação do participante pelo portal",
+  "main_collection": "individual_collections_parameters",
+  "output_name": "otpProjectNewIndividualCollectionsParameters",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "origin",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "value",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "dataType",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "rubricId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "requestDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "people",
+    "rubrics"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "_id": "$.id",
+          "origin": "$.origin",
+          "value": "$.value",
+          "dataType": "$.dataType",
+          "participationId": "$.participationId",
+          "rubricId": "$.rubricId",
+          "requestDate": "$.requestDate"
+        }
+      }
+    },
+    {
+      "$limit": 1
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "bundle.participationId",
+        "foreignField": "participations._id",
+        "as": "participationNumber",
+        "let": {
+          "participationId": "$bundle.participationId"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "number": "$participations.number"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participationNumber"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "bundle.rubricId",
+        "foreignField": "_id",
+        "as": "rubric",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "description": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubric",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "origin": "$bundle.origin",
+        "value": "$bundle.value",
+        "dataType": "$bundle.dataType",
+        "participation": {
+          "_id": "$bundle.participationId",
+          "number": "$participationNumber.number"
+        },
+        "rubric": "$rubric",
+        "effectiveDate": {
+          "startedAt": {
+            "$toDate": "$bundle.requestDate"
+          },
+          "endedAt": null
+        }
+      }
+    }
+  ]
+}

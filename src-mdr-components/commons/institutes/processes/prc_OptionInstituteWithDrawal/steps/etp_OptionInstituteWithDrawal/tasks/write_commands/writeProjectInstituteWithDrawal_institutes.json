@@ -1,0 +1,28 @@
+{
+  "_id": "6789584fcd43158e0029e1a7",
+  "type": {
+    "_id": "6789584fb3bfe38e63fb755f",
+    "name": "write_commands"
+  },
+  "name": "writeProjectInstituteWithDrawal_institutes",
+  "description": "Escreve o instituto do Resgate na collection de Institutes",
+  "main_collection": "institutes",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_projectInstituteWithDrawal_institutes"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person.participation._id": "$.$$.otp_projectInstituteWithDrawal_institutes.person.participation._id"
+          },
+          {
+            "type._id": "$.$$.otp_projectInstituteWithDrawal_institutes.type._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

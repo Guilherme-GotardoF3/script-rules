@@ -1,0 +1,505 @@
+{
+  "_id": "66fae2b372b625f870957646",
+  "type": {
+    "_id": "66fae2b39b9e3eaa7b1ec2fe",
+    "name": "queries"
+  },
+  "name": "criticDifferentValue",
+  "description": "Gera a crítica da diferença de contribuição",
+  "main_collection": "financial_statements",
+  "output_name": "otp_criticsDifferentValue",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_generationOfContribuitionSponsored",
+      "type": "Parameter",
+      "description": "Parâmetro para o id do tipo de importação de contribuição. Usado para gerar críticas durante o processo de calculo de contribuição de participantes ativos.",
+      "value": "66e2e54ee029353542629c4f"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "startedAt",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "review_collection",
+    "processed_collection_review"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$competenceDate",
+            {
+              "$toDate": "$.competenceDate"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "otpAggregation": {
+          "$concatArrays": [
+            "$.otp_calculateNormalParticipantContributionNew",
+            "$.otp_calculateNormalSponsorContributionNew",
+            "$.otp_calculateDeathContribuitionNew",
+            "$.otp_calculateDisabilityContributionNew"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otpAggregation",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$person._id",
+                "$otpAggregation.person._id"
+              ]
+            },
+            {
+              "$in": [
+                "$otpAggregation.person.participation._id",
+                "$person.participations._id"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "competenceDate": 1,
+        "amout": 1,
+        "employmentHistory": 1,
+        "origin": 1,
+        "paymentDate": 1,
+        "paymentMethod": 1,
+        "person": "$otpAggregation.person",
+        "payslip": {
+          "$filter": {
+            "input": "$payslip",
+            "as": "payslip",
+            "cond": {
+              "$in": [
+                "$$payslip.rubric._id",
+                "$otpAggregation.rubrics.rubric._id"
+              ]
+            }
+          }
+        },
+        "updatedAt": 1,
+        "rubrics": {
+          "$filter": {
+            "input": "$otpAggregation.rubrics",
+            "as": "otpAggregation",
+            "cond": {
+              "$in": [
+                "$$otpAggregation.rubric._id",
+                "$payslip.rubric._id"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "rubrics": {
+          "$map": {
+            "input": {
+              "$reduce": {
+                "input": "$rubrics",
+                "initialValue": [],
+                "in": {
+                  "$cond": {
+                    "if": {
+                      "$in": [
+                        "$$this.rubric._id",
+                        {
+                          "$map": {
+                            "input": "$$value",
+                            "as": "item",
+                            "in": "$$item.rubric._id"
+                          }
+                        }
+                      ]
+                    },
+                    "then": "$$value",
+                    "else": {
+                      "$concatArrays": [
+                        "$$value",
+                        [
+                          "$$this"
+                        ]
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "as": "rubric",
+            "in": "$$rubric"
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payslip",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$in": [
+            "$payslip.rubric._id",
+            "$rubrics.rubric._id"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubrics",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$payslip.rubric._id",
+            "$rubrics.rubric._id"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "review_collection",
+        "localField": "person.participation.participationClass.plan._id",
+        "foreignField": "plan._id",
+        "let": {
+          "rubricId": "$payslip.rubric._id"
+        },
+        "as": "acceptedDifferenceMargin",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$type._id",
+                  "p:67db04d0457974885e05b250"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$critics"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$critics.rubric._id",
+                      "$$rubricId"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$critics.description",
+                      "Diferença de valor na rubrica"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$replaceRoot": {
+              "newRoot": "$critics.acceptedDifferenceMargin"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$acceptedDifferenceMargin",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "differenceValues": {
+          "$abs": {
+            "$subtract": [
+              "$rubrics.amount",
+              "$payslip.value"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$gte": [
+            "$differenceValues",
+            {
+              "$ifNull": [
+                "$acceptedDifferenceMargin.min",
+                0
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "review_collection",
+        "localField": "person.participation.participationClass.plan._id",
+        "foreignField": "plan._id",
+        "let": {
+          "rubricId": "$payslip.rubric._id"
+        },
+        "as": "reviewCollection",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$type._id",
+                  "p:67db04d0457974885e05b250"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$critics"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$critics.rubric._id",
+                      "$$rubricId"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$critics.description",
+                      "Diferença de valor na rubrica"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "critics": {
+                "$push": "$critics"
+              },
+              "type": {
+                "$first": "$type"
+              },
+              "plan": {
+                "$first": "$plan"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$reviewCollection",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "processed_collection_review",
+        "localField": "person._id",
+        "foreignField": "person._id",
+        "as": "previewProcessedCollectionReview",
+        "let": {
+          "participationId": "$person.participation._id",
+          "referenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$person.participation._id",
+                      "$$participationId"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$referenceDate",
+                      "$$referenceDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$reviewCollections",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$addFields": {
+              "critic": {
+                "$ifNull": [
+                  {
+                    "$arrayElemAt": [
+                      "$reviewCollections.reviewCollection.critics",
+                      0
+                    ]
+                  },
+                  null
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$ne": [
+                      "$reviewCollections.reviewCollection.type._id",
+                      "p:67db04d0457974885e05b250"
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$critic.description",
+                      "Diferença de valor na rubrica"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "reviewCollections": {
+                "$push": "$reviewCollections"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$previewProcessedCollectionReview",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "newReviewCollection": {
+          "origin": {
+            "_id": "$_id",
+            "name": "financial_statements"
+          },
+          "reviewCollection": "$reviewCollection",
+          "competenceDate": "$competenceDate",
+          "rubric": "$rubrics.rubric",
+          "values": {
+            "imported": "$payslip.value",
+            "calculated": "$rubrics.amount",
+            "diff": "$differenceValues"
+          },
+          "statusReason": "Rubrica com valor divergente entre contribuição importada e calculada.",
+          "validation": {
+            "description": "Diferença de valor na rubrica",
+            "responsible": "",
+            "date": {
+              "$toDate": "$.startedAt"
+            }
+          },
+          "status": "SUCCESS"
+        },
+        "values": {
+          "imported": "$payslip.value",
+          "calculated": "$rubrics.amount",
+          "diff": "$differenceValues"
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "personId": "$person._id",
+          "participationId": "$person.participation._id"
+        },
+        "reviewCollections": {
+          "$push": "$newReviewCollection"
+        },
+        "root": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": "$root.person",
+        "referenceDate": "$root.competenceDate",
+        "reviewCollections": {
+          "$concatArrays": [
+            {
+              "$ifNull": [
+                "$root.previewProcessedCollectionReview.reviewCollections",
+                []
+              ]
+            },
+            "$reviewCollections"
+          ]
+        },
+        "company": "$root.employmentHistory.company"
+      }
+    }
+  ]
+}

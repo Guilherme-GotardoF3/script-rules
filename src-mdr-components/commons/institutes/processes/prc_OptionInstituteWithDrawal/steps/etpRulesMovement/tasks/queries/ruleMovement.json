@@ -1,0 +1,649 @@
+{
+  "_id": "67598ff3c489b2d70b6b04c2",
+  "type": {
+    "_id": "67598ff3990f84d613012a55",
+    "name": "queries"
+  },
+  "name": "ruleMovement",
+  "description": "Regra para que o produto possa fazer o levantamento dos valores de saldos e movimentações.",
+  "main_collection": "account_transaction_types",
+  "output_name": "otp_ruleMovement",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "definedBenefitId",
+      "type": "Parameter",
+      "description": "id do tipo do plano de beneficio definido ",
+      "value": "6732642511e1d84832e0acd6"
+    },
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "type",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "occurrence",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "plan",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "quoteDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participation",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participationClass",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "percentual",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "people",
+    "plans",
+    "occurrence_configurations",
+    "occurrences",
+    "account_balances_rmdrc",
+    "monetary_unit_values",
+    "pension_accounts"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "participationId": "$.participationId"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "participationId",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participationId": "$participationId"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$lookup": {
+              "from": "plans",
+              "localField": "participations.participationClass.plan._id",
+              "foreignField": "_id",
+              "as": "plans",
+              "let": {
+                "planType": "p:66d77353228261df78a0cd64"
+              },
+              "pipeline": [
+                {
+                  "$match": {
+                    "$expr": {
+                      "$ne": [
+                        "$type._id",
+                        "$$planType"
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$plans",
+              "preserveNullAndEmptyArrays": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "bundle": {
+          "type": "$.type",
+          "occurrence": "$.occurrence",
+          "plan": "$.plan",
+          "quoteDate": {
+            "$toDate": "$.quoteDate"
+          },
+          "participation": "$.participation",
+          "participationClass": "$.participationClass",
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          },
+          "percentual": {
+            "$divide": [
+              {
+                "$toDouble": "$.percentual"
+              },
+              100
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$_id",
+            "$bundle.type"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "bundle.participation",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participationId": "$bundle.participation"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$$participationId",
+                  "$participations._id"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "name": 1,
+              "participation": {
+                "_id": "$participations._id",
+                "participationClass": {
+                  "_id": "$participations.participationClass._id",
+                  "plan": {
+                    "_id": "$participations.participationClass.plan._id",
+                    "name": "$participations.participationClass.plan.name"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "occurrence_configurations",
+        "localField": "bundle.plan",
+        "foreignField": "plan._id",
+        "as": "ocorrenciaBeneficio",
+        "let": {
+          "accountTransactionTypeId": "$_id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$accountTransactionType._id",
+                  "$$accountTransactionTypeId"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$ocorrenciaBeneficio",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "occurrences",
+        "localField": "bundle.plan",
+        "foreignField": "plan._id",
+        "as": "regrasMovimentacao",
+        "let": {
+          "classesType": "$bundle.participationClass.type",
+          "classesStatus": "$bundle.participationClass.status",
+          "tipoMovimento": "$ocorrenciaBeneficio.occurrence._id",
+          "competenceDate": "$bundle.competenceDate"
+        },
+        "pipeline": [
+          {
+            "$unwind": "$participationClasses"
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$_id",
+                      "$$tipoMovimento"
+                    ]
+                  },
+                  {
+                    "$lte": [
+                      "$effectiveDate.startedAt",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$gte": [
+                          "$effectiveDate.endedAt",
+                          "$$competenceDate"
+                        ]
+                      },
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          null
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$participationClasses.type._id",
+                      "$$classesType"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$participationClasses.status._id",
+                      "$$classesStatus"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$regrasMovimentacao",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$regrasMovimentacao.occurrenceRules",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "account_balances_rmdrc",
+        "localField": "bundle.participation",
+        "foreignField": "person.participation._id",
+        "as": "saldoContas",
+        "let": {
+          "fundosOrigem": "$regrasMovimentacao.occurrenceRules.accounts.origin._id",
+          "quoteDate": "$bundle.quoteDate"
+        },
+        "pipeline": [
+          {
+            "$unwind": "$pensionAccountList"
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$pensionAccountList.pensionAccount._id",
+                      "$$fundosOrigem"
+                    ]
+                  },
+                  {
+                    "$lte": [
+                      "$competenceDate",
+                      "$$quoteDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "competenceDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$saldoContas",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "monetary_unit_values",
+        "localField": "saldoContas.pensionAccountList.monetaryUnitValue._id",
+        "foreignField": "_id",
+        "as": "monetaryUnitValues",
+        "let": {
+          "competenceDate": "$bundle.competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$lte": [
+                  "$referenceDate",
+                  "$$competenceDate"
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "referenceDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "referenceDate": 1,
+              "value": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$monetaryUnitValues",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "fundosOrigem": {
+          "_id": "$saldoContas.pensionAccountList.pensionAccount._id",
+          "name": "$saldoContas.pensionAccountList.pensionAccount.name",
+          "saidaValue": {
+            "$round": [
+              {
+                "$multiply": [
+                  "$saldoContas.value",
+                  -1
+                ]
+              },
+              2
+            ]
+          },
+          "saidaQuotas": {
+            "$multiply": [
+              {
+                "$divide": [
+                  "$saldoContas.value",
+                  "$monetaryUnitValues.value"
+                ]
+              },
+              -1
+            ]
+          }
+        },
+        "fundosDestino": {
+          "_id": "$regrasMovimentacao.occurrenceRules.accounts.destination._id",
+          "name": "$regrasMovimentacao.occurrenceRules.accounts.destination.name",
+          "entradaValue": {
+            "$round": [
+              {
+                "$multiply": [
+                  "$saldoContas.value",
+                  "$bundle.percentual"
+                ]
+              },
+              2
+            ]
+          },
+          "entradaQuotas": {
+            "$multiply": [
+              {
+                "$divide": [
+                  "$saldoContas.value",
+                  "$monetaryUnitValues.value"
+                ]
+              },
+              "$bundle.percentual"
+            ]
+          }
+        },
+        "fundosResiduo": {
+          "_id": "$regrasMovimentacao.occurrenceRules.accounts.residual._id",
+          "name": "$regrasMovimentacao.occurrenceRules.accounts.residual.name",
+          "entradaValue": {
+            "$round": [
+              {
+                "$multiply": [
+                  "$saldoContas.value",
+                  {
+                    "$subtract": [
+                      1,
+                      "$bundle.percentual"
+                    ]
+                  }
+                ]
+              },
+              2
+            ]
+          },
+          "entradaQuotas": {
+            "$multiply": [
+              {
+                "$divide": [
+                  "$saldoContas.value",
+                  "$monetaryUnitValues.value"
+                ]
+              },
+              {
+                "$subtract": [
+                  1,
+                  "$bundle.percentual"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$facet": {
+        "fundosOrigem": [
+          {
+            "$project": {
+              "_id": "$fundosOrigem._id",
+              "name": "$fundosOrigem.name",
+              "value": "$fundosOrigem.saidaValue",
+              "quotas": "$fundosOrigem.saidaQuotas",
+              "root": "$$ROOT"
+            }
+          }
+        ],
+        "fundosDestino": [
+          {
+            "$group": {
+              "_id": "$fundosDestino._id",
+              "name": {
+                "$first": "$fundosDestino.name"
+              },
+              "value": {
+                "$sum": "$fundosDestino.entradaValue"
+              },
+              "quotas": {
+                "$sum": "$fundosDestino.entradaQuotas"
+              },
+              "root": {
+                "$first": "$$ROOT"
+              }
+            }
+          }
+        ],
+        "fundosResiduo": [
+          {
+            "$match": {
+              "fundosResiduo.entradaValue": {
+                "$ne": 0
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": "$fundosResiduo._id",
+              "name": "$fundosResiduo.name",
+              "value": "$fundosResiduo.entradaValue",
+              "quotas": "$fundosResiduo.entradaQuotas",
+              "root": "$$ROOT"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$project": {
+        "result": {
+          "$concatArrays": [
+            "$fundosOrigem",
+            "$fundosDestino",
+            "$fundosResiduo"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$result",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$replaceRoot": {
+        "newRoot": "$result"
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "monetaryUnitValue": "$root.monetaryUnitValues",
+        "competenceDate": "$root.bundle.competenceDate",
+        "occurrence": "$root.ocorrenciaBeneficio.occurrence",
+        "operationDate": "$root.bundle.quoteDate",
+        "occurrenceDate": "$root.bundle.quoteDate",
+        "person": "$root.person",
+        "pensionAccount": {
+          "_id": "$_id",
+          "name": "$name"
+        },
+        "percentageMovement": {
+          "$toInt": 0
+        },
+        "amountQuotas": "$quotas",
+        "value": "$value",
+        "receiptRecord": ""
+      }
+    },
+    {
+      "$lookup": {
+        "from": "pension_accounts",
+        "localField": "pensionAccount._id",
+        "foreignField": "_id",
+        "as": "contaSaldoResgatavel"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$contaSaldoResgatavel",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "contaSaldoResgatavel": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$contaSaldoResgatavel.isCollectiveAccount",
+                false
+              ]
+            },
+            "then": false,
+            "else": true
+          }
+        }
+      }
+    }
+  ]
+}

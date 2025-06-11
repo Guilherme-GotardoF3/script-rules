@@ -1,0 +1,35 @@
+{
+  "_id": "67e455a8e666586af2511a7e",
+  "name": "etp_UpdateFieldsConvertingRetirementToPension",
+  "description": "Atualiza classe de participação do falecido, data de óbito do falecido, insere dados bancários, phone e email do beneficiário - vem do Oceano",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "67e32b7ae51a97ed791ceb53",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e32cd9e51a97ed791ceb74",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e453355d86be53860f500e",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e454335d86be53860f502f",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2025-03-26T19:29:44.224Z",
+  "updatedAt": "2025-04-04T20:48:01.707Z",
+  "__v": 0
+}

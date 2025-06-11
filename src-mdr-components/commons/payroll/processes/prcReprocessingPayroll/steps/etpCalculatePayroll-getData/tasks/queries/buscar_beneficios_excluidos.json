@@ -1,0 +1,28 @@
+{
+  "_id": "637e3b847aa6e700620a4381",
+  "type": {
+    "_id": "637e3a7ab27b400063b1e74f",
+    "name": "queries"
+  },
+  "name": "buscar_beneficios_excluidos",
+  "description": "Consulta os benefícios que foram excluídos da folha de pagamento.",
+  "main_collection": "exclusion_payrolls",
+  "output_name": "otp_trf_buscar_beneficios_excluidos",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId"
+      }
+    }
+  ]
+}

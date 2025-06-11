@@ -1,0 +1,31 @@
+{
+  "_id": "64947e96fee58cb2b81f5822",
+  "type": {
+    "_id": "65201753a2da4282abfcdddb",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReportBenefitChangeIncomes",
+  "description": "Componente de escrita relatório change_benefit_incomes",
+  "main_collection": "payroll_report_benefit_change_incomes",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_change_benefit_incomes"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_trf_project_change_benefit_incomes.participation._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_change_benefit_incomes.payrollPlanning"
+          },
+          {
+            "benefit._id": "$.$$.otp_trf_project_change_benefit_incomes.benefit._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

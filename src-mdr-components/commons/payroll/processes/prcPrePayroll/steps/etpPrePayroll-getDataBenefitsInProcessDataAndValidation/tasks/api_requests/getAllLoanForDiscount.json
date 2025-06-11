@@ -1,0 +1,17 @@
+{
+  "_id": "65f892e9b1a240741d5161f7",
+  "type": {
+    "_id": "6605b273ad93d43b4b910d1b",
+    "name": "api_requests"
+  },
+  "name": "getAllLoanForDiscount",
+  "description": "Busca a lista de emprestimos por plano e competencia",
+  "method": "get",
+  "headers": {
+    "tenant-id": "dev"
+  },
+  "pathParameters": {},
+  "queryParameters": {},
+  "Url": "https://dev.api.navega.com.vc/loans?plan=Telef%C3%B4nica%20BD&competenceDate=2024-01-01T03%3A00%3A00.000Z&creditSourceType=benefit_payroll",
+  "Body": {}
+}

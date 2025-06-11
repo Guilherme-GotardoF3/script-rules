@@ -1,0 +1,47 @@
+{
+  "_id": "678e3f075b53a0ecc3d0c9e1",
+  "type": {
+    "_id": "678e3f074ded7a23a2886835",
+    "name": "queries"
+  },
+  "name": "simulationTypeOfInstitute",
+  "description": "Seleciona que tipo de instituto está sendo simulado",
+  "main_collection": "institute_types",
+  "output_name": "otp_simulationTypeOfInstitute",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "instituteTypeId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "instituteTypeId": "$.instituteTypeId"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$_id",
+            "$bundle.instituteTypeId"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "benefitTypeId": "$_id",
+        "name": "$name"
+      }
+    }
+  ]
+}

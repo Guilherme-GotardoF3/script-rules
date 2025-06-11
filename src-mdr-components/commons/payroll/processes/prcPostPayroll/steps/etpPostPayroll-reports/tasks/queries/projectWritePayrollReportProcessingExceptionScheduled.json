@@ -1,0 +1,197 @@
+{
+  "_id": "64638d2d810463c25c6d219e",
+  "type": {
+    "_id": "646389537d9b0b89dd953bb7",
+    "name": "queries"
+  },
+  "name": "projectWritePayrollReportProcessingExceptionScheduled",
+  "description": "project_write_report_payroll_item_exception_schedules_amount",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_trf_project_report_exception_schedules_amount",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "people",
+    "payroll_item_exception_schedules"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId",
+        "judicialPension": {
+          "$exists": false
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "benefit": 1,
+        "participation": 1,
+        "payrollPlanning": 1,
+        "payrollItems": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "payrollItem": "$payrollItems"
+      }
+    },
+    {
+      "$match": {
+        "payrollItem.type": "EXCEPTION",
+        "$and": [
+          {
+            "payrollItem.exceptionAmount": {
+              "$eq": 0
+            }
+          },
+          {
+            "payrollItem.exceptionAmount": {
+              "$exists": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "participation._id",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participationId": "$participation._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "documents.document": 1,
+              "documents.type": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payroll_item_exception_schedules",
+        "localField": "benefit._id",
+        "foreignField": "benefit",
+        "as": "payrollItemExceptionSchedule",
+        "let": {
+          "payrollType": "$payrollPlanning.payrollType",
+          "rubric": "$payrollItem.rubric._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$payrollType",
+                      "$$payrollType"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$rubric._id",
+                      "$$rubric"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "listOfPercentageRubrics": 1,
+              "amountType": 1,
+              "value": 1,
+              "competenceDate": 1,
+              "reason": 1,
+              "endDate": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItemExceptionSchedule"
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "participation": "$participation",
+        "payrollPlanning": "$payrollPlanning._id",
+        "person": {
+          "_id": "$person._id",
+          "name": "$person.name",
+          "documents": "$person.documents",
+          "participation": "$participation"
+        },
+        "payrollItemExceptionSchedule": "$payrollItemExceptionSchedule._id",
+        "payroll": "$_id",
+        "listOfPercentageRubrics": "$payrollItemExceptionSchedule.listOfPercentageRubrics",
+        "rubric": "$payrollItem.rubric",
+        "amountType": "$payrollItemExceptionSchedule.amountType",
+        "value": "$payrollItemExceptionSchedule.value",
+        "competenceDate": "$payrollItemExceptionSchedule.competenceDate",
+        "reason": "$payrollItemExceptionSchedule.reason",
+        "recurrent": {
+          "$cond": [
+            {
+              "$lte": [
+                "$payrollItemExceptionSchedule.endDate",
+                false
+              ]
+            },
+            false,
+            true
+          ]
+        }
+      }
+    }
+  ]
+}

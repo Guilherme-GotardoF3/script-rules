@@ -1,0 +1,25 @@
+//_id: {'$oid': '67004750fdb7d5bd2cd4673a'}
+//_tenant: sandbox-cs
+//name: writeNewPeoplePhonesMigration
+//description: escreve os dados de telefone 
+//collection: people
+
+{
+	command: {
+        "updateOne": {
+            "update": {
+                "$set": {
+                    "phones": "$.$$.otpNewPeoplePhonesMigration.phones"
+                }
+            },
+            "filter": {
+                "$and": [
+                    {
+                        "_id": "$.$$.otpNewPeoplePhonesMigration._id"
+                    }
+                ]
+            },
+            "upsert": true
+        }
+    }
+}

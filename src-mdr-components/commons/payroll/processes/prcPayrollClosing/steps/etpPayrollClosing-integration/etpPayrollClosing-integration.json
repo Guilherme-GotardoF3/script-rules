@@ -1,0 +1,21 @@
+{
+  "_id": "66672a369c4e0b69085c6114",
+  "name": "etpPayrollClosing-integration",
+  "description": "Etapa de integração no fechamento da folha de pagamento.",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66673eaba9d2e8c66112555e",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    }
+  ],
+  "createdAt": "2024-06-10T16:30:46.459Z",
+  "updatedAt": "2024-06-10T18:05:09.756Z",
+  "__v": 0
+}

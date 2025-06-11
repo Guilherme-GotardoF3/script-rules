@@ -1,0 +1,23 @@
+{
+  "_id": "63bc4e7dedaf2600087f0d26",
+  "type": {
+    "_id": "662d30dcbe50c3d767771de8",
+    "name": "api_requests"
+  },
+  "name": "request_token_copy_2",
+  "description": "Recupera o token.",
+  "method": "post",
+  "headers": {
+    "tenant-id": "$.tenantId"
+  },
+  "pathParameters": {},
+  "queryParameters": {},
+  "Url": "$.navegaApiUrl /auth/token",
+  "Body": {
+    "type": "json",
+    "data": {
+      "username": "ti@f3capital.com.br",
+      "password": "p:63bc472efa21470008c897a1"
+    }
+  }
+}

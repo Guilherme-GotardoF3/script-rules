@@ -1,0 +1,15 @@
+{
+  "_id": "6695587bbdd73be24d7ebfaf",
+  "type": {
+    "_id": "6695587b6dcee8e0d3fc902a",
+    "name": "write_commands"
+  },
+  "name": "writeSelfSponsoredImportSalaries",
+  "description": "Escreve na collection de salario temporario",
+  "main_collection": "salary_import_temp",
+  "Command": {
+    "insertOne": {
+      "document": "$.$$.otp_applyReadjustmentsSalarySelfSponsored[0]"
+    }
+  }
+}

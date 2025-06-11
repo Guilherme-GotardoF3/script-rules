@@ -1,0 +1,28 @@
+{
+  "_id": "64417c34f9b7b44611c190ac",
+  "type": {
+    "_id": "6520162ba2da4282abfcddda",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReportIrValidationIn1343",
+  "description": "Componente de escrita relatório payroll_report_ir_validation_in1343",
+  "main_collection": "payroll_report_ir_validation_in1343",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_projecao_escrita_relatorio_in_1343"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_trf_projecao_escrita_relatorio_in_1343.participation._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_projecao_escrita_relatorio_in_1343.payrollPlanning"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

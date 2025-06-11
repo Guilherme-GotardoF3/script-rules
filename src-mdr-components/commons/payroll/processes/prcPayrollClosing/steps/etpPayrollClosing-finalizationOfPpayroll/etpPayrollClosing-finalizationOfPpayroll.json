@@ -1,0 +1,71 @@
+{
+  "_id": "65d8f2400ee692ef28d672a0",
+  "name": "etpPayrollClosing-finalizationOfPpayroll",
+  "description": "Etapa para finalizar a folha de pagamento",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6674a1d0ee09588fde97fd20",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "671baaebd2b50f533cd2f380",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "671babaad2b50f533cd2f3a5",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "64f37eb861f20eebc5504c76",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66a263184eb201ddd9af587f",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d32147ad46f7d2003312cd",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d34887f7902d43d8b89b6e",
+      "type": "tasks",
+      "order": 7,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d2cfd5e108ea324a3f5096",
+      "type": "tasks",
+      "order": 8,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d2dac16e71b6c34617485e",
+      "type": "tasks",
+      "order": 9,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66169ae0d4bd77959eaa6c5d",
+      "type": "tasks",
+      "order": 10,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:30:08.375Z",
+  "updatedAt": "2025-04-16T18:12:57.135Z",
+  "__v": 0
+}

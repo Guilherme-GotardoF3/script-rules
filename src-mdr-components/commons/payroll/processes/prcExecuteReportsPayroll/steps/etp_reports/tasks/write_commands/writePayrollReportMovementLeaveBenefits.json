@@ -1,0 +1,28 @@
+{
+  "_id": "642c49853e39732f06740791",
+  "type": {
+    "_id": "651d69dd9aac026d92b9153a",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReportMovementLeaveBenefits",
+  "description": "Componente de escrita relatório payroll_report_movement_leave_benefits",
+  "main_collection": "payroll_report_movement_leave_benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_write_report_movimen_folha_saidas"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_trf_project_write_report_movimen_folha_saidas.participation._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_write_report_movimen_folha_saidas.payrollPlanning"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

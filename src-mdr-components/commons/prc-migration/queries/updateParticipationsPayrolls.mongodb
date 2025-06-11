@@ -1,0 +1,86 @@
+//_id: {"$oid": "6703dbdeee69f1024776db28"}
+//_tenant: sandbox-cs
+//name: updateParticipationsPayrolls
+//description: projeta as participações com base na people para a atualizar a referencia estendida na payrolls
+//collection: payrolls_RMDRC
+
+//use("sandbox-cs");
+
+//db.payrolls_RMDRC.aggregate(
+    [
+        {
+          "$match": {
+            "$expr": {
+              "$eq": [
+                "$participation._id",
+                "$person.participation._id"
+              ]
+            }
+          }
+        },
+        {
+          "$project": {
+            "_id": 1,
+            "person": 1,
+            "participation": 1
+          }
+        },
+        {
+          "$lookup": {
+            "from": "people",
+            "localField": "person._id",
+            "foreignField": "_id",
+            "as": "people",
+            "let": {
+              "participationId": "$participation._id"
+            },
+            "pipeline": [
+              {
+                "$unwind": {
+                  "path": "$participations"
+                }
+              },
+              {
+                "$match": {
+                  "$expr": {
+                    "$eq": [
+                      "$participations._id",
+                      "$$participationId"
+                    ]
+                  }
+                }
+              },
+              {
+                "$project": {
+                  "person": {
+                    "_id": "$_id",
+                    "name": "$name",
+                    "documents": "$documents",
+                    "participation": {
+                      "_id": "$participations._id",
+                      "number": "$participations.number",
+                      "participationClass._id": "$participations.participationClass._id",
+                      "participationClass.plan": "$participations.participationClass.plan"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$people",
+            "preserveNullAndEmptyArrays": false
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "payroll": "$_id",
+            "participation": "$people.person.participation",
+            "person": "$people.person"
+          }
+        }
+      ]
+        //);

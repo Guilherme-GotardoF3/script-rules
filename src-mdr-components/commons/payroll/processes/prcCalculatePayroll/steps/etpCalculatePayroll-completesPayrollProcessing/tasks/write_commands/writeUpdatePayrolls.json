@@ -1,0 +1,31 @@
+{
+  "_id": "63bda47bafc969000800cc84",
+  "type": {
+    "_id": "64b587a265fdceb72e9ce3b3",
+    "name": "write_commands"
+  },
+  "name": "writeUpdatePayrolls",
+  "description": "Tarefa para atualizar os valores da collection payroll",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "IRDependents": "$.$$.otp_projectUpdatePayrolls.IRDependents",
+          "actualParcel": "$.$$.otp_projectUpdatePayrolls.actualParcel",
+          "totalParcel": "$.$$.otp_projectUpdatePayrolls.totalParcel",
+          "grossAmount": "$.$$.otp_projectUpdatePayrolls.grossAmount",
+          "netAmount": "$.$$.otp_projectUpdatePayrolls.netAmount"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_projectUpdatePayrolls._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

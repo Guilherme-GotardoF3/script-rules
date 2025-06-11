@@ -1,0 +1,159 @@
+{
+  "_id": "66f2cc14a03e096aebd8194d",
+  "type": {
+    "_id": "66f2cc140eaf70b87fcf0e70",
+    "name": "queries"
+  },
+  "name": "endBenefitRetirementIntoPension",
+  "description": "Depois da segunda etapa do transformar aposentadoria em pensão por morte e ativação dos benefícios dos beneficiários, encerra o benefício do falecido (aposentado)",
+  "main_collection": "benefits",
+  "output_name": "otp_endBenefitRetirementIntoPension",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "listBenefits",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "benefits"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "listBenefits": "$.listBenefits"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$listBenefits"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$_id",
+            "$listBenefits._id"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "benefitSource",
+        "foreignField": "_id",
+        "as": "benefitSourceOrigin"
+      }
+    },
+    {
+      "$addFields": {
+        "lastHistory": "$benefitSourceOrigin.history"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$lastHistory",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$lastHistory",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$sort": {
+        "lastHistory.effectiveDate": -1
+      }
+    },
+    {
+      "$addFields": {
+        "competenceDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        },
+        "newBenefitStartDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        },
+        "newPaymentStartDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        },
+        "lastHistory.expirationDate": {
+          "$toDate": "$listBenefits.paymentStartDate"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$lastHistory.status",
+            "Ativo"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "newHistory": {
+          "_id": "$_id",
+          "history": {
+            "$concatArrays": [
+              [
+                "$lastHistory"
+              ],
+              [
+                {
+                  "optingExemption": "$lastHistory.optingExemption",
+                  "immediatePercentage": "$lastHistory.immediatePercentage",
+                  "quotaImmediateParcelValue": "$lastHistory.quotaImmediateParcelValue",
+                  "cashImmediateParcelValue": "$lastHistory.cashImmediateParcelValue",
+                  "accountQuotaBalance": "$lastHistory.accountQuotaBalance",
+                  "accountCashBalance": "$lastHistory.accountCashBalance",
+                  "monthlyValueInCash": "$lastHistory.monthlyValueInCash",
+                  "monthlyValueInQuotas": "$lastHistory.monthlyValueInQuotas",
+                  "paymentMethods": "$lastHistory.paymentMethods",
+                  "status": "Encerrado",
+                  "effectiveDate": {
+                    "$toDate": "$listBenefits.paymentStartDate"
+                  },
+                  "expirationDate": null,
+                  "updatedBy": null,
+                  "statusReason": "Encerramento por conversão de aposentadoria em pensão por morte"
+                }
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefitSourceOrigin",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": "$benefitSourceOrigin._id",
+        "history": "$newHistory.history"
+      }
+    }
+  ]
+}

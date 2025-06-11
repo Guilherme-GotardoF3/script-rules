@@ -1,0 +1,59 @@
+{
+  "_id": "65d8f1eb0ee692ef28d67228",
+  "name": "etpCalculatePayroll-completesPayrollProcessing",
+  "description": "Etapa que fecha o processo de calculo da folha",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "63bc8119f8bd7d0008b98950",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "63bda47bafc969000800cc84",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "63b5d409a3cb720008c66c29",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "63ac9e61708b4d0008bd1fbb",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "64663e7cc8094179229d336d",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66030aa3fd8a5b6311682eb3",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "64b83f9a9de6561bf40b6b18",
+      "type": "tasks",
+      "order": 7,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "669687d01d32b4e3dc744e24",
+      "type": "tasks",
+      "order": 8,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:28:43.508Z",
+  "updatedAt": "2024-08-08T14:09:11.437Z",
+  "__v": 0
+}

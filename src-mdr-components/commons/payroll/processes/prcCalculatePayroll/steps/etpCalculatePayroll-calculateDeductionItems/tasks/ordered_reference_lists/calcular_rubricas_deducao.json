@@ -1,0 +1,12 @@
+{
+  "_id": "641de47bf5bf6ac30d4cdc09",
+  "type": {
+    "_id": "641de58b967ec6a43c744495",
+    "name": "ordered_reference_lists"
+  },
+  "name": "calcular_rubricas_deducao",
+  "description": "Calcula as rubricas de deducao de acordo com o benefício gerado.",
+  "outputName": "otp_trf_calcular_rubricas_deducao",
+  "rulePath": "$.rule",
+  "referenceListPath": "$.$$.otp_trf_buscar_rubricas_deducao..br_rubric[0]"
+}

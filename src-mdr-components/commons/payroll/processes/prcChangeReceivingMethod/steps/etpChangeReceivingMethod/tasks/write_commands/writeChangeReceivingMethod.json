@@ -1,0 +1,25 @@
+{
+  "_id": "6751d6e978ea40cf7b4f86ad",
+  "type": {
+    "_id": "6751d6e9ca5e2f9e599899ee",
+    "name": "write_commands"
+  },
+  "name": "writeChangeReceivingMethod",
+  "description": "Tarefa que escreve a mudança da forma de recebimento e do método de pagamento.",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_changeReceivingMethod"
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_changeReceivingMethod._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

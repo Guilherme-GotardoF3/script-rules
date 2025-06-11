@@ -1,0 +1,23 @@
+{
+  "_id": "678e9f8d11decd6cbbd2033f",
+  "name": "etpConcessionPermanentDisability",
+  "description": "Etapa para concessão do beneficio por incapacidade permanente",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "678e99b9bba285408e4dfe5f",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "678e9f80cf9917d0e7907833",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2025-01-20T19:10:05.416Z",
+  "updatedAt": "2025-01-20T19:10:05.416Z",
+  "__v": 0
+}

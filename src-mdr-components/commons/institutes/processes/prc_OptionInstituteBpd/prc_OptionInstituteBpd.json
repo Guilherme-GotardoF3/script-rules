@@ -1,0 +1,25 @@
+{
+  "_id": "676d9fa688ddfd71ed59e5f0",
+  "name": "prc_OptionInstituteBpd",
+  "description": "Executa tarefas quando o participante opta pelo instituto de BPD",
+  "context": "institute",
+  "steps": [
+    {
+      "step": "676d9f029d07c5120ee5767a",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "fe66bca9-90de-4909-8c1a-966f21a824bc",
+    "username": "dpitol@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "fe66bca9-90de-4909-8c1a-966f21a824bc",
+    "username": "dpitol@f3capital.com.br"
+  },
+  "isSync": false,
+  "createdAt": "2024-12-26T18:25:42.568Z",
+  "updatedAt": "2024-12-26T18:25:42.568Z",
+  "__v": 0
+}

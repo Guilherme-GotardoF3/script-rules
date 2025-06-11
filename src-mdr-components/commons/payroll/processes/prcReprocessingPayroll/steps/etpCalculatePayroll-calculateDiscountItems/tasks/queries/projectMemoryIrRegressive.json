@@ -1,0 +1,122 @@
+{
+  "_id": "6465105af75096ada0ca7634",
+  "type": {
+    "_id": "64651bef74a4bbf06a8dbc44",
+    "name": "queries"
+  },
+  "name": "projectMemoryIrRegressive",
+  "description": "Projeção para  escrita da memoria de calculo do IR Regressivo",
+  "main_collection": "payroll_plannings",
+  "output_name": "otp_projectMemoryIrRegressive",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_rubrica_ir_regressivo",
+      "type": "Parameter",
+      "description": "Id da rubrica de ir regressivo",
+      "value": "674e6d8e519c6b3b81a2d12d"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$addFields": {
+        "calculoRubricaIrResult": "$.otpCalculateIncomeTax"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$calculoRubricaIrResult",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$calculoRubricaIrResult",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$calculoRubricaIrResult.result",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "calculoRubricaIrResult.result.rubric._id": "p:64eba498f423017333463bb0"
+      }
+    },
+    {
+      "$addFields": {
+        "calculoRubricaIr": "$calculoRubricaIrResult.result"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$calculoRubricaIr",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "calculoRubricaIr.payroll",
+        "foreignField": "_id",
+        "as": "payrollItem",
+        "let": {
+          "rubric": "$calculoRubricaIr.rubric._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payrollItems",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollItems.rubric._id",
+                  "$$rubric"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItem",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payrollPlanning": "$calculoRubricaIr.memoryCalculation.payrollPlanning",
+        "benefit": "$calculoRubricaIr.memoryCalculation.benefit",
+        "payroll": "$calculoRubricaIr.memoryCalculation.payroll",
+        "payrollItem": "$payrollItem._id",
+        "listContribuitions": "$calculoRubricaIr.memoryCalculation.listContribuitions",
+        "createdAt": "$calculoRubricaIr.createdAt",
+        "updatedAt": "$calculoRubricaIr.updatedAt"
+      }
+    }
+  ]
+}

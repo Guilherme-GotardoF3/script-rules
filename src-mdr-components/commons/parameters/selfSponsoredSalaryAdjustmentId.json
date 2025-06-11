@@ -1,0 +1,14 @@
+{
+  "_id": "6723b944cd4c721feb5bee36",
+  "type": {
+    "_id": "6723b9441d9a90c03c7dabb9",
+    "name": "parameters"
+  },
+  "name": "selfSponsoredSalaryAdjustmentId",
+  "description": "id do reajuste de salario de autopatrocinado ",
+  "data": {
+    "value": "67fe6d56475e354faf208597",
+    "type": "constant",
+    "isDefault": false
+  }
+}

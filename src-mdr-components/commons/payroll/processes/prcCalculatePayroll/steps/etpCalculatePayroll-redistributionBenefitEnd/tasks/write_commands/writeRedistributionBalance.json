@@ -1,0 +1,28 @@
+{
+  "_id": "6750541edf925d9a5a597976",
+  "type": {
+    "_id": "6750541e9e632ef85b47313f",
+    "name": "write_commands"
+  },
+  "name": "writeRedistributionBalance",
+  "description": "Com a perda da condição do beneficiário, acontece a redistribuição dos saldos dos beneficiários, na coll account_movements",
+  "main_collection": "account_movements",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_redistributionBenefitEnd.movements"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otp_redistributionBenefitEnd.movements.person._id"
+          },
+          {
+            "competenceDate": "$.$$.otp_redistributionBenefitEnd.movements.competenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

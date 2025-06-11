@@ -1,0 +1,62 @@
+{
+  "_id": "65fcbd886dbdae2b6ce5caf3",
+  "name": "prcPrePayroll",
+  "description": "Processo de execução das etapas a serem executadas antes do processo da folha de pagamento",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "benefit",
+  "owners": [
+    {
+      "ref": "ad447d00-30e2-45fd-a87d-c80ba1b50c69",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "65d8f1820ee692ef28d67188",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65fdc885e3b6ae08f32b364b",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "664f4a0145a86ca75312a0cd",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f1300ee692ef28d67121",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f13f0ee692ef28d67137",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f15b0ee692ef28d67160",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-03-21T23:06:48.266Z",
+  "updatedAt": "2024-07-18T15:36:30.477Z",
+  "__v": 0,
+  "dueDate": null,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false
+}

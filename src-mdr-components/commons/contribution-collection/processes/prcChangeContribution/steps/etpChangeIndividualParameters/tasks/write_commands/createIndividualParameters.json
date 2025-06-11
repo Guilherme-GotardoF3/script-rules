@@ -1,0 +1,28 @@
+{
+  "_id": "674df32d6469189969fddec8",
+  "type": {
+    "_id": "674df32d310f76b9e89dc377",
+    "name": "write_commands"
+  },
+  "name": "createIndividualParameters",
+  "description": "Cria um novo documento conforme a alteração solicitada pelo participante pelo Oceano",
+  "main_collection": "individual_collections_parameters",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpProjectNewIndividualCollectionsParameters"
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otpProjectNewIndividualCollectionsParameters._id"
+          },
+          {
+            "effectiveDate.startedAt": "$.$$.otpProjectNewIndividualCollectionsParameters.effectiveDate.startedAt"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

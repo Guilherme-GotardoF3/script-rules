@@ -1,0 +1,31 @@
+{
+  "_id": "6720f05fc1efc13e4c19ddd6",
+  "type": {
+    "_id": "6720f05f71bcc786d2ce40ae",
+    "name": "write_commands"
+  },
+  "name": "updateCollectiveAccountBalanceByQuotaDate",
+  "description": "Atualiza novo saldo de conta coletivo, atualizado de acordo com a data da cota",
+  "main_collection": "collective_account_balances",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_projectCollectiveAccountBalanceByQuotaDate"
+      },
+      "filter": {
+        "$and": [
+          {
+            "competenceDate": "$.$$.otp_projectCollectiveAccountBalanceByQuotaDate.competenceDate"
+          },
+          {
+            "date": "$.$$.otp_projectCollectiveAccountBalanceByQuotaDate.date"
+          },
+          {
+            "plan._id": "$.$$.otp_projectCollectiveAccountBalanceByQuotaDate.plan._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

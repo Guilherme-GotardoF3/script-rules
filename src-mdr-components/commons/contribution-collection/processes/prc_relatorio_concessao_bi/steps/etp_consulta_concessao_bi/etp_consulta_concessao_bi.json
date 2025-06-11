@@ -1,0 +1,10 @@
+{
+  "_id": "6532887c55ac53621c2ef97a",
+  "name": "etp_consulta_concessao_bi",
+  "description": "etapa de consullta dos dados de concessao para o relatorio de bi",
+  "isDefault": false,
+  "actions": [],
+  "createdAt": "2023-10-20T14:02:37.026Z",
+  "updatedAt": "2023-10-20T14:02:37.026Z",
+  "__v": 0
+}

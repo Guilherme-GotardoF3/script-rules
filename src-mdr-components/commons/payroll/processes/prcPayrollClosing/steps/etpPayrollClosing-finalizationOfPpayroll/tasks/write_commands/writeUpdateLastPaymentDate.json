@@ -1,0 +1,27 @@
+{
+  "_id": "67d2dac16e71b6c34617485e",
+  "type": {
+    "_id": "67d2dac18c339f3e30848482",
+    "name": "write_commands"
+  },
+  "name": "writeUpdateLastPaymentDate",
+  "description": "Escreve na collection benefits e atualiza o campo lastPaymentDate com a data do último pagamento da folha que tiver sendo finalizada.",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "lastPaymentDate": "$.$$.otp_updateLastPaymentDate.lastPaymentDate"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_updateLastPaymentDate._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

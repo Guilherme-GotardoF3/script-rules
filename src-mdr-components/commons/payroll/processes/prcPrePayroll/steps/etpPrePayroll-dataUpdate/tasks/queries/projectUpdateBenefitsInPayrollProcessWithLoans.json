@@ -1,0 +1,86 @@
+{
+  "_id": "660b00351f1a292b02107f1e",
+  "type": {
+    "_id": "660aff63d2f94f308b5d5d03",
+    "name": "queries"
+  },
+  "name": "projectUpdateBenefitsInPayrollProcessWithLoans",
+  "description": "Projeta para atualizar o planejamento da folha de pagamento com a lista dos emprestimos das pessoas (aposentados e pensionistas)",
+  "main_collection": "benefits_in_payroll_process",
+  "output_name": "otp_trf_projectUpdatePayrollPlanningWithLoans",
+  "fixed_value": false,
+  "input_parameters": [],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "payload.loans": "$.otp_trf_getAllLoanForDiscount.payload"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payload.loans"
+      }
+    },
+    {
+      "$addFields": {
+        "CpfPerson": {
+          "$toDouble": "$payload.personCpf"
+        },
+        "CpfLoan": {
+          "$toDouble": "$payload.loans.participation.document"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$CpfPerson",
+            "$CpfLoan"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payload.loans.contract.installments"
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "participation_id": "$payload.loans.participation._id",
+          "plan": "$payload.loans.plan"
+        },
+        "totalAmount": {
+          "$sum": "$payload.loans.contract.installments.amount"
+        },
+        "idToproject": {
+          "$first": "$_id"
+        },
+        "root": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "root.payload.loans.contract.installments": [
+          {
+            "number": "$root.payload.loans.contract.installments.number",
+            "amount": "$totalAmount",
+            "competenceDate": "$root.payload.loans.contract.installments.competenceDate"
+          }
+        ]
+      }
+    },
+    {
+      "$project": {
+        "_id": "$idToproject",
+        "payload": "$root.payload"
+      }
+    }
+  ]
+}

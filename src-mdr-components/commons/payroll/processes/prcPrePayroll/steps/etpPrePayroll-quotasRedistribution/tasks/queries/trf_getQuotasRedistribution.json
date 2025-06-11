@@ -1,0 +1,195 @@
+{
+  "_id": "6656111c0f1a1027a1f58cda",
+  "type": {
+    "_id": "6656111c8f31ae437ea00851",
+    "name": "queries"
+  },
+  "name": "trf_getQuotasRedistribution",
+  "description": "Tarefa para redistribuir as cotas dos pensionistas falecidos.",
+  "main_collection": "account_balances_rmdrc",
+  "output_name": "otp_trf_getQuotasRedistribution",
+  "fixed_value": false,
+  "input_parameters": [],
+  "collections": [
+    "dependents",
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$lookup": {
+        "from": "dependents",
+        "localField": "person._id",
+        "foreignField": "owner",
+        "as": "dependents",
+        "pipeline": [
+          {
+            "$project": {
+              "owner": 1,
+              "dependent": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "dependents.dependent",
+        "foreignField": "_id",
+        "as": "personDependent",
+        "pipeline": [
+          {
+            "$match": {
+              "deathDate": {
+                "$eq": null
+              }
+            }
+          },
+          {
+            "$project": {
+              "name": 1,
+              "birthDate": 1,
+              "deathDate": 1,
+              "participations": 1,
+              "createdAt": 1,
+              "updatedAt": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$gt": [
+            {
+              "$size": "$dependents"
+            },
+            1
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "amountPerDependent": {
+          "$cond": {
+            "if": {
+              "$gt": [
+                {
+                  "$size": "$dependents"
+                },
+                1
+              ]
+            },
+            "then": {
+              "$divide": [
+                "$value",
+                {
+                  "$size": "$dependents"
+                }
+              ]
+            },
+            "else": "$value"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "competenceDate": 1,
+        "operationDate": 1,
+        "person": 1,
+        "value": 1,
+        "dependents": {
+          "$map": {
+            "input": "$personDependent",
+            "as": "personDependent",
+            "in": {
+              "_id": "$$personDependent._id",
+              "name": "$$personDependent.name",
+              "participations": "$$personDependent.participations",
+              "value": "$amountPerDependent"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$facet": {
+        "exits": [
+          {
+            "$project": {
+              "competenceDate": "$competenceDate",
+              "occurrence": {
+                "_id": "$person._id",
+                "name": "$person.name"
+              },
+              "operationDate": "$operationDate",
+              "occurrenceDate": "$competenceDate",
+              "origin": null,
+              "person": "$person",
+              "pensionAccount": "$pensionAccountList",
+              "percentageMovement": 100,
+              "value": {
+                "$multiply": [
+                  "$value",
+                  -1
+                ]
+              },
+              "description": "Saída por falecimento"
+            }
+          }
+        ],
+        "entries": [
+          {
+            "$unwind": "$dependents"
+          },
+          {
+            "$project": {
+              "competenceDate": "$competenceDate",
+              "occurrence": {
+                "_id": "$dependents._id",
+                "name": "$dependents.name"
+              },
+              "operationDate": "$operationDate",
+              "occurrenceDate": "$competenceDate",
+              "origin": {
+                "_id": "$person._id",
+                "name": "$person.name"
+              },
+              "person": "$dependents",
+              "pensionAccount": "$pensionAccountList",
+              "percentageMovement": 100,
+              "value": "$dependents.value",
+              "description": "Entrada divisão pensão"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$project": {
+        "operations": {
+          "$concatArrays": [
+            "$exits",
+            "$entries"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$operations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$replaceRoot": {
+        "newRoot": "$operations"
+      }
+    }
+  ]
+}

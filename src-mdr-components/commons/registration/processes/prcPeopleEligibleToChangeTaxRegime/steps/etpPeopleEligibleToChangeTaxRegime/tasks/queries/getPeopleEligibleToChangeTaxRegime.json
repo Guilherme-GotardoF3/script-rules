@@ -1,0 +1,320 @@
+{
+  "_id": "660eb362705ee1d4b4445ef7",
+  "type": {
+    "_id": "660eb2f7ebe0ae627e3a61d9",
+    "name": "queries"
+  },
+  "name": "getPeopleEligibleToChangeTaxRegime",
+  "description": "busca uma ou mais pessoas aptas a troca de regime tributário",
+  "main_collection": "people",
+  "output_name": "otp_trf_getPeopleEligibleToChangeTaxRegime",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_tipo_ir_progressivo",
+      "type": "Parameter",
+      "description": "Id do tipo de ir progressivo",
+      "value": "66bd44764eb4534a4f834c3c"
+    },
+    {
+      "name": "id_tipo_ir_regressivo",
+      "type": "Parameter",
+      "description": "Id do ir regressivo",
+      "value": "66bd44764eb4534a4f834c3d"
+    },
+    {
+      "name": "listOfPeople",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "benefits",
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "listOfPeople": "$.listOfPeople"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$listOfPeople",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "listOfPeople": {
+          "$ifNull": [
+            "$listOfPeople",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$_id",
+            "$listOfPeople"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "participations": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "participations._id",
+        "foreignField": "participation",
+        "as": "benefits",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$history",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$sort": {
+              "history.effectiveDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "type": 1,
+              "participation": 1,
+              "history": 1,
+              "benefitSource": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefits",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "progressivoId": "p:6418c40ee89a5fcee1d873c3",
+        "regressiveId": "p:646d2faf0c6ae3bd9fdaa44c",
+        "deadline": {
+          "$toDate": "2024-01-11"
+        },
+        "benefits": {
+          "$ifNull": [
+            "$benefits",
+            null
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "isEligibleBeforeTheDeadline": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$ne": [
+                        "$benefits",
+                        null
+                      ]
+                    },
+                    {
+                      "$lt": [
+                        "$benefits.history.effectiveDate",
+                        "$deadline"
+                      ]
+                    },
+                    {
+                      "$ne": [
+                        "$participations.taxRegimeType._id",
+                        "$regressiveId"
+                      ]
+                    }
+                  ]
+                },
+                "then": true
+              }
+            ],
+            "default": false
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "benefits.benefitSource",
+        "foreignField": "_id",
+        "as": "benefitSource",
+        "let": {
+          "progressivoId": "$progressivoId"
+        },
+        "pipeline": [
+          {
+            "$lookup": {
+              "from": "people",
+              "localField": "participation",
+              "foreignField": "participations._id",
+              "as": "person",
+              "pipeline": [
+                {
+                  "$unwind": {
+                    "path": "$participations",
+                    "preserveNullAndEmptyArrays": false
+                  }
+                },
+                {
+                  "$project": {
+                    "_id": 1,
+                    "participations": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$person",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$person.participations.taxRegimeType._id",
+                  "$$progressivoId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "type": 1,
+              "person": 1,
+              "history": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefitSource",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "benefitSource": {
+          "$ifNull": [
+            "$benefitSource",
+            null
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "isEligibleAfterTheDeadline": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$gte": [
+                        "$benefits.history.effectiveDate",
+                        "$deadline"
+                      ]
+                    },
+                    {
+                      "$ne": [
+                        "$benefits.history.status",
+                        "Ativo"
+                      ]
+                    },
+                    {
+                      "$or": [
+                        {
+                          "$eq": [
+                            "$benefits",
+                            null
+                          ]
+                        },
+                        {
+                          "$ne": [
+                            "$benefitSource",
+                            null
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "then": true
+              }
+            ],
+            "default": false
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "isElegible": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$ne": [
+                    "$isEligibleBeforeTheDeadline",
+                    "$isEligibleAfterTheDeadline"
+                  ]
+                },
+                "then": true
+              }
+            ],
+            "default": false
+          }
+        },
+        "participation": "$participations._id"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "participation": 1,
+        "isElegible": 1
+      }
+    }
+  ]
+}

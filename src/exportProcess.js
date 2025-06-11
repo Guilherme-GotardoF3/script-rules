@@ -6,7 +6,7 @@ import path from "path";
 export async function exportProcess(processName, area) {
     console.log(`Procurando processo "${processName}"`);
 
-    const baseDir = `export/${area}`;
+    const baseDir = `src-mdr-components/commons/${area}`;
     const db = await getDb();
 
     const process = await db.collection("processes").findOne({ name: processName });
@@ -200,7 +200,7 @@ function extractSystemActions(aggregation) {
 
     function search(value, path = "") {
         if (typeof value === "string") {
-            if (value.startsWith("$.") && (!value.startsWith("$.$$.otp") || !value.startsWith("$.otp"))) {
+            if (value.startsWith("$.") && !(value.startsWith("$.$$") || value.startsWith("$.opt") || value.startsWith("$.otp")))  {
                 systemActions.add(value);
                 console.log(`Ação do sistema encontrada em ${path}`, value);
             }
@@ -252,7 +252,6 @@ export async function updateParameters() {
                 isDefault: param.isDefault
             }
         };
-
-        await saveJson("parameters", param.name, parameter);
+        await saveJson("src-mdr-components/commons/parameters", param.name, parameter);
     }
 }

@@ -1,0 +1,23 @@
+{
+  "_id": "677d7be1ebbb7fc26a621e1e",
+  "name": "etp_WaitingPeriod",
+  "description": "Etapa que busca, calcula e checa as carências de concessão",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "677d78f6fefb8cfd1daff825",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "677d77a8fefb8cfd1daff804",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2025-01-07T19:09:21.154Z",
+  "updatedAt": "2025-01-07T19:09:21.154Z",
+  "__v": 0
+}

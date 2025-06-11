@@ -1,0 +1,351 @@
+{
+  "_id": "64dbd1a97493c2647517d95e",
+  "type": {
+    "_id": "64dbcf68cc84fbf977b28c76",
+    "name": "queries"
+  },
+  "name": "project_contribuicao_de_risco",
+  "description": "project_contribuicao_de_risco",
+  "main_collection": "participations",
+  "output_name": "otp_trf_escrita_contribuicao_de_risco",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "referenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "acceptedDifferenceMargin",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "costing_plans",
+    "financial_statements",
+    "costing_plan_configurations"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "dateFilter": {
+          "$toDate": "$.referenceDate"
+        },
+        "planIdFilter": "$.planId",
+        "personWithParticipationActived": "$.otp_trf_buscar_participacoes_ativas",
+        "acceptedDifferenceMargin": {
+          "$toInt": "$.acceptedDifferenceMargin"
+        },
+        "rubricFilter": [
+          "p:647f9e5367c2916c6680bee9",
+          "p:64e5ff463323eea1277b8a3d"
+        ],
+        "personContribuicaoRisco": "$.otp_calcular_contribuicao_risco"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "person": 1,
+        "dateFilter": 1,
+        "planIdFilter": 1,
+        "personWithParticipationActived": 1,
+        "acceptedDifferenceMargin": 1,
+        "rubricFilter": 1,
+        "personContribuicaoRisco": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricFilter",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$personContribuicaoRisco",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$personContribuicaoRisco._id",
+            "$person"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$personWithParticipationActived",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$personWithParticipationActived.participation._id",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plans",
+        "localField": "planIdFilter",
+        "foreignField": "plan",
+        "as": "costingPlans",
+        "let": {
+          "rubricFilter": "$rubricFilter"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$rubric",
+                  "$$rubricFilter"
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$costingPlans",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$personContribuicaoRisco.rubricFilter",
+            "$costingPlans.rubric"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "financialrubrics": [
+          "$personContribuicaoRisco.contribuicaoParticipante.rubric",
+          "$personContribuicaoRisco.contribuicaoPatrocinador.rubric"
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "financial_statements",
+        "localField": "person",
+        "foreignField": "person",
+        "as": "financialStatement",
+        "let": {
+          "dateFilter": "$dateFilter",
+          "financialrubrics": "$financialrubrics"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      {
+                        "$toInt": {
+                          "$dateToString": {
+                            "format": "%m",
+                            "date": "$$dateFilter"
+                          }
+                        }
+                      },
+                      "$referencyMonth"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      {
+                        "$toInt": {
+                          "$dateToString": {
+                            "format": "%Y",
+                            "date": "$$dateFilter"
+                          }
+                        }
+                      },
+                      "$referencyYear"
+                    ]
+                  },
+                  {
+                    "$in": [
+                      "$rubric",
+                      "$$financialrubrics"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$financialStatement",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "participationRisk": "$personContribuicaoRisco.participationRisk",
+        "sponsorRisk": "$personContribuicaoRisco.sponsorRisk"
+      }
+    },
+    {
+      "$addFields": {
+        "risk": {
+          "$cond": {
+            "if": "$personContribuicaoRisco.riskTotal",
+            "then": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$sponsorRisk",
+                    "$participationRisk"
+                  ]
+                },
+                "then": "$participationRisk",
+                "else": "$personContribuicaoRisco.riskTotal"
+              }
+            },
+            "else": false
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plan_configurations",
+        "localField": "planIdFilter",
+        "foreignField": "plan._id",
+        "as": "rubricResult",
+        "let": {
+          "rubricFilter": "$rubricFilter",
+          "dateFilter": "$dateFilter"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "effectiveDate.endedAt": {
+                "$ifNull": [
+                  "$effectiveDate.endedAt",
+                  ""
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$in": [
+                      "$$rubricFilter",
+                      "$rubrics.destiny._id"
+                    ]
+                  },
+                  {
+                    "$gte": [
+                      "$$dateFilter",
+                      "$effectiveDate.startedAt"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          ""
+                        ]
+                      },
+                      {
+                        "$lte": [
+                          "$$dateFilter",
+                          "$effectiveDate.endedAt"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$addFields": {
+              "rubric": {
+                "$first": {
+                  "$filter": {
+                    "input": "$rubrics",
+                    "cond": {
+                      "$eq": [
+                        "$$rubric.destiny._id",
+                        "$$rubricFilter"
+                      ]
+                    },
+                    "as": "rubric"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricResult",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "participation": "$personWithParticipationActived.participation._id",
+        "financialStatement": "$financialStatement._id",
+        "receiptRecord": "$rubricResult.rubric.destiny.name",
+        "origin": "importado",
+        "discountSponsor": "$financialStatement.discountSponsor",
+        "rubric": "$costingPlans.rubric",
+        "competencyMonth": "$financialStatement.competencyMonth",
+        "competencyYear": "$financialStatement.competencyYear",
+        "referencyMonth": "$financialStatement.referencyMonth",
+        "referencyYear": "$financialStatement.referencyYear",
+        "value": "$risk",
+        "paymentDate": {
+          "$toDate": "$financialStatement.paymentDate"
+        },
+        "plan": "$planIdFilter"
+      }
+    }
+  ]
+}

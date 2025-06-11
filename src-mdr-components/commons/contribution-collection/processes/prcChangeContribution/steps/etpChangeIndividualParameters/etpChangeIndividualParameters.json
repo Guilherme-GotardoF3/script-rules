@@ -1,0 +1,35 @@
+{
+  "_id": "674dfa7be5c2e5768012e1a8",
+  "name": "etpChangeIndividualParameters",
+  "description": "Etapa destinada a alteração da contribuição mensal solicitada pelo participante no Oceano",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "674de7de0a9a44f79baa7fef",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "674df2476469189969fddea3",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "674de8fd0a9a44f79baa8014",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "674df32d6469189969fddec8",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-12-02T18:20:43.958Z",
+  "updatedAt": "2024-12-02T18:20:43.958Z",
+  "__v": 0
+}

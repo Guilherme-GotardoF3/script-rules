@@ -1,0 +1,28 @@
+{
+  "_id": "637f8c9e0a122b0063e6b04b",
+  "type": {
+    "_id": "637f8c1863b865006148f076",
+    "name": "queries"
+  },
+  "name": "buscar_exclusoes_item_folha_pagamento",
+  "description": "Consulta os itens excluídos da folha de pagamento para um benefício.",
+  "main_collection": "exclusion_payroll_items",
+  "output_name": "trf_buscar_exclusoes_item_folha_pagamento",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId"
+      }
+    }
+  ]
+}

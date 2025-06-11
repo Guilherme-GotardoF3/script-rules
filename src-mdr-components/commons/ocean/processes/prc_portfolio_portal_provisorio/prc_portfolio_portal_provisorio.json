@@ -1,0 +1,25 @@
+{
+  "_id": "66b635ec3e7d9085e25049a8",
+  "name": "prc_portfolio_portal_provisorio",
+  "description": "Processo provisório* que busca os dados do portifólio do participante",
+  "context": "benefit",
+  "steps": [
+    {
+      "step": "66b6355f4f82b5a3b1d2d460",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-08-09T15:29:48.972Z",
+  "updatedAt": "2024-11-14T22:43:23.162Z",
+  "__v": 0,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": true
+}

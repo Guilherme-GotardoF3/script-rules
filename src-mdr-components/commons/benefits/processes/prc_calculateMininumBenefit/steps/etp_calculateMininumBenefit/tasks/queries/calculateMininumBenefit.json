@@ -1,0 +1,180 @@
+{
+  "_id": "6776fba43677c91893ba697f",
+  "type": {
+    "_id": "6776fba47593260a8e5d8da8",
+    "name": "queries"
+  },
+  "name": "calculateMininumBenefit",
+  "description": "Apura o valor do benefício mínimo para cada tipo de benefício, se for o caso para cada plano",
+  "main_collection": "people",
+  "output_name": "otp_calculateMininumBenefit",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "personId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefitTypeId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefitPaymentReceivingId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "tagIds",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "requestDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "personId": "$.personId",
+          "participationId": "$.participationId",
+          "planId": "$.planId",
+          "benefitTypeId": "$.benefitTypeId",
+          "benefitPaymentReceivingId": "$.benefitPaymentReceivingId",
+          "tagsId": "$.tagIds",
+          "requestDate": {
+            "$toDate": "$.requestDate"
+          }
+        },
+        "SRB": {
+          "$toDouble": "$.otp_calculateSRBTelefonicaBD[0].amount"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$SRB",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$_id",
+            "$bundle.personId"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$participations._id",
+            "$bundle.participationId"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "beneficioMinimo": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$eq": [
+                        "$participations.participationClass.plan._id",
+                        "665cd426d11b2a523e4708b5"
+                      ]
+                    },
+                    {
+                      "$ne": [
+                        "$bundle.benefitTypeId",
+                        "66bd4fef4eb4534a4f85503f"
+                      ]
+                    }
+                  ]
+                },
+                "then": {
+                  "$multiply": [
+                    0.1,
+                    "$SRB"
+                  ]
+                }
+              },
+              {
+                "case": {
+                  "$gt": [
+                    "$campo2",
+                    100
+                  ]
+                },
+                "then": "Resultado 2"
+              },
+              {
+                "case": {
+                  "$lt": [
+                    "$campo3",
+                    50
+                  ]
+                },
+                "then": "Resultado 3"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$campo4",
+                    "valor2"
+                  ]
+                },
+                "then": "Resultado 4"
+              },
+              {
+                "case": {
+                  "$gte": [
+                    "$campo5",
+                    200
+                  ]
+                },
+                "then": "Resultado 5"
+              }
+            ],
+            "default": 0
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "beneficioMinimo": "$beneficioMinimo"
+      }
+    }
+  ]
+}

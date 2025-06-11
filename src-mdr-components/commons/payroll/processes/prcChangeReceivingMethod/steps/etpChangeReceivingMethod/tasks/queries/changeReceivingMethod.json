@@ -1,0 +1,391 @@
+{
+  "_id": "6751d658e2419bdd96cafa50",
+  "type": {
+    "_id": "6751d657aed0fa6912628b6e",
+    "name": "queries"
+  },
+  "name": "changeReceivingMethod",
+  "description": "Tarefa que faz a consulta da mudança da forma de recebimento e do método de pagamento.",
+  "main_collection": "benefits",
+  "output_name": "otp_changeReceivingMethod",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "benefitId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "receivingMethods",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "requestDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "origin",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payment_receivings",
+    "account_balances"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "benefitId": {
+            "$toObjectId": "$.benefitId"
+          },
+          "receivingMethods": "$.receivingMethods",
+          "requestDate": {
+            "$toDate": "$.requestDate"
+          },
+          "origin": "$.origin"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$bundle.benefitId",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$bundle.receivingMethods",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payment_receivings",
+        "localField": "bundle.receivingMethods.paymentReceiving._id",
+        "foreignField": "_id",
+        "as": "paymentReceiving",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 0,
+              "paymentMethod": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$paymentReceiving",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$paymentMethods",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$ne": [
+            "$paymentReceiving.paymentMethod._id",
+            "$paymentMethods.method._id"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "account_balances",
+        "localField": "person.participation._id",
+        "foreignField": "participation",
+        "as": "balance",
+        "let": {
+          "requestDate": "$bundle.requestDate"
+        },
+        "pipeline": [
+          {
+            "$sort": {
+              "competenceDate": -1
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$lte": [
+                  "$competenceDate",
+                  "$$requestDate"
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$unwind": {
+              "path": "$pensionAccountList"
+            }
+          },
+          {
+            "$project": {
+              "value": "$value",
+              "monetaryUnitValue": "$pensionAccountList.monetaryUnitValue.value"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$balance",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$set": {
+        "lastHistory": {
+          "$arrayElemAt": [
+            "$history",
+            {
+              "$subtract": [
+                {
+                  "$size": "$history"
+                },
+                1
+              ]
+            }
+          ]
+        },
+        "history": {
+          "$map": {
+            "input": "$history",
+            "as": "item",
+            "in": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    {
+                      "$indexOfArray": [
+                        "$history",
+                        "$$item"
+                      ]
+                    },
+                    {
+                      "$subtract": [
+                        {
+                          "$size": "$history"
+                        },
+                        1
+                      ]
+                    }
+                  ]
+                },
+                "then": {
+                  "$mergeObjects": [
+                    "$$item",
+                    {
+                      "expirationDate": "$bundle.requestDate"
+                    }
+                  ]
+                },
+                "else": "$$item"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$set": {
+        "lastParcel": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$paymentReceiving.paymentMethod._id",
+                "66bd4cdd4eb4534a4f853c6c"
+              ]
+            },
+            "then": 0,
+            "else": 0
+          }
+        },
+        "receivingMethods": [
+          "$bundle.receivingMethods"
+        ],
+        "paymentMethods": [
+          {
+            "method": "$paymentReceiving.paymentMethod",
+            "value": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$paymentReceiving.paymentMethod._id",
+                    "66bd4cdd4eb4534a4f853c6c"
+                  ]
+                },
+                "then": {
+                  "$multiply": [
+                    {
+                      "$divide": [
+                        "$balance.value",
+                        "$bundle.receivingMethods.installment.quantity"
+                      ]
+                    },
+                    "$balance.monetaryUnitValue"
+                  ]
+                },
+                "else": {
+                  "$multiply": [
+                    {
+                      "$multiply": [
+                        "$balance.value",
+                        {
+                          "$divide": [
+                            "$bundle.receivingMethods.percentage",
+                            100
+                          ]
+                        }
+                      ]
+                    },
+                    "$balance.monetaryUnitValue"
+                  ]
+                }
+              }
+            },
+            "parcelsQuantity": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$paymentReceiving.paymentMethod._id",
+                    "66bd4cdd4eb4534a4f853c6c"
+                  ]
+                },
+                "then": "$bundle.receivingMethods.installment.quantity",
+                "else": 0
+              }
+            },
+            "percentage": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$paymentReceiving.paymentMethod._id",
+                    "66bd4cdd4eb4534a4f853c6c"
+                  ]
+                },
+                "then": 0,
+                "else": "$bundle.receivingMethods.percentage"
+              }
+            }
+          }
+        ],
+        "benefitSource": null,
+        "history": {
+          "$concatArrays": [
+            "$history",
+            [
+              {
+                "optingExemption": "$lastHistory.optingExemption",
+                "accountQuotaBalance": "$lastHistory.accountQuotaBalance",
+                "accountCashBalance": "$lastHistory.accountCashBalance",
+                "monthlyValueInCash": "$lastHistory.monthlyValueInCash",
+                "monthlyValueInQuotas": "$lastHistory.monthlyValueInQuotas",
+                "paymentMethods": [
+                  {
+                    "method": "$paymentReceiving.paymentMethod",
+                    "value": {
+                      "$cond": {
+                        "if": {
+                          "$eq": [
+                            "$paymentReceiving.paymentMethod._id",
+                            "66bd4cdd4eb4534a4f853c6c"
+                          ]
+                        },
+                        "then": {
+                          "$multiply": [
+                            {
+                              "$divide": [
+                                "$balance.value",
+                                "$bundle.receivingMethods.installment.quantity"
+                              ]
+                            },
+                            "$balance.monetaryUnitValue"
+                          ]
+                        },
+                        "else": {
+                          "$multiply": [
+                            {
+                              "$multiply": [
+                                "$balance.value",
+                                {
+                                  "$divide": [
+                                    "$bundle.receivingMethods.percentage",
+                                    100
+                                  ]
+                                }
+                              ]
+                            },
+                            "$balance.monetaryUnitValue"
+                          ]
+                        }
+                      }
+                    },
+                    "parcelsQuantity": {
+                      "$cond": {
+                        "if": {
+                          "$eq": [
+                            "$paymentReceiving.paymentMethod._id",
+                            "66bd4cdd4eb4534a4f853c6c"
+                          ]
+                        },
+                        "then": "$bundle.receivingMethods.installment.quantity",
+                        "else": 0
+                      }
+                    },
+                    "percentage": {
+                      "$cond": {
+                        "if": {
+                          "$eq": [
+                            "$paymentReceiving.paymentMethod._id",
+                            "66bd4cdd4eb4534a4f853c6c"
+                          ]
+                        },
+                        "then": 0,
+                        "else": "$bundle.receivingMethods.percentage"
+                      }
+                    }
+                  }
+                ],
+                "status": "Ativo",
+                "effectiveDate": "$bundle.requestDate",
+                "expirationDate": null,
+                "updatedBy": "Rules",
+                "statusReason": "Alteração no método de pagamento",
+                "taxRegimeTypes": "$lastHistory.taxRegimeTypes"
+              }
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "bundle": 0,
+        "lastHistory": 0,
+        "balance": 0,
+        "paymentReceiving": 0
+      }
+    }
+  ]
+}

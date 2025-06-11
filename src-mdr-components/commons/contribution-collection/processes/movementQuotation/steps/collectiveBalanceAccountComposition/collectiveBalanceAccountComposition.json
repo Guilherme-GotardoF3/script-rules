@@ -1,0 +1,23 @@
+{
+  "_id": "66d79189033ccace1fb27acf",
+  "name": "collectiveBalanceAccountComposition",
+  "description": "Etapa para composição do saldo de conta dos participantes",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66d790dbfda0202d2bdb953c",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66d7a991fda0202d2bdb9582",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-09-03T22:45:29.148Z",
+  "updatedAt": "2024-09-04T00:32:05.539Z",
+  "__v": 0
+}

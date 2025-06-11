@@ -1,0 +1,17 @@
+{
+  "_id": "667f2d0c84b02c06eedcc861",
+  "name": "etpCalculatePayroll-completeReprocessingPayroll",
+  "description": "Etapa que fecha o reprocessamento de calculo da folha",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "63bc8119f8bd7d0008b98950",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-06-28T21:37:16.410Z",
+  "updatedAt": "2024-06-28T21:37:16.410Z",
+  "__v": 0
+}

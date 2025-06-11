@@ -1,0 +1,173 @@
+{
+  "_id": "63dd27976c679b0008fcceed",
+  "type": {
+    "_id": "63dd276d57b7c7000865bf6c",
+    "name": "queries"
+  },
+  "name": "projectWriteReportIrRegressive",
+  "description": "projectWriteReportIrRegressive",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_trf_project_write_report_ir_regressive",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_tipo_ir_regressivo",
+      "type": "Parameter",
+      "description": "Id do ir regressivo",
+      "value": "66bd44764eb4534a4f834c3d"
+    },
+    {
+      "name": "id_rubrica_ir_regressivo",
+      "type": "Parameter",
+      "description": "Id da rubrica de ir regressivo",
+      "value": "674e6d8e519c6b3b81a2d12d"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "benefits",
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId",
+        "judicialPension": {
+          "$exists": false
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "payrollPlanning": 1,
+        "participation": 1,
+        "benefit": 1,
+        "payrollItems": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "payrollItems.rubric._id": "p:64eba498f423017333463bb0"
+      }
+    },
+    {
+      "$match": {
+        "payrollItems.payrollReferenceBases.percentage": {
+          "$exists": true
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "benefit._id",
+        "foreignField": "_id",
+        "as": "benefit",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$taxRegimeTypes",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "type": 1,
+              "paymentMethods": 1,
+              "taxRegimeTypes": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefit",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "participation._id",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participationId": "$participation._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "participation": "$participations._id",
+              "taxRegimeType": "$participations.taxRegimeType",
+              "name": 1,
+              "documents.document": 1,
+              "documents.type": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$or": [
+          {
+            "benefit.taxRegimeTypes.type._id": "p:646d2faf0c6ae3bd9fdaa44c"
+          },
+          {
+            "person.taxRegimeType._id": "p:646d2faf0c6ae3bd9fdaa44c"
+          }
+        ]
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payrollPlanning": "$payrollPlanning._id",
+        "participation": "$participation",
+        "person": {
+          "_id": "$person._id",
+          "name": "$person.name",
+          "documents": "$person.documents"
+        },
+        "aliquot": "$payrollItems.payrollReferenceBases.percentage",
+        "format": "PEPS"
+      }
+    }
+  ]
+}

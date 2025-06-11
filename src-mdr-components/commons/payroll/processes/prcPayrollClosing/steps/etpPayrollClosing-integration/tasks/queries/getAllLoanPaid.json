@@ -1,0 +1,59 @@
+{
+  "_id": "66673eaba9d2e8c66112555e",
+  "type": {
+    "_id": "66673eab6b127a30398f76e4",
+    "name": "queries"
+  },
+  "name": "getAllLoanPaid",
+  "description": "Faz a consulta de todos os empréstimos pagos.",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_trf_getAllLoanPaid",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "loanItemId",
+      "type": "Parameter",
+      "description": "id da rubrica de empréstimo",
+      "value": "674e6d67519c6b3b81a2d0f3"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$payrollItems.rubric._id",
+            "p:66a78cd7dc7efd212efea372"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "name": "$person.name",
+        "documents": "$person.documents",
+        "plan": "$payrollPlanning.plan",
+        "competenceDate": "$payrollItems.competenceDate",
+        "value": "$payrollItems.finalAmount"
+      }
+    }
+  ]
+}

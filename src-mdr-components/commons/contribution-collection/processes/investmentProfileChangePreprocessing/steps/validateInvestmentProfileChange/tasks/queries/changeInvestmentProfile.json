@@ -1,0 +1,253 @@
+{
+  "_id": "683075d88592e53ad627d9c7",
+  "type": {
+    "_id": "683075d78592e53ad627d978",
+    "name": "queries"
+  },
+  "name": "changeInvestmentProfile",
+  "description": "Consulta que realiza um depara do perfil de investimento atual do participante em relação com o novo perfil solicitado. ",
+  "main_collection": "account_balances_rmdrc",
+  "output_name": "otpChangeInvestmentProfile",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "participation",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "currentInvestmentProfile",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "targetInvestmentProfile",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "ticket",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "user",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "startedAt",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "investment_profiles",
+    "monetary_unit_values"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "person.participation._id": "$.participation"
+      }
+    },
+    {
+      "$sort": {
+        "date": -1
+      }
+    },
+    {
+      "$limit": 1
+    },
+    {
+      "$lookup": {
+        "from": "investment_profiles",
+        "let": {
+          "actualInvestmentProfileID": "$.currentInvestmentProfile"
+        },
+        "as": "currentInvestmentProfile",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$_id",
+                  "$$actualInvestmentProfileID"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": "$currentInvestmentProfile"
+    },
+    {
+      "$lookup": {
+        "from": "investment_profiles",
+        "let": {
+          "targetInvestmentProfileID": "$.targetInvestmentProfile"
+        },
+        "as": "targetInvestmentProfile",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$_id",
+                  "$$targetInvestmentProfileID"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": "$targetInvestmentProfile"
+    },
+    {
+      "$unwind": "$targetInvestmentProfile.monetaryUnits"
+    },
+    {
+      "$lookup": {
+        "from": "monetary_unit_values",
+        "let": {
+          "currentMonetaryUnitID": "$currentInvestmentProfile.monetaryUnit._id",
+          "targetMonetaryUnitID": "$targetInvestmentProfile.monetaryUnits.monetaryUnit._id"
+        },
+        "as": "monetaryUnitValues",
+        "pipeline": [
+          {
+            "$facet": {
+              "currentMonetaryUnityValues": [
+                {
+                  "$match": {
+                    "$expr": {
+                      "$eq": [
+                        "$monetaryUnit._id",
+                        "$$currentMonetaryUnitID"
+                      ]
+                    }
+                  }
+                },
+                {
+                  "$sort": {
+                    "referenceDate": -1
+                  }
+                },
+                {
+                  "$limit": 1
+                }
+              ],
+              "targetMonetaryUnityValues": [
+                {
+                  "$match": {
+                    "$expr": {
+                      "$eq": [
+                        "$monetaryUnit._id",
+                        "$$targetMonetaryUnitID"
+                      ]
+                    }
+                  }
+                },
+                {
+                  "$sort": {
+                    "referenceDate": -1
+                  }
+                },
+                {
+                  "$limit": 1
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": "$monetaryUnitValues"
+    },
+    {
+      "$unwind": "$monetaryUnitValues.currentMonetaryUnityValues"
+    },
+    {
+      "$unwind": "$monetaryUnitValues.targetMonetaryUnityValues"
+    },
+    {
+      "$addFields": {
+        "newPensionAccountList": {
+          "$map": {
+            "input": "$pensionAccountList",
+            "as": "pensionAccount",
+            "in": {
+              "pensionAccount": {
+                "name": "$$pensionAccount.pensionAccount.name",
+                "_id": "$$pensionAccount.pensionAccount._id",
+                "monetaryUnit": {
+                  "$concatArrays": [
+                    {
+                      "$ifNull": [
+                        "$$pensionAccount.monetaryUnit",
+                        []
+                      ]
+                    },
+                    [
+                      "$monetaryUnitValues.targetMonetaryUnityValues.monetaryUnit"
+                    ]
+                  ]
+                }
+              },
+              "monetaryUnitValue": {
+                "_id": "$monetaryUnitValues.targetMonetaryUnityValues._id",
+                "value": "$monetaryUnitValues.targetMonetaryUnityValues.value",
+                "referenceDate": "$monetaryUnitValues.targetMonetaryUnityValues.referenceDate"
+              },
+              "movements": [],
+              "movementsInValue": {
+                "value": 0,
+                "amountQuotas": 0
+              },
+              "movementsOutValue": {
+                "value": 0,
+                "amountQuotas": 0
+              },
+              "lastBalanceValue": "$$pensionAccount.totalValue",
+              "totalValue": {
+                "value": "$$pensionAccount.totalValue.value",
+                "amountQuotas": {
+                  "$divide": [
+                    "$$pensionAccount.totalValue.value",
+                    "$monetaryUnitValues.targetMonetaryUnityValues.value"
+                  ]
+                }
+              },
+              "_id": "$_id"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "person": "$person",
+        "current": {
+          "investmentProfile": "$currentInvestmentProfile",
+          "pensionAccountList": "$pensionAccountList"
+        },
+        "target": {
+          "investmentProfile": "$targetInvestmentProfile",
+          "pensionAccountList": "$newPensionAccountList"
+        },
+        "ticketInfo": {
+          "_id": "$.ticket",
+          "user": "$.user",
+          "createdAt": "$.startedAt"
+        },
+        "status": "done"
+      }
+    }
+  ]
+}

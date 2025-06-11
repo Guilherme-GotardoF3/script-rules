@@ -1,0 +1,107 @@
+{
+  "_id": "66a1332cc88832ddbdbd27c7",
+  "name": "provisioningSelfSponsoredContribuitions",
+  "description": "Etapa para o provisionamento das contribuições",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "67e808dfdcc300eb829945a1",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66a268a90a662322b70aabb3",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e808dfdcc300eb829945b8",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66a268900a662322b70aab92",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e808e0dcc300eb829945d1",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66a268760a662322b70aab71",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e808e0dcc300eb829945ea",
+      "type": "tasks",
+      "order": 7,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66a25c4d28165e34c5655dfd",
+      "type": "tasks",
+      "order": 8,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e808e0dcc300eb82994607",
+      "type": "tasks",
+      "order": 9,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e831a52e7ee50b6201b112",
+      "type": "tasks",
+      "order": 10,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e808e0dcc300eb8299461e",
+      "type": "tasks",
+      "order": 11,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e8324a2e7ee50b6201b133",
+      "type": "tasks",
+      "order": 12,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e808e0dcc300eb82994635",
+      "type": "tasks",
+      "order": 13,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e832a52e7ee50b6201b154",
+      "type": "tasks",
+      "order": 14,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e808e0dcc300eb8299464c",
+      "type": "tasks",
+      "order": 15,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e8333d2e7ee50b6201b175",
+      "type": "tasks",
+      "order": 16,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-07-24T17:00:28.745Z",
+  "updatedAt": "2025-04-11T22:28:16.244Z",
+  "__v": 0
+}

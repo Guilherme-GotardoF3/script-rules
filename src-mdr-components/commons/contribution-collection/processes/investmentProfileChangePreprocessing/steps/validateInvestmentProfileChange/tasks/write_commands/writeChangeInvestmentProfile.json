@@ -1,0 +1,25 @@
+{
+  "_id": "683075d88592e53ad627da03",
+  "type": {
+    "_id": "683075d88592e53ad627d9f0",
+    "name": "write_commands"
+  },
+  "name": "writeChangeInvestmentProfile",
+  "description": "Escrita da consulta que realiza um depara do perfil de investimento atual do participante em relação com o novo perfil solicitado.",
+  "main_collection": "investment_profile_pre_process_option",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpChangeInvestmentProfile"
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otpChangeInvestmentProfile._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

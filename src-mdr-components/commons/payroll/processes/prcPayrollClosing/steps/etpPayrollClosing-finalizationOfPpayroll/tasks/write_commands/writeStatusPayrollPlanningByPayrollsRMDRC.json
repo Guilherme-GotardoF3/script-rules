@@ -1,0 +1,27 @@
+{
+  "_id": "67d34887f7902d43d8b89b6e",
+  "type": {
+    "_id": "67d3488783c959e7b5059125",
+    "name": "write_commands"
+  },
+  "name": "writeStatusPayrollPlanningByPayrollsRMDRC",
+  "description": "Escreve na collection payrolls_RMDRC o status de FINISHED na referência estendida da payrollPlanning quando a folha já tiver sido finalizada.",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payrollPlanning": "$.$$.otp_updateStatusPayrollPlanningByPayrollsRMDRC.payrollPlanning"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_updateStatusPayrollPlanningByPayrollsRMDRC._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "_id": "65f1d34f52d07f519355e455",
+  "type": {
+    "_id": "65f1d26a239454de9ae65bf0",
+    "name": "write_commands"
+  },
+  "name": "writeDeathRetireeBenefitEnds",
+  "description": "Encerramento do benefício por falecimento do aposentado.",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "history": "$.$$.otp_trf_getDeathRetireeBenefitEnds.history"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_trf_getDeathRetireeBenefitEnds.benfitId"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

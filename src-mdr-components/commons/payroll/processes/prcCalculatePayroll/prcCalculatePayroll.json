@@ -1,0 +1,107 @@
+{
+  "_id": "65d8f30b9b815872b68f15b7",
+  "name": "prcCalculatePayroll",
+  "description": "Processo que vai processar a folha de pagamento após o pre processamento da folha..",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "benefit",
+  "owners": [
+    {
+      "ref": "d60dcbab-9e19-4aef-9c34-42b349e373a5",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "65d8f1750ee692ef28d67174",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f18e0ee692ef28d6719c",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f19e0ee692ef28d671b0",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "674b0639669d17331c5cd2bf",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "6748828691f461f43ef329f8",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f1a90ee692ef28d671c4",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f1b50ee692ef28d671d8",
+      "order": 7,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "66bfa1ffa5898d24a9405315",
+      "order": 8,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65fde04a660e0c5f9a403b01",
+      "order": 9,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "67485631d657153a5fc34bab",
+      "order": 10,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f1c80ee692ef28d671ec",
+      "order": 11,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f1e00ee692ef28d67214",
+      "order": 12,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f1eb0ee692ef28d67228",
+      "order": 13,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "644c0b782ca68f53b28b21e3",
+      "order": 14,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "64b84157c18aab972590b370",
+      "order": 15,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:33:31.089Z",
+  "updatedAt": "2025-02-26T16:07:34.994Z",
+  "__v": 0,
+  "dueDate": null,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "9122ff06-ec30-4c99-b8ae-42671989a0b6",
+    "username": "dpitol@f3capital.com.br"
+  },
+  "isSync": false
+}

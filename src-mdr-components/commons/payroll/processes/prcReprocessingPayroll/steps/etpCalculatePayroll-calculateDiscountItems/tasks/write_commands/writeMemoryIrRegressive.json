@@ -1,0 +1,34 @@
+{
+  "_id": "64651135dc4b3634c4ab75f6",
+  "type": {
+    "_id": "64b57f0be50a7b9e2dc22eed",
+    "name": "write_commands"
+  },
+  "name": "writeMemoryIrRegressive",
+  "description": "Componente para escrita da memoria de calculo de Ir Regressivo",
+  "main_collection": "payroll_ir_regressive_peps",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_projectMemoryIrRegressive"
+      },
+      "filter": {
+        "$and": [
+          {
+            "payrollPlanning._id": "$.$$.otp_projectMemoryIrRegressive.payrollPlanning._id"
+          },
+          {
+            "benefit": "$.$$.otp_projectMemoryIrRegressive.benefit"
+          },
+          {
+            "payroll": "$.$$.otp_projectMemoryIrRegressive.payroll"
+          },
+          {
+            "payrollItem": "$.$$.otp_projectMemoryIrRegressive.payrollItem"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

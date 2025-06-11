@@ -1,0 +1,321 @@
+//_id: {""}
+//_tenant: sandbox-migration
+//name: integrationSaldo
+//description: Aggregation utilizado para validar se as chaves estrangeiras existem.
+//use("sandbox-migration");
+
+//db.CollectionRepositoryBase_Saldo_Conta.aggregate(
+    [
+        {
+          "$unwind": {
+            "path": "$lista_contas_previdenciarias", 
+            "preserveNullAndEmptyArrays": true
+          }
+        }, {
+          "$project": {
+            "_id": 1, 
+            "all": "$$ROOT", 
+            "lista_contas_previdenciarias": 1
+          }
+        }, {
+          "$lookup": {
+            "from": "CollectionIntegration_Participacao", 
+            "localField": "all.identificador_participacao", 
+            "foreignField": "identificador", 
+            "as": "person", 
+            "pipeline": [
+              {
+                "$project": {
+                  "_id": 1, 
+                  "numero": 1
+                }
+              }, {
+                "$lookup": {
+                  "from": "CollectionIntegration_Pessoa", 
+                  "localField": "_id", 
+                  "foreignField": "participacoes._id", 
+                  "as": "person", 
+                  "let": {
+                    "participationId": "$_id"
+                  }, 
+                  "pipeline": [
+                    {
+                      "$project": {
+                        "_id": 1, 
+                        "name": "$nome", 
+                        "participations": "$participacoes"
+                      }
+                    }, {
+                      "$unwind": {
+                        "path": "$participations", 
+                        "preserveNullAndEmptyArrays": true
+                      }
+                    }, {
+                      "$match": {
+                        "$expr": {
+                          "$eq": [
+                            "$participations._id", "$$participationId"
+                          ]
+                        }
+                      }
+                    }, {
+                      "$project": {
+                        "_id": 1, 
+                        "name": 1, 
+                        "participation": {
+                          "_id": "$participations._id", 
+                          "participationClass": {
+                            "_id": "$participations.participationClass._id", 
+                            "plan": {
+                              "_id": "$participations.participationClass.plan._id", 
+                              "name": "$participations.participationClass.plan.name"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }, {
+                "$unwind": {
+                  "path": "$person", 
+                  "preserveNullAndEmptyArrays": true
+                }
+              }, {
+                "$replaceRoot": {
+                  "newRoot": "$person"
+                }
+              }
+            ]
+          }
+        }, {
+          "$unwind": {
+            "path": "$person", 
+            "preserveNullAndEmptyArrays": true
+          }
+        }, {
+          "$lookup": {
+            "from": "CollectionIntegration_Conta_Previdenciaria", 
+            "localField": "lista_contas_previdenciarias.identificador_conta_previdenciaria", 
+            "foreignField": "identificador", 
+            "as": "pensionAccount", 
+            "pipeline": [
+              {
+                "$project": {
+                  "_id": 1, 
+                  "name": "$nome"
+                }
+              }
+            ]
+          }
+        }, {
+          "$unwind": {
+            "path": "$pensionAccount", 
+            "preserveNullAndEmptyArrays": true
+          }
+        }, {
+          "$lookup": {
+            "from": "CollectionIntegration_Valor_Unidade_Monetaria", 
+            "localField": "lista_contas_previdenciarias.identificador_valor_unidade_monetaria", 
+            "foreignField": "identificador", 
+            "as": "monetaryUnitValue", 
+            "pipeline": [
+              {
+                "$project": {
+                  "_id": 1, 
+                  "value": "$translated.value", 
+                  "referenceDate": "$translated.referenceDate"
+                }
+              }
+            ]
+          }
+        }, {
+          "$unwind": {
+            "path": "$monetaryUnitValue", 
+            "preserveNullAndEmptyArrays": true
+          }
+        }, {
+          "$project": {
+            "_id": 1, 
+            "all": 1, 
+            "person": 1, 
+            "pensionAccountList": {
+              "pensionAccount": "$pensionAccount", 
+              "monetaryUnitValue": "$monetaryUnitValue", 
+              "movements": "$lista_contas_previdenciarias.movimentos"
+            }
+          }
+        }, {
+          "$lookup": {
+            "from": "CollectionIntegration_Movimento_Conta", 
+            "localField": "pensionAccountList.movements.identificador_movimento", 
+            "foreignField": "identificador", 
+            "as": "pensionAccountList.movements", 
+            "pipeline": [
+              {
+                "$project": {
+                  "_id": "$_id", 
+                  "monetaryUnitValue": 1, 
+                  "occurrence": 1, 
+                  "pensionAccount": 1
+                }
+              }
+            ]
+          }
+        }, {
+          "$addFields": {
+            "action": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    {
+                      "$size": "$pensionAccountList.movements"
+                    }, 0
+                  ]
+                }, 
+                "then": "done", 
+                "else": {
+                  "$cond": {
+                    "if": {
+                      "$and": [
+                        {
+                          "$gt": [
+                            {
+                              "$size": {
+                                "$filter": {
+                                  "input": "$pensionAccountList.movements", 
+                                  "as": "movement", 
+                                  "cond": {
+                                    "$eq": [
+                                      "$$movement.pensionAccount._id", "$pensionAccountList.pensionAccount._id"
+                                    ]
+                                  }
+                                }
+                              }
+                            }, 0
+                          ]
+                        }, {
+                          "$gt": [
+                            {
+                              "$size": {
+                                "$filter": {
+                                  "input": "$pensionAccountList.movements", 
+                                  "as": "movement", 
+                                  "cond": {
+                                    "$eq": [
+                                      "$$movement.monetaryUnitValue._id", "$pensionAccountList.monetaryUnitValue._id"
+                                    ]
+                                  }
+                                }
+                              }
+                            }, 0
+                          ]
+                        }
+                      ]
+                    }, 
+                    "then": "done", 
+                    "else": "failure"
+                  }
+                }
+              }
+            }
+          }
+        }, {
+          "$group": {
+            "_id": "$_id", 
+            "all": {
+              "$first": "$all"
+            }, 
+            "person": {
+              "$first": "$person"
+            }, 
+            "pensionAccountList": {
+              "$push": "$pensionAccountList"
+            }, 
+            "action": {
+              "$first": "$action"
+            }
+          }
+        }, {
+          "$project": {
+            "_id": 1, 
+            "all": 1, 
+            "person": 1, 
+            "pensionAccountList": 1, 
+            "action": {
+              "$cond": {
+                "if": {
+                  "$gt": [
+                    {
+                      "$size": {
+                        "$filter": {
+                          "input": "$pensionAccountList", 
+                          "as": "pensionAccountList", 
+                          "cond": {
+                            "$and": [
+                              {
+                                "$or": [
+                                  {
+                                    "$eq": [
+                                      {
+                                        "$ifNull": [
+                                          "$$pensionAccountList.pensionAccount", null
+                                        ]
+                                      }, null
+                                    ]
+                                  }, {
+                                    "$eq": [
+                                      {
+                                        "$ifNull": [
+                                          "$$pensionAccountList.monetaryUnitValue", null
+                                        ]
+                                      }, null
+                                    ]
+                                  }, {
+                                    "$eq": [
+                                      {
+                                        "$ifNull": [
+                                          "$$pensionAccountList.movements", null
+                                        ]
+                                      }, null
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }, 0
+                  ]
+                }, 
+                "then": "failure", 
+                "else": {
+                  "$cond": {
+                    "if": {
+                      "$and": [
+                        {
+                          "$ne": [
+                            "$all.identificador_participacao", null
+                          ]
+                        }, {
+                          "$eq": [
+                            {
+                              "$ifNull": [
+                                "$person._id", null
+                              ]
+                            }, null
+                          ]
+                        }
+                      ]
+                    }, 
+                    "then": "failure", 
+                    "else": "$action"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+                //);

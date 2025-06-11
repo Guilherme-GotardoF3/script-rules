@@ -1,0 +1,1247 @@
+{
+  "_id": "678e99b9bba285408e4dfe5f",
+  "type": {
+    "_id": "678e99b9849a0e2af1da778d",
+    "name": "queries"
+  },
+  "name": "concessionPermanentDisability",
+  "description": "Tarefa de concessão do benefício de incapacidade permanente.",
+  "main_collection": "benefit_types",
+  "output_name": "otp_concessionPermanentDisability",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_tipo_ir_progressivo",
+      "type": "Parameter",
+      "description": "Id do tipo de ir progressivo",
+      "value": "66bd44764eb4534a4f834c3c"
+    },
+    {
+      "name": "id_tipo_ir_regressivo",
+      "type": "Parameter",
+      "description": "Id do ir regressivo",
+      "value": "66bd44764eb4534a4f834c3d"
+    },
+    {
+      "name": "benefitTypeId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefitSourceId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefitStartDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "paymentStartDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "beneficiaries",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "receivingMethod",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "immediatePercentage",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "hasAnnualAllowance",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "isTaxFreeAtSixtyFive",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefitData",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "requestDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payment_receivings",
+    "payment_methods",
+    "people",
+    "institutes",
+    "occurrence_configurations",
+    "occurrences",
+    "account_balances_rmdrc",
+    "monetary_unit_values",
+    "pension_accounts"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$_id",
+            "$.benefitTypeId"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "name": 1
+      }
+    },
+    {
+      "$addFields": {
+        "bundle": {
+          "participationId": "$.participationId",
+          "planId": "$.planId",
+          "benefitTypeId": "$.benefitTypeId",
+          "benefitSourceId": "$.benefitSourceId",
+          "benefitStartDate": {
+            "$toDate": "$.benefitStartDate"
+          },
+          "paymentStartDate": {
+            "$toDate": "$.paymentStartDate"
+          },
+          "beneficiaries": "$.beneficiaries",
+          "receivingMethods": "$.receivingMethod",
+          "immediatePercentage": {
+            "$toDouble": "$.immediatePercentage"
+          },
+          "hasAnnualAllowance": "$.hasAnnualAllowance",
+          "isTaxFreeAtSixtyFive": "$.isTaxFreeAtSixtyFive",
+          "benefitData": "$.benefitData",
+          "requestDate": {
+            "$toDate": "$.requestDate"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payment_receivings",
+        "localField": "bundle.receivingMethods.paymentReceiving._id",
+        "foreignField": "_id",
+        "as": "receivingMethods",
+        "pipeline": [
+          {
+            "$project": {
+              "name": 1,
+              "type": 1,
+              "paymentMethod": 1,
+              "paymentReceivingType": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$receivingMethods",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payment_methods",
+        "localField": "receivingMethods.paymentMethod._id",
+        "foreignField": "_id",
+        "as": "paymentMethods",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "bundle.participationId",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participation": "$bundle.participationId",
+          "plan": "$bundle.planId"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$participations._id",
+                      "$$participation"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$participations.participationClass.plan._id",
+                      "$$plan"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "name": 1,
+              "participations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "institutes",
+        "localField": "person._id",
+        "foreignField": "person._id",
+        "as": "institutes",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$data.costingPlan"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$or": [
+                      {
+                        "$ne": [
+                          "$type._id",
+                          "673ce3425dc6dff687bde82a"
+                        ]
+                      },
+                      {
+                        "$eq": [
+                          "$data.costingPlan.pensionAccount.type._id",
+                          "665cca91d11b2a523e46e21e"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$type._id",
+                      "c3a1b54263414b988bc57b6f"
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$type._id",
+                      "673ccea82be964ecab1e0043"
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$type._id",
+                      "673ce36b5dc6dff687bde82b"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$institutes",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "occurrence_configurations",
+        "localField": "bundle.planId",
+        "foreignField": "plan._id",
+        "as": "benefitOccurrence",
+        "let": {
+          "benefitTypeId": "$bundle.benefitTypeId"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$benefitType._id",
+                  "$$benefitTypeId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "occurrence": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefitOccurrence",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "occurrences",
+        "localField": "bundle.planId",
+        "foreignField": "plan._id",
+        "as": "rulesMovement",
+        "let": {
+          "classesType": "$person.participations.participationClass.type._id",
+          "classesStatus": "$person.participations.participationClass.status._id",
+          "tipoMovimento": "$benefitOccurrence.occurrence._id",
+          "competenceDate": "$bundle.requestDate"
+        },
+        "pipeline": [
+          {
+            "$unwind": "$participationClasses"
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$_id",
+                      "$$tipoMovimento"
+                    ]
+                  },
+                  {
+                    "$lte": [
+                      "$effectiveDate.startedAt",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$gte": [
+                          "$effectiveDate.endedAt",
+                          "$$competenceDate"
+                        ]
+                      },
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          null
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$participationClasses.type._id",
+                      "$$classesType"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$participationClasses.status._id",
+                      "$$classesStatus"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "occurrenceRules": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rulesMovement",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rulesMovement.occurrenceRules",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "account_balances_rmdrc",
+        "localField": "person.participations._id",
+        "foreignField": "person.participation._id",
+        "as": "balance",
+        "let": {
+          "fundosOrigem": "$rulesMovement.occurrenceRules.accounts.origin._id",
+          "quoteDate": "$bundle.requestDate"
+        },
+        "pipeline": [
+          {
+            "$unwind": "$pensionAccountList"
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$pensionAccountList.pensionAccount._id",
+                      "$$fundosOrigem"
+                    ]
+                  },
+                  {
+                    "$lte": [
+                      "$competenceDate",
+                      "$$quoteDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "competenceDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "value": 1,
+              "pensionAccountList": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$balance",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "monetary_unit_values",
+        "localField": "balance.pensionAccountList.monetaryUnitValue._id",
+        "foreignField": "_id",
+        "as": "monetaryUnitValues",
+        "let": {
+          "requestDate": "$bundle.requestDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$lte": [
+                  "$referenceDate",
+                  "$$requestDate"
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "referenceDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "referenceDate": 1,
+              "value": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$monetaryUnitValues",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "originFunds": {
+          "_id": "$balance.pensionAccountList.pensionAccount._id",
+          "name": "$balance.pensionAccountList.pensionAccount.name",
+          "exitValue": {
+            "$round": [
+              {
+                "$multiply": [
+                  "$balance.value",
+                  -1
+                ]
+              },
+              2
+            ]
+          },
+          "exitQuota": {
+            "$multiply": [
+              {
+                "$divide": [
+                  "$balance.value",
+                  "$monetaryUnitValues.value"
+                ]
+              },
+              -1
+            ]
+          }
+        },
+        "destinyFunds": {
+          "_id": "$rulesMovement.occurrenceRules.accounts.destination._id",
+          "name": "$rulesMovement.occurrenceRules.accounts.destination.name",
+          "entryValue": {
+            "$round": [
+              {
+                "$multiply": [
+                  "$balance.value",
+                  "$rulesMovement.occurrenceRules.percentage"
+                ]
+              },
+              2
+            ]
+          },
+          "entryQuota": {
+            "$multiply": [
+              {
+                "$divide": [
+                  "$balance.value",
+                  "$monetaryUnitValues.value"
+                ]
+              },
+              "$rulesMovement.occurrenceRules.percentage"
+            ]
+          }
+        },
+        "residualFunds": {
+          "_id": "$rulesMovement.occurrenceRules.accounts.residual._id",
+          "name": "$rulesMovement.occurrenceRules.accounts.residual.name",
+          "entryValue": {
+            "$round": [
+              {
+                "$multiply": [
+                  "$balance.value",
+                  {
+                    "$subtract": [
+                      1,
+                      "$rulesMovement.occurrenceRules.percentage"
+                    ]
+                  }
+                ]
+              },
+              2
+            ]
+          },
+          "entryQuota": {
+            "$multiply": [
+              {
+                "$divide": [
+                  "$balance.value",
+                  "$monetaryUnitValues.value"
+                ]
+              },
+              {
+                "$subtract": [
+                  1,
+                  "$rulesMovement.occurrenceRules.percentage"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "pension_accounts",
+        "localField": "balance.pensionAccountList.pensionAccount._id",
+        "foreignField": "_id",
+        "as": "pensionAccount",
+        "pipeline": [
+          {
+            "$project": {
+              "name": 1,
+              "isRegressivePortable": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$pensionAccount",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$group": {
+        "_id": "$destinyFunds._id",
+        "totalEntryValue": {
+          "$sum": "$destinyFunds.entryValue"
+        },
+        "totalEntryQuota": {
+          "$sum": "$destinyFunds.entryQuota"
+        },
+        "root": {
+          "$first": "$$ROOT"
+        },
+        "progressiveValue": {
+          "$sum": {
+            "$cond": [
+              {
+                "$eq": [
+                  "$pensionAccount.isRegressivePortable",
+                  false
+                ]
+              },
+              "$balance.value",
+              0
+            ]
+          }
+        },
+        "regressiveValue": {
+          "$sum": {
+            "$cond": [
+              {
+                "$eq": [
+                  "$pensionAccount.isRegressivePortable",
+                  true
+                ]
+              },
+              "$balance.value",
+              0
+            ]
+          }
+        },
+        "isRegressivePortable": {
+          "$addToSet": "$pensionAccount.isRegressivePortable"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "initialMonthlyValue": {
+          "$round": [
+            {
+              "$arrayElemAt": [
+                {
+                  "$map": {
+                    "input": "$root.bundle.receivingMethods",
+                    "as": "method",
+                    "in": {
+                      "$switch": {
+                        "branches": [
+                          {
+                            "case": {
+                              "$ne": [
+                                "$$method.percentage",
+                                0
+                              ]
+                            },
+                            "then": {
+                              "$multiply": [
+                                {
+                                  "$multiply": [
+                                    "$totalEntryValue",
+                                    {
+                                      "$subtract": [
+                                        1,
+                                        {
+                                          "$divide": [
+                                            "$root.bundle.immediatePercentage",
+                                            100
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "$divide": [
+                                    "$$method.percentage",
+                                    100
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "case": {
+                              "$and": [
+                                {
+                                  "$ne": [
+                                    "$$method.fixedAmount.amountType",
+                                    null
+                                  ]
+                                },
+                                {
+                                  "$ne": [
+                                    "$$method.fixedAmount.list",
+                                    []
+                                  ]
+                                },
+                                {
+                                  "$ne": [
+                                    {
+                                      "$arrayElemAt": [
+                                        "$$method.fixedAmount.list.amount",
+                                        0
+                                      ]
+                                    },
+                                    null
+                                  ]
+                                }
+                              ]
+                            },
+                            "then": {
+                              "$arrayElemAt": [
+                                "$$method.fixedAmount.list.amount",
+                                0
+                              ]
+                            }
+                          },
+                          {
+                            "case": {
+                              "$ne": [
+                                "$$method.installment.quantity",
+                                0
+                              ]
+                            },
+                            "then": {
+                              "$divide": [
+                                {
+                                  "$multiply": [
+                                    "$totalEntryValue",
+                                    {
+                                      "$subtract": [
+                                        1,
+                                        {
+                                          "$divide": [
+                                            "$root.bundle.immediatePercentage",
+                                            100
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "$cond": {
+                                    "if": {
+                                      "$eq": [
+                                        "years",
+                                        "$$method.installment.type"
+                                      ]
+                                    },
+                                    "then": {
+                                      "$multiply": [
+                                        "$$method.installment.quantity",
+                                        12
+                                      ]
+                                    },
+                                    "else": "$$method.installment.quantity"
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "case": {
+                              "$ne": [
+                                "$$method.actuarialFactorValue",
+                                null
+                              ]
+                            },
+                            "then": {
+                              "$multiply": [
+                                {
+                                  "$multiply": [
+                                    "$totalEntryValue",
+                                    {
+                                      "$subtract": [
+                                        1,
+                                        {
+                                          "$divide": [
+                                            "$root.bundle.immediatePercentage",
+                                            100
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "$divide": [
+                                    "$$method.actuarialFactorValue",
+                                    100
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        ],
+                        "default": null
+                      }
+                    }
+                  }
+                },
+                0
+              ]
+            },
+            2
+          ]
+        },
+        "immediateValue": {
+          "$round": [
+            {
+              "$multiply": [
+                "$totalEntryValue",
+                {
+                  "$divide": [
+                    "$root.bundle.immediatePercentage",
+                    100
+                  ]
+                }
+              ]
+            },
+            2
+          ]
+        },
+        "totalValue": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$or": [
+                    {
+                      "$eq": [
+                        "$isRegressivePortable",
+                        true
+                      ]
+                    },
+                    {
+                      "$in": [
+                        true,
+                        "$isRegressivePortable"
+                      ]
+                    }
+                  ]
+                },
+                "then": {
+                  "taxRegimeTypes": [
+                    {
+                      "type": {
+                        "_id": "p:6418c40ee89a5fcee1d873c3",
+                        "name": "Progressivo"
+                      },
+                      "percentage": {
+                        "$round": [
+                          {
+                            "$multiply": [
+                              {
+                                "$divide": [
+                                  "$progressiveValue",
+                                  {
+                                    "$add": [
+                                      "$progressiveValue",
+                                      "$regressiveValue"
+                                    ]
+                                  }
+                                ]
+                              },
+                              100
+                            ]
+                          },
+                          2
+                        ]
+                      }
+                    },
+                    {
+                      "type": {
+                        "_id": "p:646d2faf0c6ae3bd9fdaa44c",
+                        "name": "Regressivo"
+                      },
+                      "percentage": {
+                        "$round": [
+                          {
+                            "$multiply": [
+                              {
+                                "$divide": [
+                                  "$regressiveValue",
+                                  {
+                                    "$add": [
+                                      "$regressiveValue",
+                                      "$progressiveValue"
+                                    ]
+                                  }
+                                ]
+                              },
+                              100
+                            ]
+                          },
+                          2
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$root.person.participations.taxRegimeType._id",
+                    "p:6418c40ee89a5fcee1d873c3"
+                  ]
+                },
+                "then": {
+                  "taxRegimeTypes": [
+                    {
+                      "type": {
+                        "_id": "p:6418c40ee89a5fcee1d873c3",
+                        "name": "Progressivo"
+                      },
+                      "percentage": 100
+                    }
+                  ]
+                }
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$root.person.participations.taxRegimeType._id",
+                    "p:646d2faf0c6ae3bd9fdaa44c"
+                  ]
+                },
+                "then": {
+                  "type": {
+                    "_id": "p:646d2faf0c6ae3bd9fdaa44c",
+                    "name": "Regressivo"
+                  },
+                  "percentage": 100
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "initialMonthlyQuota": {
+          "$divide": [
+            "$initialMonthlyValue",
+            {
+              "$divide": [
+                "$totalEntryValue",
+                "$totalEntryQuota"
+              ]
+            }
+          ]
+        },
+        "immediateValueQuota": {
+          "$divide": [
+            "$immediateValue",
+            {
+              "$divide": [
+                "$totalEntryValue",
+                "$totalEntryQuota"
+              ]
+            }
+          ]
+        },
+        "lifetimeBenefit": {
+          "$cond": {
+            "if": {
+              "$and": [
+                {
+                  "$ne": [
+                    "$root.receivingMethods.paymentReceiving.paymentReceivingType",
+                    "lifetime_bd"
+                  ]
+                },
+                {
+                  "$ne": [
+                    "root.receivingMethods.paymentReceiving.paymentReceivingType",
+                    "lifetime_bd_with_actuarial_factor"
+                  ]
+                }
+              ]
+            },
+            "then": false,
+            "else": true
+          }
+        },
+        "getDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "immediatePercentage": [
+          {
+            "cashImmediateValue": "$immediateValue",
+            "quotaImmediateValue": "$immediateValueQuota",
+            "accountCashBalance": "$totalEntryValue",
+            "accountQuotaBalance": "$totalEntryQuota",
+            "percentage": "$root.bundle.immediatePercentage",
+            "paymentPayrollDate": null,
+            "solicitationDate": "$root.bundle.requestDate",
+            "effectiveDate": {
+              "startedAt": "$root.bundle.paymentStartDate",
+              "endedAt": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "root": 1,
+        "benefits": {
+          "type": {
+            "_id": "$root._id",
+            "name": "$root.name"
+          },
+          "participation": "$root.bundle.participationId",
+          "benefitSource": "$root.bundle.benefitSourceId",
+          "benefitStartDate": "$root.bundle.benefitStartDate",
+          "paymentStartDate": "$root.bundle.paymentStartDate",
+          "lastParcel": {
+            "$toDouble": "0"
+          },
+          "lastPaymentDate": null,
+          "sheetEntryDate": {
+            "$toDate": "$root.bundle.benefitStartDate"
+          },
+          "lifetimeBenefit": {
+            "$toBool": "$lifetimeBenefit"
+          },
+          "quota": {
+            "_id": "$root.monetaryUnitValues._id",
+            "referency": "$root.monetaryUnitValues.referenceDate",
+            "value": "$root.monetaryUnitValues.value"
+          },
+          "receivingMethods": "$root.bundle.receivingMethods",
+          "paymentMethods": [
+            {
+              "method": {
+                "$arrayElemAt": [
+                  "$root.paymentMethods",
+                  0
+                ]
+              },
+              "value": "$initialMonthlyValue",
+              "parcelsQuantity": {
+                "$cond": {
+                  "if": {
+                    "$eq": [
+                      "$root.receivingMethods.paymentMethod._id",
+                      "66bd4cdd4eb4534a4f853c6c"
+                    ]
+                  },
+                  "then": {
+                    "$cond": {
+                      "if": {
+                        "$in": [
+                          "years",
+                          "$root.bundle.receivingMethods.installment.type"
+                        ]
+                      },
+                      "then": {
+                        "$multiply": [
+                          {
+                            "$arrayElemAt": [
+                              "$root.bundle.receivingMethods.installment.quantity",
+                              0
+                            ]
+                          },
+                          12
+                        ]
+                      },
+                      "else": "$root.bundle.receivingMethods.installment.quantity"
+                    }
+                  },
+                  "else": {
+                    "$toInt": "0"
+                  }
+                }
+              },
+              "percentage": {
+                "$cond": {
+                  "if": {
+                    "$eq": [
+                      "$root.receivingMethods.paymentMethod._id",
+                      "66bd4cdd4eb4534a4f853c6c"
+                    ]
+                  },
+                  "then": {
+                    "$toInt": "0"
+                  },
+                  "else": {
+                    "$arrayElemAt": [
+                      "$root.bundle.receivingMethods.percentage",
+                      0
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "hasAnnualAllowance": "$root.bundle.hasAnnualAllowance",
+          "history": [
+            {
+              "optingExemption": false,
+              "immediatePercentage": "$root.bundle.immediatePercentage",
+              "quotaImmediateParcelValue": "$immediateValueQuota",
+              "cashImmediateParcelValue": "$immediateValue",
+              "accountQuotaBalance": "$totalEntryQuota",
+              "accountCashBalance": "$totalEntryValue",
+              "monthlyValueInCash": "$initialMonthlyValue",
+              "monthlyValueInQuotas": "$initialMonthlyQuota",
+              "paymentMethods": [
+                {
+                  "method": {
+                    "$arrayElemAt": [
+                      "$root.paymentMethods",
+                      0
+                    ]
+                  },
+                  "value": "$initialMonthlyValue",
+                  "parcelsQuantity": {
+                    "$cond": {
+                      "if": {
+                        "$eq": [
+                          "$root.receivingMethods.paymentMethod._id",
+                          "66bd4cdd4eb4534a4f853c6c"
+                        ]
+                      },
+                      "then": {
+                        "$cond": {
+                          "if": {
+                            "$in": [
+                              "years",
+                              "$root.bundle.receivingMethods.installment.type"
+                            ]
+                          },
+                          "then": {
+                            "$multiply": [
+                              {
+                                "$arrayElemAt": [
+                                  "$root.bundle.receivingMethods.installment.quantity",
+                                  0
+                                ]
+                              },
+                              12
+                            ]
+                          },
+                          "else": "$root.bundle.receivingMethods.installment.quantity"
+                        }
+                      },
+                      "else": {
+                        "$toInt": "0"
+                      }
+                    }
+                  },
+                  "percentage": {
+                    "$cond": {
+                      "if": {
+                        "$eq": [
+                          "$root.receivingMethods.paymentMethod._id",
+                          "66bd4cdd4eb4534a4f853c6c"
+                        ]
+                      },
+                      "then": {
+                        "$toInt": "0"
+                      },
+                      "else": {
+                        "$arrayElemAt": [
+                          "$root.bundle.receivingMethods.percentage",
+                          0
+                        ]
+                      }
+                    }
+                  }
+                }
+              ],
+              "status": "Ativo",
+              "effectiveDate": "$root.bundle.benefitStartDate",
+              "expirationDate": null,
+              "updatedBy": null,
+              "statusReason": "Concessão de Benefício"
+            }
+          ],
+          "immediatePercentage": "$immediatePercentage",
+          "taxRegimeTypes": "$totalValue.taxRegimeTypes",
+          "updatedAt": "$getDate"
+        }
+      }
+    },
+    {
+      "$replaceRoot": {
+        "newRoot": "$benefits"
+      }
+    }
+  ]
+}

@@ -1,0 +1,387 @@
+{
+  "_id": "66e395667d4c46fee9acb631",
+  "type": {
+    "_id": "66e39566f4a7a27388cd8a8f",
+    "name": "queries"
+  },
+  "name": "generatesBankingIntegration",
+  "description": "Gera os dados para a integração bancária",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_generatesBankingIntegration",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_recebimento_beneficio_purpose",
+      "type": "Parameter",
+      "description": "_id da purpose dentro do objeto bankAccounts - Recebimento de benefício",
+      "value": "672ecef3bf79df4f579c7900"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "people",
+    "banks"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "judicialPension": 1,
+        "person": 1,
+        "benefit": 1,
+        "bankAccount": 1,
+        "netAmount": 1,
+        "paymentDate": "$payrollPlanning.paymentDate"
+      }
+    },
+    {
+      "$addFields": {
+        "judicialPension": {
+          "$ifNull": [
+            "$judicialPension",
+            null
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "person": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$eq": [
+                        "$judicialPension",
+                        null
+                      ]
+                    }
+                  ]
+                },
+                "then": "$person"
+              }
+            ],
+            "default": "$judicialPension.recipient"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "person._id",
+        "foreignField": "_id",
+        "as": "people",
+        "let": {
+          "participationId": "$person.participation._id",
+          "judicialPension": "$judicialPension"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$or": [
+                  {
+                    "$eq": [
+                      "$participations._id",
+                      "$$participationId"
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$$judicialPension",
+                      null
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$documents",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$match": {
+              "documents.type.name": "CPF"
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$bankAccounts",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$bankAccounts.purpose._id",
+                  "p:68013e26d87b4c78d5a30ccb"
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$people",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "banks",
+        "localField": "bankAccount.bank._id",
+        "foreignField": "_id",
+        "as": "num_Bank",
+        "let": {
+          "bankId": "$bankAccount.bank._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$_id",
+                  "$$bankId"
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$num_Bank",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "CPF": {
+          "$ifNull": [
+            "$people.documents.document",
+            ""
+          ]
+        },
+        "Tipo": {
+          "$ifNull": [
+            "$bankAccount.type.name",
+            ""
+          ]
+        },
+        "ChavePix": {
+          "$ifNull": [
+            "$bankAccount.pix",
+            ""
+          ]
+        },
+        "Banco": {
+          "$ifNull": [
+            "$num_Bank.code",
+            ""
+          ]
+        },
+        "Agência": {
+          "$ifNull": [
+            "$bankAccount.agency",
+            ""
+          ]
+        },
+        "Conta": {
+          "$ifNull": [
+            "$bankAccount.account",
+            ""
+          ]
+        },
+        "Dígito": {
+          "$ifNull": [
+            "$bankAccount.digit",
+            ""
+          ]
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$bankAccount.bank._id",
+        "name": {
+          "$first": {
+            "$ifNull": [
+              "$bankAccount.bank.name",
+              ""
+            ]
+          }
+        },
+        "banco": {
+          "$first": {
+            "$ifNull": [
+              "$Banco",
+              ""
+            ]
+          }
+        },
+        "agencia": {
+          "$first": {
+            "$ifNull": [
+              "$bankAccount.agency",
+              ""
+            ]
+          }
+        },
+        "conta": {
+          "$first": {
+            "$ifNull": [
+              "$bankAccount.account",
+              ""
+            ]
+          }
+        },
+        "digito": {
+          "$first": {
+            "$ifNull": [
+              "$bankAccount.digit",
+              ""
+            ]
+          }
+        },
+        "titulosapagar": {
+          "$push": {
+            "za2_cpf": {
+              "$ifNull": [
+                "$CPF",
+                ""
+              ]
+            },
+            "za2_nome": {
+              "$ifNull": [
+                "$people.name",
+                ""
+              ]
+            },
+            "za2_data": {
+              "$dateToString": {
+                "format": "%d/%m/%Y",
+                "date": "$paymentDate"
+              }
+            },
+            "za2_rubric": "999",
+            "za2_valor": {
+              "$ifNull": [
+                "$netAmount",
+                ""
+              ]
+            },
+            "za2_banco": {
+              "$ifNull": [
+                "$Banco",
+                ""
+              ]
+            },
+            "za2_agencia": {
+              "$ifNull": [
+                "$Agência",
+                ""
+              ]
+            },
+            "za2_dvagenc": "0",
+            "za2_conta": {
+              "$ifNull": [
+                "$Conta",
+                ""
+              ]
+            },
+            "za2_dvconta": {
+              "$ifNull": [
+                "$Dígito",
+                ""
+              ]
+            },
+            "za2_formpag": "TED",
+            "za2_idbene": {
+              "$ifNull": [
+                "$benefit._id",
+                ""
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$not": {
+            "$or": [
+              {
+                "$eq": [
+                  "$banco",
+                  ""
+                ]
+              },
+              {
+                "$eq": [
+                  "$agencia",
+                  ""
+                ]
+              },
+              {
+                "$eq": [
+                  "$conta",
+                  ""
+                ]
+              },
+              {
+                "$eq": [
+                  "$digito",
+                  ""
+                ]
+              },
+              {
+                "$eq": [
+                  "$name",
+                  ""
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

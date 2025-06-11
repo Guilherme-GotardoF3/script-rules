@@ -1,0 +1,47 @@
+{
+  "_id": "65d8f1750ee692ef28d67174",
+  "name": "etpCalculatePayroll-getData",
+  "description": "Etapa responsável por buscar os dado para o processo de calculo da folha de pagamento\n",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6648fbddc350c812fb20a5dd",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6376730ed1573700637b7129",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "637e3b847aa6e700620a4381",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6376738b763fd50063d9ebd9",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "637f8c800a122b0063e6b029",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "637f8c9e0a122b0063e6b04b",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:26:45.725Z",
+  "updatedAt": "2024-06-17T21:43:36.972Z",
+  "__v": 0
+}

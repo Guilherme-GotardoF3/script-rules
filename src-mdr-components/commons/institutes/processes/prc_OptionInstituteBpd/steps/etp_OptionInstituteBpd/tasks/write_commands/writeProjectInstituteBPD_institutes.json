@@ -1,0 +1,28 @@
+{
+  "_id": "6769b57ab0490b84f86a77a6",
+  "type": {
+    "_id": "6769b57aadc73f41948b75e6",
+    "name": "write_commands"
+  },
+  "name": "writeProjectInstituteBPD_institutes",
+  "description": "Escreve o instituto do BPD na collection de Institutes",
+  "main_collection": "institutes",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_projectInstituteBPD_institutes"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person.participation._id": "$.$$.otp_projectInstituteBPD_institutes.person.participation._id"
+          },
+          {
+            "type._id": "$.$$.otp_projectInstituteBPD_institutes.type._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

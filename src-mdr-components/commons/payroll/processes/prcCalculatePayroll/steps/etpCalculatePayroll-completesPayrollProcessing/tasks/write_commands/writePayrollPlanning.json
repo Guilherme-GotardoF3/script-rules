@@ -1,0 +1,27 @@
+{
+  "_id": "63ac9e61708b4d0008bd1fbb",
+  "type": {
+    "_id": "64d550e45c4165b76ade8ffc",
+    "name": "write_commands"
+  },
+  "name": "writePayrollPlanning",
+  "description": "Escrita da atualização da payroll_plannings",
+  "main_collection": "payroll_plannings",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "status": "$.$$.otp_projectWritePayrollPlanning.status"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_projectWritePayrollPlanning._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

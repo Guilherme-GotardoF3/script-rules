@@ -1,0 +1,35 @@
+{
+  "_id": "65d8f19e0ee692ef28d671b0",
+  "name": "etpCalculatePayroll-calculateEarningsItems",
+  "description": "Etapa para calculo dos proventos da folha de pagamento",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "637e8b88f364180060b3d686",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6380c55d613511005d3e6d97",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "65e0da641f005b439669fca1",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "64d3d0fb95c0caf00384a979",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:27:26.700Z",
+  "updatedAt": "2024-07-09T21:22:11.325Z",
+  "__v": 0
+}

@@ -1,0 +1,28 @@
+{
+  "_id": "63d3e96589c26d0008fa0ee7",
+  "type": {
+    "_id": "651c1dc29aac026d92b91531",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReportMovementNewBenefits",
+  "description": "Componente de escrita relatório payroll_report_movement_new_benefits",
+  "main_collection": "payroll_report_movement_new_benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_write_report_movement_new_benefits"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_trf_project_write_report_movement_new_benefits.participation._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_write_report_movement_new_benefits.payrollPlanning"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

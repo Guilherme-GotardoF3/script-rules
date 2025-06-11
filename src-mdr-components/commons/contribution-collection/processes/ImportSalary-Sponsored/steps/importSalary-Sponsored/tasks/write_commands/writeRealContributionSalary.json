@@ -1,0 +1,28 @@
+{
+  "_id": "6684417fc84389b502b2e437",
+  "type": {
+    "_id": "6684417f2d0a23441de19018",
+    "name": "write_commands"
+  },
+  "name": "writeRealContributionSalary",
+  "description": "Tarefa que escreve a soma dos valores das rubricas para ver o salário base do participante",
+  "main_collection": "salary_import_temp",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_realContributionSalary"
+      },
+      "filter": {
+        "$and": [
+          {
+            "salaryImportGeneration": "$.$$.otp_realContributionSalary.salaryImportGeneration"
+          },
+          {
+            "person._id": "$.$$.otp_realContributionSalary.person._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

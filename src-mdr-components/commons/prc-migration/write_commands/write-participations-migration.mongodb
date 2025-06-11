@@ -1,0 +1,25 @@
+//_id: {'$oid': '66f45b4c3645b6c12d66fbc4'}
+//_tenant: sandbox-cs
+//name: writeParticipationsMigration
+//description: Escrita que atualiza as participações na collection people
+//collection: people
+
+{
+	command: {
+        "updateOne": {
+            "update": {
+                "$set": {
+                    "participations": "$.$$.otpParticipationsMigration.participations"
+                }
+            },
+            "filter": {
+                "$and": [
+                    {
+                        "_id": "$.$$.otpParticipationsMigration._id"
+                    }
+                ]
+            },
+            "upsert": true
+        }
+    }
+}

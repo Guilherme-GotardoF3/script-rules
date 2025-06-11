@@ -1,0 +1,27 @@
+{
+  "_id": "66900f194887e25bb93e437d",
+  "type": {
+    "_id": "66900f19038ca91479ea44d1",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReferenceBase",
+  "description": "Escreve a base de calculo utilizada para calcular o item",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payrollItems": "$.$$.otpProjectPayrollReferenceBase.payrollItems"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otpProjectPayrollReferenceBase._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

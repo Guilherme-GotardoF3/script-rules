@@ -1,0 +1,420 @@
+{
+  "_id": "6602116cdb6266e84ce9dd7e",
+  "type": {
+    "_id": "6602f9a3b9f14f1f26a78972",
+    "name": "queries"
+  },
+  "name": "projectANewBenefitForBeneficiary",
+  "description": "Projeta o beneficio do pensionista ",
+  "main_collection": "benefits",
+  "output_name": "otp_trf_trf_projectANewBenefitForBeneficiary",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "telefonicaBdPlanId",
+      "type": "Parameter",
+      "description": "parâmetro que guarda o id do plano Telefônica BD",
+      "value": "665cd426d11b2a523e4708b5"
+    },
+    {
+      "name": "id_benefitType_PensionDeathOfRetiree",
+      "type": "Parameter",
+      "description": "Id do tipo de benefício de pensão por morte oriunda de assistido (conversão de aposentadoria para pensão por morte)",
+      "value": "67d3330dd939441008248ac0"
+    },
+    {
+      "name": "benefitSourceId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "beneficiaries",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "people",
+    "benefit_types",
+    "family_groups",
+    "benefits"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "benefitId": "$.benefitSourceId",
+          "participationId": "$.participationId",
+          "benefitStartDate": "$.otp_calculateBenefitStartDate[0].benefitStartDate",
+          "paymentStartDate": "$.otp_calculateBenefitStartDate[0].paymentStartDate",
+          "beneficiaries": "$.beneficiaries"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$bundle.benefitStartDate",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$bundle.paymentStartDate",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$_id",
+                "$bundle.benefitId"
+              ]
+            },
+            {
+              "$eq": [
+                "$participation",
+                "$bundle.participationId"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "bundle": 1,
+        "taxRegimeTypes": 1
+      }
+    },
+    {
+      "$addFields": {
+        "participationId": "$bundle.participationId",
+        "benefitId": "$bundle.benefitId",
+        "beneficiaryList": "$bundle.beneficiaries",
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        },
+        "type": "p:67d33bf1d119a43d3369b292",
+        "newParticipation": "$.otp_trf_projectANewParticipationForBeneficiary",
+        "accountBalance": "$.otp_trf_getTheBalancePerBeneficiary"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$newParticipation",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$accountBalance",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$accountBalance",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$newParticipation.otp_trf_projectDataForNewGrantingBenefits.familyGroups.dependents.person._id",
+            "$accountBalance.dependents.person._id"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "newParticipation.otp_trf_projectDataForNewGrantingBenefits.familyGroups.dependents.person._id",
+        "foreignField": "_id",
+        "as": "person",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$sort": {
+              "participations.effectiveDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "participations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefit_types",
+        "localField": "type",
+        "foreignField": "_id",
+        "as": "type",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$type",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$beneficiaryList",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$beneficiaryList._id",
+            "$person._id"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "family_groups",
+        "localField": "person._id",
+        "foreignField": "dependents.person._id",
+        "as": "familyGroups",
+        "let": {
+          "personDependentId": "$person._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$dependents",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$dependents.person._id",
+                  "$$personDependentId"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$dependents.beneficiaries",
+              "preserveNullAndEmptyArrays": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$familyGroups",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "participationId",
+        "foreignField": "participation",
+        "as": "benefit",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 0,
+              "paymentMethods": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefit",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefit.paymentMethods",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "familyQuotas": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$person.participations.participationClass.plan._id",
+                "p:66e03abdd0e7f4f32d0bf537"
+              ]
+            },
+            "then": 0.5,
+            "else": 1
+          }
+        },
+        "quotaForDependents": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$person.participations.participationClass.plan._id",
+                "p:66e03abdd0e7f4f32d0bf537"
+              ]
+            },
+            "then": 0.1,
+            "else": 0
+          }
+        },
+        "dependentsCount": {
+          "$size": {
+            "$ifNull": [
+              "$bundle.beneficiaries",
+              []
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "totalPensionQuota": {
+          "$add": [
+            "$familyQuotas",
+            {
+              "$multiply": [
+                "$quotaForDependents",
+                "$dependentsCount"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "beneficiaryListFinal": {
+          "_id": "$beneficiaryList._id",
+          "paymentMethods": [
+            {
+              "method": "$benefit.paymentMethods.method",
+              "value": {
+                "$round": [
+                  {
+                    "$multiply": [
+                      "$benefit.paymentMethods.value",
+                      {
+                        "$divide": [
+                          "$familyGroups.dependents.beneficiaries.divisionPercentage",
+                          100
+                        ]
+                      },
+                      "$totalPensionQuota"
+                    ]
+                  },
+                  2
+                ]
+              },
+              "parcelsQuantity": "$benefit.paymentMethods.parcelsQuantity",
+              "percentage": "$benefit.paymentMethods.percentage"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "type": 1,
+        "participation": "$person.participations._id",
+        "paymentMethods": "$beneficiaryListFinal.paymentMethods",
+        "benefitSource": "$benefitId",
+        "benefitStartDate": {
+          "$toDate": "$bundle.benefitStartDate"
+        },
+        "paymentStartDate": {
+          "$toDate": "$bundle.paymentStartDate"
+        },
+        "lastParcel": {
+          "$toDouble": "0"
+        },
+        "lastPaymentDate": null,
+        "sheetEntryDate": {
+          "$toDate": "$bundle.paymentStartDate"
+        },
+        "lifetimeBenefit": {
+          "$toBool": false
+        },
+        "quota": {
+          "value": {
+            "$toDouble": 0
+          },
+          "referency": null
+        },
+        "taxRegimeTypes": "$taxRegimeTypes",
+        "history": [
+          {
+            "optingExemption": false,
+            "immediatePercentage": 0,
+            "quotaImmediateParcelValue": 0,
+            "cashImmediateParcelValue": 0,
+            "accountQuotaBalance": "$accountBalance,accountQuotaBalance",
+            "accountCashBalance": "$accountBalance.accountCashBalance",
+            "monthlyValueInCash": "$accountBalance.monthlyValueInCash",
+            "monthlyValueInQuotas": "$accountBalance.monthlyValueInQuotas",
+            "paymentMethods": "$beneficiaryListFinal.paymentMethods",
+            "status": "Em análise",
+            "effectiveDate": "$bundle.benefitStartDate",
+            "expirationDate": null,
+            "statusReason": "Concessão de Pensão por Morte"
+          }
+        ]
+      }
+    }
+  ]
+}

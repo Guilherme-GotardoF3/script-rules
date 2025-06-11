@@ -1,0 +1,150 @@
+{
+  "_id": "63d3e499429e640008e761b2",
+  "type": {
+    "_id": "63d3e4563b59a30008201f01",
+    "name": "queries"
+  },
+  "name": "projectWritePayrollIrDiseases",
+  "description": "Relatório que mostra quem tem moléstia grave ",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_trf_project_write_report_ir_diseases",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId",
+        "judicialPension": {
+          "$exists": false
+        }
+      }
+    },
+    {
+      "$project": {
+        "participation": 1,
+        "payrollPlanning": 1,
+        "benefit": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "participation._id",
+        "foreignField": "participations._id",
+        "as": "people",
+        "let": {
+          "participationId": "$participation._id",
+          "dateFilter": "$payrollPlanning.competenceDate"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              },
+              "incomeTaxFree": {
+                "$exists": true
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$ne": [
+                      "$incomeTaxFree.effectiveDate.startedAt",
+                      null
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$incomeTaxFree",
+                      null
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$incomeTaxFree.effectiveDate.endedAt",
+                          null
+                        ]
+                      },
+                      {
+                        "$gte": [
+                          "$incomeTaxFree.effectiveDate.endedAt",
+                          "$$dateFilter"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "incomeTaxFree": 1,
+              "documents.document": 1,
+              "documents.type": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$people",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "participation": "$participation",
+        "person": {
+          "_id": "$people._id",
+          "name": "$people.name",
+          "documents": "$people.documents"
+        },
+        "payrollPlanning": "$payrollPlanning._id",
+        "startDate": "$people.incomeTaxFree.effectiveDate.startedAt",
+        "endDate": "$people.incomeTaxFree.effectiveDate.endedAt",
+        "createdAt": "$getdate"
+      }
+    }
+  ]
+}

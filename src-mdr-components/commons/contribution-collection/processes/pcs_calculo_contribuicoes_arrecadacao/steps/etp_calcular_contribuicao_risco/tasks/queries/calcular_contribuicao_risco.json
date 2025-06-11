@@ -1,0 +1,424 @@
+{
+  "_id": "6435c40948b53a9b9b05c768",
+  "type": {
+    "_id": "6435bf5c441c15671ee5f938",
+    "name": "queries"
+  },
+  "name": "calcular_contribuicao_risco",
+  "description": "calcula os valores de contribuição de risco",
+  "main_collection": "people",
+  "output_name": "otp_calcular_contribuicao_risco",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "referenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "costing_plans",
+    "costing_plan_configurations"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$project": {
+        "_id": 1,
+        "birthDate": 1,
+        "firstName": 1,
+        "lastName": 1
+      }
+    },
+    {
+      "$addFields": {
+        "dateFilter": {
+          "$toDate": "$.referenceDate"
+        },
+        "planIdFilter": "$.planId",
+        "rubricFilter": [
+          "p:647f9e5367c2916c6680bee9",
+          "p:64e5ff463323eea1277b8a3d"
+        ],
+        "contributionRangeRisk": "$.otp_trf_buscar_faixa_contribuicao_risco_por_idade",
+        "contribuicaoParticipante": "$.otp_trf_calcular_contribuicao_participante",
+        "contribuicaoPatrocinador": "$.otp_trf_calcular_contribuicao_patrocinador",
+        "person": "$.otp_trf_buscar_participacoes_ativas",
+        "maxInsuredCapital": {
+          "$toDouble": "p:6499cc7e66b0325a13786c2c"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricFilter",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$person._id",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$contribuicaoParticipante"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$contribuicaoParticipante.personId",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$contribuicaoPatrocinador"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$contribuicaoPatrocinador.personId",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$contributionRangeRisk",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plans",
+        "localField": "planIdFilter",
+        "foreignField": "plan",
+        "as": "costingPlans",
+        "let": {
+          "rubricFilter": "$rubricFilter"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$rubric",
+                  "$$rubricFilter"
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$costingPlans",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plan_configurations",
+        "localField": "planIdFilter",
+        "foreignField": "plan._id",
+        "as": "costingPlanConfiguration",
+        "let": {
+          "rubricFilter": "$rubricFilter",
+          "dateFilter": "$dateFilter"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "effectiveDate.endedAt": {
+                "$ifNull": [
+                  "$effectiveDate.endedAt",
+                  ""
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "type": "BALANCE"
+                  },
+                  {
+                    "$in": [
+                      "$$rubricFilter",
+                      "$rubrics.destiny._id"
+                    ]
+                  },
+                  {
+                    "$gte": [
+                      "$$dateFilter",
+                      "$effectiveDate.startedAt"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          ""
+                        ]
+                      },
+                      {
+                        "$lte": [
+                          "$$dateFilter",
+                          "$effectiveDate.endedAt"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$costingPlanConfiguration",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "maxInsuredCapital": 1,
+        "contributionRangeRisk": 1,
+        "birthDate": 1,
+        "dateFilter": 1,
+        "planIdFilter": 1,
+        "rubricFilter": 1,
+        "contribuicaoParticipante": 1,
+        "contribuicaoPatrocinador": 1,
+        "participation": "$person.participation",
+        "dateFilterMonth": {
+          "$toInt": {
+            "$dateToString": {
+              "format": "%m",
+              "date": "$dateFilter"
+            }
+          }
+        },
+        "dateFilterYear": {
+          "$toInt": {
+            "$dateToString": {
+              "format": "%Y",
+              "date": "$dateFilter"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "age": {
+          "$toInt": {
+            "$dateDiff": {
+              "startDate": {
+                "$toDate": "$birthDate"
+              },
+              "endDate": "$dateFilter",
+              "unit": "day"
+            }
+          }
+        },
+        "vinculationDays": {
+          "$toInt": {
+            "$dateDiff": {
+              "startDate": {
+                "$toDate": "$participation.effectiveDate.startedAt"
+              },
+              "endDate": "$dateFilter",
+              "unit": "day"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "ageCalculated": {
+          "$round": [
+            {
+              "$divide": [
+                "$age",
+                365.25
+              ]
+            },
+            2
+          ]
+        },
+        "vinculationDaysCalculated": {
+          "$divide": [
+            "$vinculationDays",
+            365.25
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "monthsUntilRetirement": {
+          "$function": {
+            "body": "function (ageCalculated, vinculationDaysCalculated) {const returnMaxValue = (n1, n2) =>n1 > n2 ? n1 : n2;            if (ageCalculated < 60) {if (60 - ageCalculated < 5) {return Math.round(returnMaxValue(60 - ageCalculated,                    5 - vinculationDaysCalculated) * 12, 0);} else {                return Math.round((60 - ageCalculated) * 12,0);}} else {              return Math.round(returnMaxValue(0,                  5 - vinculationDaysCalculated) * 12,0);}}",
+            "args": [
+              "$ageCalculated",
+              "$vinculationDaysCalculated"
+            ],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "insuredCapital": {
+          "$function": {
+            "body": "function (            maxInsuredCapital,            contribuicaoParticipante,            contribuicaoPatrocinador,            monthsUntilRetirement          ) {            const returnMinValue = (n1, n2) =>              n1 < n2 ? n1 : n2;            const sumContribuition =              contribuicaoParticipante +              contribuicaoPatrocinador;            return Number(              returnMinValue(                maxInsuredCapital,                ((sumContribuition * 13) / 12) *                  monthsUntilRetirement              ).toFixed(2)            );          }",
+            "args": [
+              "$maxInsuredCapital",
+              "$contribuicaoParticipante.contribuitionValue",
+              "$contribuicaoPatrocinador.contribuitionValue",
+              "$monthsUntilRetirement"
+            ],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "contributionRangeRisk.tax": {
+          "$first": {
+            "$filter": {
+              "input": "$contributionRangeRisk.ranges",
+              "cond": {
+                "$eq": [
+                  "$$tax.age",
+                  {
+                    "$round": [
+                      "$ageCalculated",
+                      0
+                    ]
+                  }
+                ]
+              },
+              "as": "tax"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "participationRisk": {
+          "$round": [
+            {
+              "$divide": [
+                {
+                  "$divide": [
+                    {
+                      "$multiply": [
+                        "$insuredCapital",
+                        "$contributionRangeRisk.tax.percentage"
+                      ]
+                    },
+                    1000
+                  ]
+                },
+                2
+              ]
+            },
+            2
+          ]
+        },
+        "sponsorRisk": {
+          "$round": [
+            {
+              "$divide": [
+                {
+                  "$divide": [
+                    {
+                      "$multiply": [
+                        "$insuredCapital",
+                        "$contributionRangeRisk.tax.percentage"
+                      ]
+                    },
+                    1000
+                  ]
+                },
+                2
+              ]
+            },
+            2
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "riskTotal": {
+          "$ifNull": [
+            {
+              "$sum": {
+                "$add": [
+                  "$participationRisk",
+                  "$sponsorRisk"
+                ]
+              }
+            },
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "contribuicaoParticipante.rubric": 1,
+        "contribuicaoPatrocinador.rubric": 1,
+        "rubricFilter": 1,
+        "participation": 1,
+        "participationRisk": 1,
+        "sponsorRisk": 1,
+        "riskTotal": 1
+      }
+    }
+  ]
+}

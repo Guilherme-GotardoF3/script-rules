@@ -1,0 +1,14 @@
+{
+  "_id": "67db04d0ef589068300b3f4a",
+  "type": {
+    "_id": "67db04d0457974885e05b250",
+    "name": "parameters"
+  },
+  "name": "id_generationOfContribuitionSponsored",
+  "description": "Parâmetro para o id do tipo de importação de contribuição. Usado para gerar críticas durante o processo de calculo de contribuição de participantes ativos.",
+  "data": {
+    "value": "66e2e54ee029353542629c4f",
+    "type": "constant",
+    "isDefault": false
+  }
+}

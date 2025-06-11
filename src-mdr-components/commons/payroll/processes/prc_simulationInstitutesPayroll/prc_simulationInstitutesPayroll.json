@@ -1,0 +1,30 @@
+{
+  "_id": "675a19e17a6361baeb0b28d6",
+  "name": "prc_simulationInstitutesPayroll",
+  "description": "Seleciona a etapa que seleciona o componente que simula uma folha de resgate",
+  "context": "benefit",
+  "steps": [
+    {
+      "step": "67599004cf9cd9fcfcde1336",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "675a19895e0ae8aa55e07c0e",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "fe66bca9-90de-4909-8c1a-966f21a824bc",
+    "username": "dpitol@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "152dc485-afcd-46c6-ad92-6a6dadf95732",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false,
+  "createdAt": "2024-12-11T23:01:53.487Z",
+  "updatedAt": "2025-02-04T18:33:17.094Z",
+  "__v": 0
+}
