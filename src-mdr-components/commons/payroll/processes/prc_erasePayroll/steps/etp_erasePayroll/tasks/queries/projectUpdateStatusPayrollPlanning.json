@@ -1,0 +1,41 @@
+{
+  "_id": "6744ecc8fa4ab685ccf1ac96",
+  "type": {
+    "_id": "6744ecc8c0b57feb20da983b",
+    "name": "queries"
+  },
+  "name": "projectUpdateStatusPayrollPlanning",
+  "description": "Altera o status da payrollPlannings de PROCESSED para WAITING",
+  "main_collection": "payroll_plannings",
+  "output_name": "otp_projectUpdateStatusPayrollPlanning",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$match": {
+        "status": "PROCESSED"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "status": "WAITING",
+        "processExecution": null,
+        "finishProcess": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "_id": "67adeac17a6fd8a877866016",
+  "type": {
+    "_id": "67adeac1f32b94466ae111a6",
+    "name": "api_requests"
+  },
+  "name": "clean_payrolls_by_payroll_planning",
+  "description": "Limpa as folhas de pagamento vinculadas a payroll planning especifica",
+  "method": "post",
+  "headers": {
+    "tenant-id": "$.tenantId",
+    "authorization": "Bearer $.opt_trf_request_token.payload.accessToken"
+  },
+  "pathParameters": {
+    "excludePayrollPlanning": "true"
+  },
+  "queryParameters": {
+    "excludePayrollPlanning": "true"
+  },
+  "Url": "$.navegaApiUrl /payrolls/benefit-payroll/$.payrollPlanningId /remove-batch",
+  "Body": {
+    "type": "json",
+    "data": {
+      "benefits": "$.benefits"
+    }
+  }
+}

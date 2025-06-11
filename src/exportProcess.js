@@ -33,10 +33,13 @@ export async function exportProcess(processName, area) {
         const uniqueTaskIds = [...new Set(taskIds.map(id => id.toString()))].map(id => new ObjectId(id));
         const tasks = await db.collection("tasks").find({ _id: { $in: uniqueTaskIds } }).toArray();
 
+        const exportedParentTasks = new Set();
+
         for (const task of tasks) {
             const rule = task.rule;
             const ruleId = rule?.ref;
             const ruleType = rule?.type;
+            const taskType = task?.type;
 
             if (!ruleId || !ruleType || !["queries", "write_commands", "ordered_reference_lists", "api_requests", "conditions"].includes(ruleType)) {
                 console.warn(`Task "${task.name}" não possui regra válida (ruleId=${ruleId}, type=${ruleType})`);
@@ -50,6 +53,27 @@ export async function exportProcess(processName, area) {
                 continue;
             }
 
+            if (taskType == "child") {
+                const parentId = task.childConfig?.parentTask?._id;
+
+                if (parentId) {
+                    const parentTask = await db.collection("tasks").findOne({ _id: parentId });
+
+                    if (parentTask) {
+                        const parentKey = parentTask._id.toString();
+
+                        if (!exportedParentTasks.has(parentKey)) {
+                            exportedParentTasks.add(parentKey);
+
+                            await saveJson("src-mdr-components/commons/parent-tasks", parentTask.name, parentTask);
+                        }
+                    } else {
+                        console.warn(`Parent task com ID ${parentId} não encontrada para a task "${task.name}"`);
+                    }
+                } else {
+                    console.warn(`Task "${task.name}" é do tipo "child" mas não possui parentTask._id`);
+                }
+            }
             await exportRuleWithFormat(ruleDoc, ruleType, task, path.join(stepDir, "tasks", ruleType), baseDir, db);
         }
     }
@@ -120,6 +144,16 @@ async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir,
 
 
     if (ruleType === "api_requests") {
+
+        var body = {};
+
+        if (!(ruleDoc.body == null)) {
+            body = {
+                type: ruleDoc.body.type,
+                data: typeof ruleDoc.body.data === "string" ? JSON.parse(ruleDoc.body.data) : ruleDoc.body.data
+            }
+        }
+
         const enriched = {
             ...enrichedBase,
             method: ruleDoc.method,
@@ -127,10 +161,7 @@ async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir,
             pathParameters: ruleDoc.pathParameters,
             queryParameters: ruleDoc.queryParameters,
             Url: ruleDoc.url,
-            Body: {
-                type: ruleDoc.body.type,
-                data: typeof ruleDoc.body.data === "string" ? JSON.parse(ruleDoc.body.data) : ruleDoc.body.data
-            }
+            Body: body
         };
         await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
     }
@@ -200,7 +231,7 @@ function extractSystemActions(aggregation) {
 
     function search(value, path = "") {
         if (typeof value === "string") {
-            if (value.startsWith("$.") && !(value.startsWith("$.$$") || value.startsWith("$.opt") || value.startsWith("$.otp")))  {
+            if (value.startsWith("$.") && !(value.startsWith("$.$$") || value.startsWith("$.opt") || value.startsWith("$.otp"))) {
                 systemActions.add(value);
                 console.log(`Ação do sistema encontrada em ${path}`, value);
             }
