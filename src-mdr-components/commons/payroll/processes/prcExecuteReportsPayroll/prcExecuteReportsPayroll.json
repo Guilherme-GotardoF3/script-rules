@@ -1,0 +1,42 @@
+{
+  "_id": "64e4f48d56199e47f9598c53",
+  "name": "prcExecuteReportsPayroll",
+  "description": "Limpa e executa relatorios da folha cs",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "benefit",
+  "owners": [
+    {
+      "ref": "84d7494c-568d-4b75-880d-79adca52bc29",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "64eb4c5577eda621ef4d5c13",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "63bd9e87e7c4e900080e342e",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2023-08-22T17:46:53.527Z",
+  "updatedAt": "2024-07-18T15:36:30.477Z",
+  "__v": 0,
+  "dueDate": null,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false
+}

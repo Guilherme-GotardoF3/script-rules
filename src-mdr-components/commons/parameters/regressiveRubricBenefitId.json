@@ -1,0 +1,10 @@
+{
+  "_id": "66eb7ceff772590b47bef18f",
+  "name": "regressiveRubricBenefitId",
+  "description": "id da rubrica de provento de beneficio regressivo",
+  "data": {
+    "value": "674e6d67519c6b3b81a2d0d0",
+    "type": "constant",
+    "isDefault": false
+  }
+}

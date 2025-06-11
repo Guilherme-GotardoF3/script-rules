@@ -1,0 +1,137 @@
+{
+  "_id": "64272ca0c00774877ad90fb3",
+  "type": {
+    "_id": "64272b72ec17a69872c286c5",
+    "name": "queries"
+  },
+  "name": "projectWriteReportPayrollIrExterior",
+  "description": "o relatório filtra os benéficos que tiveram dedução do ir pela in_1343 por expatriados",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_trf_project_write_report_payroll_ir_exterior",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "rubrica_ir_exterior",
+      "type": "Parameter",
+      "description": "Parâmetro que define a rubrica do imposto de renda para quem mora fora do país.",
+      "value": "64222642859b25fd44eaa076"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId",
+        "judicialPension": {
+          "$exists": false
+        }
+      }
+    },
+    {
+      "$project": {
+        "participation": 1,
+        "payrollPlanning": 1,
+        "payrollItems": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "participation._id",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participationId": "$participation._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$foreignerData.livesAbroad",
+                  true
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "foreignerData": 1,
+              "name": 1,
+              "documents.document": 1,
+              "documents.type": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$payrollItems.rubric._id",
+            "p:63d8179408d1ef0008bdf772"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "payrollItem": "$payrollItems"
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "participation": 1,
+        "person": {
+          "_id": "$person._id",
+          "name": "$person.name",
+          "documents": "$person.documents"
+        },
+        "payrollPlanning": "$payrollPlanning._id",
+        "country": "$person.foreignerData.country",
+        "calculatedIR": "$payrollItem.amount",
+        "literal": "INPUT",
+        "aliquot": "0"
+      }
+    }
+  ]
+}

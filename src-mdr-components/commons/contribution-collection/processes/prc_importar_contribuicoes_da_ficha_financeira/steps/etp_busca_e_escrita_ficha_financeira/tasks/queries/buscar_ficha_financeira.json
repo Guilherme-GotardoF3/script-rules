@@ -1,0 +1,168 @@
+{
+  "_id": "642b373188d800a20ce10c16",
+  "type": {
+    "_id": "642b1419d65907782fc9e2b4",
+    "name": "queries"
+  },
+  "name": "buscar_ficha_financeira",
+  "description": "busca a ficha financeira com base no resultado da query de participações ativas",
+  "main_collection": "participations",
+  "output_name": "otp_trf_buscar_ficha_financeira",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "referenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "financial_statements",
+    "rubrics"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "dateFilter": {
+          "$toDate": "$.referenceDate"
+        },
+        "planIdFilter": "$.planId",
+        "rubricFilter": [
+          "p:645bef7bb9d4cfa1ab29e844",
+          "p:645befb4b9d4cfa1ab29e84b"
+        ],
+        "personWithParticipationActived": "$.otp_trf_buscar_participacoes_ativas"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricFilter",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$personWithParticipationActived"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$personWithParticipationActived._id",
+            "$person"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "dateFilterMonth": {
+          "$toInt": {
+            "$dateToString": {
+              "format": "%m",
+              "date": "$dateFilter"
+            }
+          }
+        },
+        "dateFilterYear": {
+          "$toInt": {
+            "$dateToString": {
+              "format": "%Y",
+              "date": "$dateFilter"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "financial_statements",
+        "localField": "personWithParticipationActived._id",
+        "foreignField": "person",
+        "as": "financialStatement",
+        "let": {
+          "dateFilterMonth": "$dateFilterMonth",
+          "dateFilterYear": "$dateFilterYear",
+          "rubricsId": "$rubricFilter"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$$dateFilterMonth",
+                      "$referencyMonth"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$$dateFilterYear",
+                      "$referencyYear"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$rubric",
+                      "$$rubricsId"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$financialStatement",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubricFilter",
+        "foreignField": "_id",
+        "as": "rubric"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubric",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "participation": "$personWithParticipationActived.participation._id",
+        "financialStatement": "$financialStatement._id",
+        "receiptRecord": "$rubric.name",
+        "origin": "importado",
+        "discountSponsor": "$financialStatement.discountSponsor",
+        "rubric": "$financialStatement.rubric",
+        "competencyMonth": "$financialStatement.competencyMonth",
+        "competencyYear": "$financialStatement.competencyYear",
+        "referencyMonth": "$financialStatement.referencyMonth",
+        "referencyYear": "$financialStatement.referencyYear",
+        "value": "$financialStatement.value",
+        "paymentDate": {
+          "$toDate": "$financialStatement.paymentDate"
+        },
+        "plan": "$planIdFilter"
+      }
+    }
+  ]
+}

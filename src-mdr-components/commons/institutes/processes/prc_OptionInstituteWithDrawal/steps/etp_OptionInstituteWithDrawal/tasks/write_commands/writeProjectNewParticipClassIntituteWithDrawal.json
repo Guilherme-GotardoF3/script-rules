@@ -1,0 +1,27 @@
+{
+  "_id": "678ae1c74b5e57051494adfb",
+  "type": {
+    "_id": "678ae1c7bf1fead670020f56",
+    "name": "write_commands"
+  },
+  "name": "writeProjectNewParticipClassIntituteWithDrawal",
+  "description": "Escreve novo tipo de participação (classe de participação) conforme escolha pelo instituto de Resgate",
+  "main_collection": "people",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "participations": "$.$$.otp_projectNewParticipationClassIntituteWithDrawal.participations"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_projectNewParticipationClassIntituteWithDrawal._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

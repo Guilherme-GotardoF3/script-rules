@@ -1,0 +1,37 @@
+{
+  "_id": "65d8f3259b815872b68f15ce",
+  "name": "prcPostPayroll",
+  "description": "Processo a ser executado depois do calculo da folha de pagamento.",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "benefit",
+  "owners": [
+    {
+      "ref": "d60dcbab-9e19-4aef-9c34-42b349e373a5",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "65d8f2070ee692ef28d67250",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:33:57.698Z",
+  "updatedAt": "2024-08-05T19:39:54.336Z",
+  "__v": 0,
+  "dueDate": null,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false
+}

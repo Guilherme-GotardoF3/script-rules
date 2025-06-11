@@ -1,0 +1,104 @@
+{
+  "_id": "642d857fa5edbb0803fd2044",
+  "type": {
+    "_id": "642d84a306cc69dffb9a7068",
+    "name": "queries"
+  },
+  "name": "escrita_ficha_financeira_collection_record",
+  "description": "escreve na collection records a ficha financeira",
+  "main_collection": "participations",
+  "output_name": "trf_escrita_ficha_financeira_collection_record",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "collectionRecordProcessId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "otpFichaFinanceira": "$.otp_trf_buscar_ficha_financeira"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otpFichaFinanceira"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$otpFichaFinanceira._id",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "participation": "$otpFichaFinanceira.participation",
+        "financialStatement": "$otpFichaFinanceira.financialStatement",
+        "receiptRecord": "$otpFichaFinanceira.receiptRecord",
+        "origin": "$otpFichaFinanceira.origin",
+        "discountSponsor": {
+          "$toDate": "$otpFichaFinanceira.discountSponsor"
+        },
+        "rubric": "$otpFichaFinanceira.rubric",
+        "competencyMonth": "$otpFichaFinanceira.competencyMonth",
+        "competencyYear": "$otpFichaFinanceira.competencyYear",
+        "referencyMonth": "$otpFichaFinanceira.referencyMonth",
+        "referencyYear": "$otpFichaFinanceira.referencyYear",
+        "value": "$otpFichaFinanceira.value",
+        "paymentDate": {
+          "$toDate": "$otpFichaFinanceira.paymentDate"
+        },
+        "plan": "$otpFichaFinanceira.plan",
+        "status": "in_review",
+        "collectionRecordProcess": "$.collectionRecordProcessId",
+        "createdAt": "$getdate",
+        "updatedAt": "$getdate"
+      }
+    },
+    {
+      "$merge": {
+        "into": "collection_records",
+        "on": [
+          "competencyYear",
+          "competencyMonth",
+          "participation",
+          "rubric",
+          "referencyMonth",
+          "referencyYear"
+        ],
+        "let": {
+          "date": "$updatedAt"
+        },
+        "whenMatched": [
+          {
+            "$set": {
+              "updatedAt": "$$date"
+            }
+          }
+        ],
+        "whenNotMatched": "insert"
+      }
+    }
+  ]
+}

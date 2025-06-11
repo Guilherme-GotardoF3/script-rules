@@ -1,0 +1,27 @@
+{
+  "_id": "65f0a2227509c36c36416bb3",
+  "type": {
+    "_id": "65f09700ce9fbb06896db8e5",
+    "name": "write_commands"
+  },
+  "name": "writeCountPaidBenefits",
+  "description": "Incrementa em lastParcel se o benefício for \"Prazo certo\" ",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "lastParcel": "$.$$.otp_countPaidBenefits.lastParcel"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_countPaidBenefits._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

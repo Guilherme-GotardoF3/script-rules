@@ -1,0 +1,36 @@
+{
+  "_id": "66169ae0d4bd77959eaa6c5d",
+  "type": {
+    "_id": "6615a3d35c0cc86d96367d41",
+    "name": "api_requests"
+  },
+  "name": "executeOccurrencesPayrollFinalization",
+  "description": "Executa a ocorrência de baixa de saldo da folha de pagamento",
+  "method": "post",
+  "headers": {
+    "tenant-id": "$.tenantId",
+    "authorization": "Bearer $.opt_trf_request_token.payload.accessToken"
+  },
+  "pathParameters": {},
+  "queryParameters": {},
+  "Url": "$.navegaApiUrl /workflows/processes-executions/6615a8d0601cd9da810b699b",
+  "Body": {
+    "type": "json",
+    "data": {
+      "owners": [
+        {
+          "ref": "d60dcbab-9e19-4aef-9c34-42b349e373a5",
+          "type": "user"
+        }
+      ],
+      "trigger": {
+        "type": "now"
+      },
+      "endDeadline": "2050-11-30T03:00:00.000Z",
+      "initialParameters": {
+        "accountTransactionTypeId": "p:67d17b2f349a10c4528cda40",
+        "payrollPlanningId": "$.payrollPlanningId"
+      }
+    }
+  }
+}

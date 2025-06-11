@@ -1,0 +1,28 @@
+{
+  "_id": "63dd27b16c679b0008fccf00",
+  "type": {
+    "_id": "651d64929aac026d92b91536",
+    "name": "write_commands"
+  },
+  "name": "writePayrollIrRegressivePmp",
+  "description": "Componente de escrita relatório payroll_report_ir_validation_regressive_pmp",
+  "main_collection": "payroll_report_ir_validation_regressive_pmp",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_write_report_ir_regressive"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_trf_project_write_report_ir_regressive.participation._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_write_report_ir_regressive.payrollPlanning"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

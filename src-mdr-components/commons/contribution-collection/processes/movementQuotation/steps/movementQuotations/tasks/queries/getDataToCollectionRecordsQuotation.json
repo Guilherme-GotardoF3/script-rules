@@ -1,0 +1,182 @@
+{
+  "_id": "66d7132b778dca2b9b092c10",
+  "type": {
+    "_id": "66d7132a5a4168b9b09f12db",
+    "name": "queries"
+  },
+  "name": "getDataToCollectionRecordsQuotation",
+  "description": "Busca os movimentos cotizados para inserir os dados na collection de contribuição",
+  "main_collection": "account_movements",
+  "output_name": "otp_getDataToCollectionRecordsQuotation",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "collectionRecordProcessId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "collection_records_temp"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "origin.collectionRecordProcess": "$.collectionRecordProcessId"
+      }
+    },
+    {
+      "$addFields": {
+        "bundle": {
+          "plan": "$.planId",
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          },
+          "collectionRecordProcess": "$.collectionRecordProcessId"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$bundle.plan",
+                "$person.participation.participationClass.plan._id"
+              ]
+            },
+            {
+              "$eq": [
+                "$bundle.competenceDate",
+                "$competenceDate"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "collection_records_temp",
+        "as": "records",
+        "let": {
+          "originId": "$origin._id",
+          "competenceDate": "$bundle.competenceDate",
+          "movement": "$$ROOT"
+        },
+        "pipeline": [
+          {
+            "$limit": 1
+          },
+          {
+            "$addFields": {
+              "otherRubrics": "$rubrics"
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$rubrics",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$rubrics.competenceDate",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$rubrics.rubric._id",
+                      "$$originId"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "rubrics.movements": {
+                "$concatArrays": [
+                  "$rubrics.movements",
+                  [
+                    "$$movement"
+                  ]
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$otherRubrics",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$ne": [
+                      "$rubrics.rubric._id",
+                      "$otherRubrics.rubric._id"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "rubricQuoted": {
+                "$push": "$rubrics"
+              },
+              "otherRubrics": {
+                "$push": "$otherRubrics"
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "rubrics": {
+                "$concatArrays": [
+                  "$otherRubrics",
+                  "$rubricQuoted"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$records"
+      }
+    },
+    {
+      "$replaceRoot": {
+        "newRoot": "$records"
+      }
+    }
+  ]
+}

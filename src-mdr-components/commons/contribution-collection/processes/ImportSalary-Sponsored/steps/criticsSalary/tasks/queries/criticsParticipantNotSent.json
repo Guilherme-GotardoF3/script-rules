@@ -1,0 +1,425 @@
+{
+  "_id": "669019d0c318d5f8da80888e",
+  "type": {
+    "_id": "669019d09a2b0f13e891c55b",
+    "name": "queries"
+  },
+  "name": "criticsParticipantNotSent",
+  "description": "Crítica que identifica qual(is) participante(s), não foi enviado",
+  "main_collection": "people",
+  "output_name": "otp_criticsParticipantNotSent",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "criticReviewTypeSalaryImport",
+      "type": "Parameter",
+      "description": "Parâmetro para o id do tipo de importação de salário da collection type_review_process. Usado para gerar críticas da importação.",
+      "value": "66e2e359e029353542629c4c"
+    },
+    {
+      "name": "plan",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "startedAt",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "financial_statements",
+    "employment_history",
+    "review_collection",
+    "processed_collection_review"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "$expr": {
+          "$anyElementTrue": {
+            "$map": {
+              "input": {
+                "$ifNull": [
+                  "$participations.participationClass",
+                  []
+                ]
+              },
+              "as": "class",
+              "in": {
+                "$eq": [
+                  "$$class.plan._id",
+                  "$.plan"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$participations.participationClass.plan._id",
+            "$.plan"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "name": 1,
+        "documents": 1,
+        "birthDate": 1,
+        "participations": 1
+      }
+    },
+    {
+      "$addFields": {
+        "bundle": {
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          },
+          "plan": {
+            "$toObjectId": "$.plan"
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "participations.participationClass.status.name": {
+          "$regex": "ativ",
+          "$options": "i"
+        },
+        "participations.participationClass.type.name": {
+          "$regex": "contrib",
+          "$options": "i"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "financial_statements",
+        "localField": "_id",
+        "foreignField": "person._id",
+        "as": "financial_statements",
+        "let": {
+          "competenceDate": {
+            "$toDate": "$bundle.competenceDate"
+          }
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$competenceDate",
+                  "$$competenceDate"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "competenceDate": 1,
+              "value": 1,
+              "employmentHistory": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$match": {
+        "financial_statements": []
+      }
+    },
+    {
+      "$lookup": {
+        "from": "employment_history",
+        "localField": "_id",
+        "foreignField": "person._id",
+        "as": "employmentHistory",
+        "let": {
+          "personId": "$person._id",
+          "competenceDate": "$bundle.competenceDate",
+          "registrySponsored": "$data.person.registrySponsored",
+          "companyId": "$fileData.details.company.id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$or": [
+                  {
+                    "$and": [
+                      {
+                        "$gt": [
+                          "$$competenceDate",
+                          "$effectiveDate.startedAt"
+                        ]
+                      },
+                      {
+                        "$lte": [
+                          "$effectiveDate.endedAt",
+                          "$$competenceDate"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "$and": [
+                      {
+                        "$gte": [
+                          "$$competenceDate",
+                          "$effectiveDate.startedAt"
+                        ]
+                      },
+                      {
+                        "$eq": [
+                          {
+                            "$ifNull": [
+                              "$effectiveDate.endedAt",
+                              null
+                            ]
+                          },
+                          null
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "effectiveDate.startedAt": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "person": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": "$employmentHistory"
+    },
+    {
+      "$lookup": {
+        "from": "review_collection",
+        "localField": "participations.participationClass.plan._id",
+        "foreignField": "plan._id",
+        "as": "reviewCollection",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$type._id",
+                  "p:67c098bde9c51a0f5dee0f1d"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$critics"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$critics.description",
+                  "Participante não enviado"
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "critics": {
+                "$push": "$critics"
+              },
+              "type": {
+                "$first": "$type"
+              },
+              "plan": {
+                "$first": "$plan"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$reviewCollection",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "processed_collection_review",
+        "localField": "_id",
+        "foreignField": "person._id",
+        "as": "previewProcessedCollectionReview",
+        "let": {
+          "participationId": "$participations._id",
+          "referenceDate": "$bundle.competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$person.participation._id",
+                      "$$participationId"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$referenceDate",
+                      "$$referenceDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$reviewCollections",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$addFields": {
+              "critic": {
+                "$ifNull": [
+                  {
+                    "$arrayElemAt": [
+                      "$reviewCollections.reviewCollection.critics",
+                      0
+                    ]
+                  },
+                  null
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$ne": [
+                      "$reviewCollections.reviewCollection.type._id",
+                      "p:67c098bde9c51a0f5dee0f1d"
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$critic.description",
+                      "Participante não enviado"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "reviewCollections": {
+                "$push": "$reviewCollections"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$previewProcessedCollectionReview",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": {
+          "_id": "$_id",
+          "name": "$name",
+          "documents": "$documents",
+          "participation": "$participations"
+        },
+        "referenceDate": "$bundle.competenceDate",
+        "reviewCollections": {
+          "$concatArrays": [
+            {
+              "$ifNull": [
+                "$previewProcessedCollectionReview.reviewCollections",
+                []
+              ]
+            },
+            [
+              {
+                "origin": {
+                  "_id": "$_id",
+                  "name": "people"
+                },
+                "reviewCollection": "$reviewCollection",
+                "competenceDate": "$bundle.competenceDate",
+                "values": {
+                  "imported": {
+                    "$toInt": 0
+                  },
+                  "calculated": {
+                    "$toInt": 0
+                  },
+                  "diff": {
+                    "$toInt": 0
+                  }
+                },
+                "statusReason": "Participante não enviado",
+                "validation": {
+                  "description": "",
+                  "responsible": "",
+                  "date": "$.startedAt"
+                },
+                "status": "SUCCESS"
+              }
+            ]
+          ]
+        },
+        "company": "$employmentHistory.company"
+      }
+    }
+  ]
+}

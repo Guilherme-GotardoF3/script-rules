@@ -1,0 +1,37 @@
+{
+  "_id": "6615a8d0601cd9da810b699b",
+  "name": "prcWithdrawalBenefitPayments",
+  "description": "Processo para a baixa dos saldos da folha de pagamento, em decorrência de pagamento de benefício",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "payroll",
+  "owners": [
+    {
+      "ref": "ad447d00-30e2-45fd-a87d-c80ba1b50c69",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "6615a95db750a5b91760ba7e",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-04-09T20:45:04.224Z",
+  "updatedAt": "2024-07-18T15:36:30.477Z",
+  "__v": 0,
+  "dueDate": null,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false
+}

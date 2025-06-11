@@ -1,0 +1,64 @@
+{
+  "_id": "650ca2d091399913711bb623",
+  "type": {
+    "_id": "650ca2763aff8c5587358746",
+    "name": "queries"
+  },
+  "name": "projeta_escrita_verificacoes",
+  "description": "Ajusta a projecao das verificacoes",
+  "main_collection": "payroll_plannings",
+  "output_name": "otp_trf_projeta_escrita_verificacoes",
+  "fixed_value": false,
+  "input_parameters": [],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$limit": 1
+    },
+    {
+      "$project": {
+        "_id": 1
+      }
+    },
+    {
+      "$addFields": {
+        "otp_trf_calcular_verificacoes_folha": "$.otp_trf_calcular_verificacoes_folha"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otp_trf_calcular_verificacoes_folha",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otp_trf_calcular_verificacoes_folha",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otp_trf_calcular_verificacoes_folha.result",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "sheetVerification": "$otp_trf_calcular_verificacoes_folha.result.sheetVerification",
+        "sheetVerificationRule": "$otp_trf_calcular_verificacoes_folha.result.sheetVerificationRule",
+        "participation": "$otp_trf_calcular_verificacoes_folha.result.participation",
+        "payrollPlanning": "$otp_trf_calcular_verificacoes_folha.result.payrollPlanning",
+        "status": "$otp_trf_calcular_verificacoes_folha.result.status",
+        "statusReason": "$otp_trf_calcular_verificacoes_folha.result.statusReason",
+        "person": "$otp_trf_calcular_verificacoes_folha.result.person",
+        "benefit": "$otp_trf_calcular_verificacoes_folha.result.benefit",
+        "validation": "$otp_trf_calcular_verificacoes_folha.result.validation",
+        "createdAt": "$otp_trf_calcular_verificacoes_folha.result.createdAt",
+        "updatedAt": "$otp_trf_calcular_verificacoes_folha.result.updatedAt"
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "_id": "6418be6a6dcafc9b25c167a4",
+  "name": "id_rubrica_pensao_por_morte",
+  "description": "Id da rubrica do provento da pensão por morte",
+  "data": {
+    "value": "674e6d8e519c6b3b81a2d136",
+    "type": "constant",
+    "isDefault": false
+  }
+}

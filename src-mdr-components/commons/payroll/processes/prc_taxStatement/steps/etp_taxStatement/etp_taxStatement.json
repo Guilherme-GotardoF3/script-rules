@@ -1,0 +1,23 @@
+{
+  "_id": "66feb08d23b03ed8177f826d",
+  "name": "etp_taxStatement",
+  "description": "Etapa que chama a tarefa que monta um extrato de IR regressivo para o Portifólio",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6737a5da22e68b4ba5daeb60",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66feb04b8acc638be590914e",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-10-03T14:56:13.178Z",
+  "updatedAt": "2024-11-16T19:44:56.705Z",
+  "__v": 0
+}

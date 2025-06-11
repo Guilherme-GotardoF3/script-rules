@@ -1,0 +1,258 @@
+{
+  "_id": "66997d6914ae66be08c87775",
+  "type": {
+    "_id": "66997d69e9d633bb6fb446e4",
+    "name": "queries"
+  },
+  "name": "projectPayrollForRecipient",
+  "description": "Projeta uma folha para o recebedor da pensão judicial",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_projectPayrollForRecipient",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "rubricGroupJudicialPensionsId",
+      "type": "Parameter",
+      "description": "id do grupo das rubricas de pensão judicial",
+      "value": "6679ceeaffd544212eccd5d2"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "people",
+    "rubrics",
+    "benefits_in_payroll_process"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "payrollItems.judicialPension": {
+          "$exists": true
+        }
+      }
+    },
+    {
+      "$project": {
+        "person": 1,
+        "benefit": 1,
+        "payrollPlanning": 1,
+        "participation": 1,
+        "payrollItems": 1,
+        "bankAccount": 1,
+        "status": 1,
+        "totalParcel": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "payrollItems.judicialPension.recipient._id",
+        "foreignField": "_id",
+        "as": "bankData",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$bankAccounts",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$bankAccounts.pix",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$addFields": {
+              "bankData": {
+                "type": "$bankAccounts.type",
+                "bank": "$bankAccounts.bank",
+                "agency": "$bankAccounts.agency",
+                "account": "$bankAccounts.account",
+                "digit": "$bankAccounts.digit",
+                "pixKey": "$bankAccounts.pixKey"
+              }
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "bankAccounts": "$bankData"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$bankData",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "payrollItems.rubric._id",
+        "foreignField": "_id",
+        "as": "rubric",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$support.group._id",
+                  "p:6679dcbf2c592b5f1896b9ad"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubric",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits_in_payroll_process",
+        "localField": "benefit._id",
+        "foreignField": "payload.benefit._id",
+        "as": "benefitsInPayroll",
+        "let": {
+          "recipientId": "$payrollItems.judicialPension.recipient._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payload.judicialPensions"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payload.judicialPensions.recipient._id",
+                  "$$recipientId"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$payload.judicialPensions.calculationSeries"
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "remunerationRubric": "$payload.judicialPensions.calculationSeries.remunerationRubric"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefitsInPayroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "benefitsInPayroll.remunerationRubric._id",
+        "foreignField": "_id",
+        "as": "payrollItems.rubric",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems.rubric",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "newPayrollItems": [
+          {
+            "rubric": "$payrollItems.rubric",
+            "status": "$payrollItems.status",
+            "type": "$payrollItems.type",
+            "finalAmount": {
+              "$multiply": [
+                "$payrollItems.finalAmount",
+                -1
+              ]
+            },
+            "amount": {
+              "$multiply": [
+                "$payrollItems.amount",
+                -1
+              ]
+            },
+            "exceptionAmount": "$payrollItems.exceptionAmount",
+            "competenceDate": "$payrollItems.competenceDate",
+            "quota": "$payrollItems.quota"
+          }
+        ]
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payrollPlanning": 1,
+        "participation": 1,
+        "IRDependents": {
+          "$toDouble": 0
+        },
+        "actualParcel": {
+          "$toDouble": 0
+        },
+        "bankAccount": "$bankData.bankAccounts",
+        "benefit": 1,
+        "grossAmount": {
+          "$first": "$newPayrollItems.finalAmount"
+        },
+        "judicialPension": "$payrollItems.judicialPension",
+        "netAmount": {
+          "$first": "$newPayrollItems.amount"
+        },
+        "payrollItems": "$newPayrollItems",
+        "person": 1,
+        "status": 1,
+        "totalParcel": 1
+      }
+    }
+  ]
+}

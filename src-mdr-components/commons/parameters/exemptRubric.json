@@ -1,0 +1,10 @@
+{
+  "_id": "671abc3294fdb65603771749",
+  "name": "exemptRubric",
+  "description": "id da rubrica do Benefício Isento (exigibilidade suspensa)",
+  "data": {
+    "value": "674e6db6519c6b3b81a2d1f9",
+    "type": "constant",
+    "isDefault": false
+  }
+}

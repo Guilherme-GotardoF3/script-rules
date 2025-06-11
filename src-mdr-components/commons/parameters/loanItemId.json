@@ -1,0 +1,10 @@
+{
+  "_id": "66a78cd7dc7efd212efea372",
+  "name": "loanItemId",
+  "description": "id da rubrica de empréstimo",
+  "data": {
+    "value": "674e6d67519c6b3b81a2d0f3",
+    "type": "constant",
+    "isDefault": false
+  }
+}

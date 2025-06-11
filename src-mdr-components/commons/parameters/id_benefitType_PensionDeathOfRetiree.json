@@ -1,0 +1,10 @@
+{
+  "_id": "67d33bf1d119a43d3369b292",
+  "name": "id_benefitType_PensionDeathOfRetiree",
+  "description": "Id do tipo de benefício de pensão por morte oriunda de assistido (conversão de aposentadoria para pensão por morte)",
+  "data": {
+    "value": "67d3330dd939441008248ac0",
+    "type": "constant",
+    "isDefault": false
+  }
+}

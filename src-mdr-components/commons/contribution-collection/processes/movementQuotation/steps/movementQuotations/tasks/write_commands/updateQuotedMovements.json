@@ -1,0 +1,25 @@
+{
+  "_id": "66c8a76a6b44c320801d505d",
+  "type": {
+    "_id": "66c8a76a0d46a2a91e114d4b",
+    "name": "write_commands"
+  },
+  "name": "updateQuotedMovements",
+  "description": "Atualiza movimentos cotizados",
+  "main_collection": "account_movements",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "monetaryUnitValue": "$.$$.otp_getMovementsToBeQuoted.monetaryUnitValue",
+          "amountQuotas": "$.$$.otp_getMovementsToBeQuoted.amountQuotas",
+          "origin.collectionRecordProcess": "$.collectionRecordProcessId"
+        }
+      },
+      "filter": {
+        "_id": "$.$$.otp_getMovementsToBeQuoted._id"
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "_id": "6418beef6dcafc9b25c167b2",
+  "name": "id_beneficio_aposentadoria",
+  "description": "Id do benefício de aposentadoria.",
+  "data": {
+    "value": "642225e338f6962fa1aa07b5",
+    "type": "constant",
+    "isDefault": false
+  }
+}

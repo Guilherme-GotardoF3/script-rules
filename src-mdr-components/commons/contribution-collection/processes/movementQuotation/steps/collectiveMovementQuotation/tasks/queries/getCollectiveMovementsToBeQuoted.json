@@ -1,0 +1,268 @@
+{
+  "_id": "66d7854f6909823d77efe82e",
+  "type": {
+    "_id": "66d7854fb8df40e5fef87d41",
+    "name": "queries"
+  },
+  "name": "getCollectiveMovementsToBeQuoted",
+  "description": "Listar todos os movimentos coletivos para cotização, identificar a conta previdenciária e a unidade monetária.",
+  "main_collection": "collective_account_movements",
+  "output_name": "otp_getCollectiveMovementsToBeQuoted",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "collectionRecordProcessId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "monetary_unit_values"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "$or": [
+          {
+            "amountQuotas": {
+              "$exists": false
+            }
+          },
+          {
+            "amountQuotas": null
+          },
+          {
+            "amountQuotas": 0
+          }
+        ]
+      }
+    },
+    {
+      "$project": {
+        "competenceDate": 1,
+        "pensionAccount": 1,
+        "plan": 1,
+        "value": 1,
+        "monetaryUnitValue": 1
+      }
+    },
+    {
+      "$addFields": {
+        "bundle": {
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          },
+          "plan": "$.planId",
+          "collectionRecordProcess": "$.collectionRecordProcessId"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$competenceDate",
+                "$bundle.competenceDate"
+              ]
+            },
+            {
+              "$eq": [
+                "$plan._id",
+                "$bundle.plan"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "endDate": {
+          "$dateAdd": {
+            "startDate": "$competenceDate",
+            "unit": "month",
+            "amount": 1
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "monetary_unit_values",
+        "localField": "pensionAccount.monetaryUnit._id",
+        "foreignField": "monetaryUnit._id",
+        "as": "monetary_unit_value",
+        "let": {
+          "begin": "$competenceDate",
+          "end": "$endDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lt": [
+                      "$referenceDate",
+                      "$$end"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "referenceDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "value": 1,
+              "referenceDate": 1,
+              "monetaryUnit": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$monetary_unit_value",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "monetary_unit_values",
+        "localField": "monetaryUnitValue.referenceDate",
+        "foreignField": "referenceDate",
+        "as": "monetaryUnitValueExists",
+        "let": {
+          "plan": "$bundle.plan",
+          "monetaryUnitId": "$pensionAccount.monetaryUnit._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$monetaryUnit.plan._id",
+                      "$$plan"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$monetaryUnit._id",
+                      "$$monetaryUnitId"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "referenceDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "value": 1,
+              "referenceDate": 1,
+              "monetaryUnit": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$monetaryUnitValueExists",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "amountQuotas": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                {
+                  "$ifNull": [
+                    "$monetaryUnitValue",
+                    0
+                  ]
+                },
+                0
+              ]
+            },
+            "then": {
+              "$round": [
+                {
+                  "$divide": [
+                    "$value",
+                    "$monetary_unit_value.value"
+                  ]
+                },
+                8
+              ]
+            },
+            "else": {
+              "$round": [
+                {
+                  "$divide": [
+                    "$value",
+                    "$monetaryUnitValueExists.value"
+                  ]
+                },
+                8
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "amountQuotas": {
+          "$ne": null
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "monetaryUnitValue": {
+          "$ifNull": [
+            "$monetaryUnitValueExists",
+            "$monetary_unit_value"
+          ]
+        },
+        "amountQuotas": 1,
+        "collectionRecordProcess": 1
+      }
+    }
+  ]
+}

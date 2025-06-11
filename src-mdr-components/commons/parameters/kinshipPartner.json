@@ -1,0 +1,10 @@
+{
+  "_id": "671024fa5756605daf6c73ce",
+  "name": "kinshipPartner",
+  "description": "id referente ao parentesco \"companheiro(a)\" da collection kinships",
+  "data": {
+    "value": "65f0a9570b8bfc37fa20771f",
+    "type": "constant",
+    "isDefault": false
+  }
+}

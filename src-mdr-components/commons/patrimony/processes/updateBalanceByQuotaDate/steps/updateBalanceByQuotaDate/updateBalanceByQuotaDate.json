@@ -1,0 +1,35 @@
+{
+  "_id": "66eb526c4cac1f35a1c5bb89",
+  "name": "updateBalanceByQuotaDate",
+  "description": "Etapa para atualizacao de saldo de acordo com a data da cota",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66eb526621a089419389dd2d",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66eb5322b667f2012c8662b1",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6720f020c1efc13e4c19ddb1",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6720f05fc1efc13e4c19ddd6",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-09-18T22:21:32.903Z",
+  "updatedAt": "2024-10-29T14:25:45.356Z",
+  "__v": 0
+}

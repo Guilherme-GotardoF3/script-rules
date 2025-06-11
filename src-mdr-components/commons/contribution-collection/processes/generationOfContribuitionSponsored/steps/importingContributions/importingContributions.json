@@ -1,0 +1,29 @@
+{
+  "_id": "66a10b6f0ec81be0d6561dcf",
+  "name": "importingContributions",
+  "description": "Etapa de importação das contribuições",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66a110b91a400398ace35b6f",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66a10f731a400398ace35b2d",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66a10fcb1a400398ace35b4e",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-07-24T14:10:55.277Z",
+  "updatedAt": "2025-03-29T14:50:51.251Z",
+  "__v": 0
+}

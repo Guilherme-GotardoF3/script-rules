@@ -1,0 +1,35 @@
+{
+  "_id": "66e8892defe3eddc267fe4d9",
+  "name": "quotaCalculation-getPassive",
+  "description": "Etapa que vai buscar o passivo para o calculo da tela",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66e98aa5541f2af88c79034f",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66e98cee3ddbed312fd1a564",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66e9978b541f2af88c790397",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66e88925d77e39f42091067a",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-09-16T19:38:21.764Z",
+  "updatedAt": "2024-09-17T20:05:41.696Z",
+  "__v": 0
+}

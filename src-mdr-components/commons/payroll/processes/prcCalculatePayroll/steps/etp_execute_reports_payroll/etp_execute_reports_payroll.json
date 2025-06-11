@@ -1,0 +1,23 @@
+{
+  "_id": "64b84157c18aab972590b370",
+  "name": "etp_execute_reports_payroll",
+  "description": "Etapara para execucao dos relatorios da folha",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "63bda2ff355d7400084bad3a",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "64b841a59de6561bf40b6b72",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2023-07-19T20:02:31.589Z",
+  "updatedAt": "2024-06-26T19:57:06.687Z",
+  "__v": 0
+}

@@ -1,0 +1,37 @@
+{
+  "_id": "667d9f9c9722208848c6a9c3",
+  "name": "balanceAccountRecompositionAllTime",
+  "description": "Recomposicao do saldo atraves das movimentacoes, comparando mes a mes se o saldo esta igual ao total das movimentacoes apuradas ate a data de competencia informada",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "collection",
+  "owners": [
+    {
+      "ref": "63ae81bc-9a8d-4c03-af44-94e93ea47661",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "667d9e5fc0a6d310dc14e00d",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-06-27T17:21:32.826Z",
+  "updatedAt": "2024-07-18T15:36:30.477Z",
+  "__v": 0,
+  "dueDate": null,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false
+}

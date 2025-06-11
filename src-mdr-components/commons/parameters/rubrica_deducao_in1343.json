@@ -1,0 +1,10 @@
+{
+  "_id": "63d7b891fc21e000082e0283",
+  "name": "rubrica_deducao_in1343",
+  "description": "Parâmetro que define a rubrica de dedução da IN 1343.",
+  "data": {
+    "value": "637d62a87ade154dc2b8f717",
+    "type": "constant",
+    "isDefault": false
+  }
+}

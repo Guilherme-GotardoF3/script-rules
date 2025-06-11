@@ -1,0 +1,21 @@
+{
+  "_id": "644038a242b4252a66164a76",
+  "name": "etp_calcular_saldo",
+  "description": "calcular o saldo baseado na data informada",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6440387871d386c53208ddbd",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    }
+  ],
+  "createdAt": "2023-04-19T18:53:22.590Z",
+  "updatedAt": "2023-04-19T18:53:22.590Z",
+  "__v": 0
+}

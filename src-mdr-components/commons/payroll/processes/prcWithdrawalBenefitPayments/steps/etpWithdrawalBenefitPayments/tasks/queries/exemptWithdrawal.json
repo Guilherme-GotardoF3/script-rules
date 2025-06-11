@@ -1,0 +1,146 @@
+{
+  "_id": "66e451238be6af7903960c99",
+  "type": {
+    "_id": "66e4512355f05d123a7a0f0a",
+    "name": "queries"
+  },
+  "name": "exemptWithdrawal",
+  "description": "Baixa do saldo isento IN1343",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otpExemptWithdrawal",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "exemptRubricIn1343",
+      "type": "Parameter",
+      "description": "id da rubrica IN1343-Dedução Base Tributável (informativo)\n",
+      "value": "674e6db5519c6b3b81a2d1bd"
+    },
+    {
+      "name": "occurenceExemptBalanceId",
+      "type": "Parameter",
+      "description": "id da ocorrência da baixa de saldo isento IN1343",
+      "value": "66e4420e1a8bacbd569996ea"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "plans",
+    "occurrences"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId",
+        "payrollItems.payrollReferenceBases.rubricList.rubric._id": "p:66e44ba2137b1d08405e2f77"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "person": 1,
+        "grossAmount": 1,
+        "payrollPlanning": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "plans",
+        "localField": "person.participation.participationClass.plan._id",
+        "foreignField": "_id",
+        "as": "plan",
+        "pipeline": [
+          {
+            "$project": {
+              "name": 1,
+              "companies": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$plan",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "occurenceId": "p:66e44e27137b1d08405e2f7e"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "occurrences",
+        "localField": "occurenceId",
+        "foreignField": "_id",
+        "as": "occurrence",
+        "pipeline": [
+          {
+            "$project": {
+              "name": 1,
+              "occurrenceRules": 1
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$occurrenceRules"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$occurrence"
+      }
+    },
+    {
+      "$addFields": {
+        "getDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "competenceDate": "$payrollPlanning.competenceDate",
+        "occurrence": {
+          "_id": "$occurrence._id",
+          "name": "$occurrence.name"
+        },
+        "occurrenceDate": "$getDate",
+        "operationDate": "$getDate",
+        "origin": {
+          "_id": "$_id",
+          "name": "payrolls_RMDRC"
+        },
+        "pensionAccount": {
+          "_id": "$occurrence.occurrenceRules.accounts.origin._id",
+          "name": "$occurrence.occurrenceRules.accounts.origin.name"
+        },
+        "person": 1,
+        "value": {
+          "$multiply": [
+            "$grossAmount",
+            -1
+          ]
+        },
+        "percentageMovement": {
+          "$toInt": 100
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "_id": "669ebd6871479a801b5e9850",
+  "name": "provisioningParticipantsContribuitions",
+  "description": "Etapa para geração dos provisionamentos das contribuições dos participantes",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "67e808cadcc300eb82994495",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e808cadcc300eb829944d1",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e808cadcc300eb829944f2",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e808cadcc300eb8299450a",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e808cadcc300eb82994521",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67e808cbdcc300eb82994538",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-07-22T20:13:28.191Z",
+  "updatedAt": "2025-03-29T14:50:51.130Z",
+  "__v": 0
+}

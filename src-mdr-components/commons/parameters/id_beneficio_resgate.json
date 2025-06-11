@@ -1,0 +1,10 @@
+{
+  "_id": "67a0c8253a2b2f7c6a4c7615",
+  "name": "id_beneficio_resgate",
+  "description": "Id do benefício de resgate de contribuições",
+  "data": {
+    "value": "66bd4fef4eb4534a4f855041",
+    "type": "constant",
+    "isDefault": false
+  }
+}

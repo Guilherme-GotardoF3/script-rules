@@ -1,0 +1,460 @@
+{
+  "_id": "67d576eaae2fb5ada3c65a68",
+  "type": {
+    "_id": "67d576eaae2fb5ada3c65a66",
+    "name": "queries"
+  },
+  "name": "criticsActiveParticipants",
+  "description": "Consulta de crítica listando participantes ativos no cadastro, porém não constam no arquivo de movimentação.",
+  "main_collection": "people",
+  "output_name": "otpCriticsActiveParticipants",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "telefonicaBdPlanId",
+      "type": "Parameter",
+      "description": "parâmetro que guarda o id do plano Telefônica BD",
+      "value": "665cd426d11b2a523e4708b5"
+    },
+    {
+      "name": "id_ImportFinancialStatementsFile",
+      "type": "Parameter",
+      "description": "Parâmetro para o id do tipo de importação do arquivo de movimento da. Usado para gerar críticas durante o processo de importação do arquivo de movimento no painel de terceiros.",
+      "value": "67d3218cd61a29ba7b25b441"
+    },
+    {
+      "name": "fileId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "startedAt",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "files",
+    "files_lines_contents",
+    "review_collection",
+    "processed_collection_review"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "participations.participationClass.plan._id": {
+          "$in": [
+            "p:66e03abdd0e7f4f32d0bf537"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "files",
+        "localField": "file",
+        "foreignField": "_id",
+        "as": "fileData"
+      }
+    },
+    {
+      "$unwind": "$fileData"
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "participations.participationClass.plan._id": "p:66e03abdd0e7f4f32d0bf537",
+        "$expr": {
+          "$regexMatch": {
+            "input": "$participations.participationClass.status.name",
+            "regex": "Ativ",
+            "options": "i"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "files_lines_contents",
+        "as": "files",
+        "let": {
+          "fileId": "$.fileId",
+          "cpf": {
+            "$arrayElemAt": [
+              {
+                "$map": {
+                  "input": {
+                    "$filter": {
+                      "input": "$documents",
+                      "as": "doc",
+                      "cond": {
+                        "$eq": [
+                          "$$doc.type.name",
+                          "CPF"
+                        ]
+                      }
+                    }
+                  },
+                  "as": "filteredDoc",
+                  "in": "$$filteredDoc.document"
+                }
+              },
+              0
+            ]
+          }
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$$fileId",
+                      "$file"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$content.parsed.cpf",
+                      "$$cpf"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$match": {
+        "files": {
+          "$eq": []
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "fileId": "$.fileId"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "files_lines_contents",
+        "localField": "fileId",
+        "foreignField": "file",
+        "let": {
+          "status": "$status",
+          "fileId": "$fileId"
+        },
+        "as": "getCompetenceDate",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$file",
+                      "$$fileId"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$status",
+                      "success"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$addFields": {
+              "competenceDate": {
+                "$toDate": {
+                  "$concat": [
+                    {
+                      "$substr": [
+                        "$content.parsed.data_da_competencia",
+                        2,
+                        4
+                      ]
+                    },
+                    "-",
+                    {
+                      "$substr": [
+                        "$content.parsed.data_da_competencia",
+                        0,
+                        2
+                      ]
+                    },
+                    "-01"
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "competenceDate": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$getCompetenceDate",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "competenceDate": {
+          "$dateFromParts": {
+            "year": {
+              "$year": "$getCompetenceDate.competenceDate"
+            },
+            "month": {
+              "$month": "$getCompetenceDate.competenceDate"
+            },
+            "day": {
+              "$dayOfMonth": "$getCompetenceDate.competenceDate"
+            },
+            "hour": 3,
+            "minute": 0,
+            "second": 0,
+            "millisecond": 0,
+            "timezone": "+00:00"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "review_collection",
+        "localField": "participations.participationClass.plan._id",
+        "foreignField": "plan._id",
+        "as": "reviewCollection",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$type._id",
+                  "p:67d42a8e98c3896283cd9c4b"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$critics"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$critics.description",
+                  "Participantes ativos não informados no arquivo de movimento"
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "critics": {
+                "$push": "$critics"
+              },
+              "type": {
+                "$first": "$type"
+              },
+              "plan": {
+                "$first": "$plan"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$reviewCollection",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "processed_collection_review",
+        "localField": "_id",
+        "foreignField": "person._id",
+        "as": "previewProcessedCollectionReview",
+        "let": {
+          "participationId": "$participations._id",
+          "referenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$person.participation._id",
+                      "$$participationId"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$referenceDate",
+                      "$$referenceDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$reviewCollections",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$addFields": {
+              "critic": {
+                "$ifNull": [
+                  {
+                    "$arrayElemAt": [
+                      "$reviewCollections.reviewCollection.critics",
+                      0
+                    ]
+                  },
+                  null
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$cond": {
+                  "if": {
+                    "$eq": [
+                      "$reviewCollections.reviewCollection.type._id",
+                      "p:67d42a8e98c3896283cd9c4b"
+                    ]
+                  },
+                  "then": {
+                    "$ne": [
+                      "$critic.description",
+                      "Participantes ativos não informados no arquivo de movimento"
+                    ]
+                  },
+                  "else": {
+                    "$and": [
+                      {
+                        "$ne": [
+                          "$reviewCollections.reviewCollection.type._id",
+                          "p:67d42a8e98c3896283cd9c4b"
+                        ]
+                      },
+                      {
+                        "$ne": [
+                          "$critic.description",
+                          "Participantes ativos não informados no arquivo de movimento"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "reviewCollections": {
+                "$push": "$reviewCollections"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$previewProcessedCollectionReview",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": {
+          "_id": "$_id",
+          "name": "$name",
+          "documents": "$documents",
+          "participation": "$participations"
+        },
+        "referenceDate": "$competenceDate",
+        "reviewCollections": {
+          "$concatArrays": [
+            {
+              "$ifNull": [
+                "$previewProcessedCollectionReview.reviewCollections",
+                []
+              ]
+            },
+            [
+              {
+                "origin": {
+                  "_id": "$_id",
+                  "name": "people"
+                },
+                "reviewCollection": "$reviewCollection",
+                "competenceDate": "$competenceDate",
+                "values": {
+                  "imported": {
+                    "$toInt": 0
+                  },
+                  "calculated": {
+                    "$toInt": 0
+                  },
+                  "diff": {
+                    "$toInt": 0
+                  }
+                },
+                "statusReason": "Participante não consta no arquivo de movimento",
+                "validation": {
+                  "description": "Participantes ativos não informados no arquivo de movimento",
+                  "responsible": "",
+                  "date": "$.startedAt"
+                },
+                "status": "SUCCESS"
+              }
+            ]
+          ]
+        },
+        "company": {
+          "_id": "$fileData.details.company.id",
+          "companyName": "$fileData.details.company.companyName"
+        }
+      }
+    }
+  ]
+}

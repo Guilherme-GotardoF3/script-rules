@@ -1,0 +1,143 @@
+{
+  "_id": "67d576eaae2fb5ada3c65a77",
+  "name": "etpCriticsImportFinancialStatements",
+  "description": "Etapa de criticas ao importar o arquivo de movimento dos participantes.",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "67d576eaae2fb5ada3c65a20",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a24",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a28",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a2c",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a30",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a34",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a38",
+      "type": "tasks",
+      "order": 7,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a3c",
+      "type": "tasks",
+      "order": 8,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a40",
+      "type": "tasks",
+      "order": 9,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a44",
+      "type": "tasks",
+      "order": 10,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a48",
+      "type": "tasks",
+      "order": 11,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a4c",
+      "type": "tasks",
+      "order": 12,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a50",
+      "type": "tasks",
+      "order": 13,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a54",
+      "type": "tasks",
+      "order": 14,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a58",
+      "type": "tasks",
+      "order": 15,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a5c",
+      "type": "tasks",
+      "order": 16,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a60",
+      "type": "tasks",
+      "order": 17,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a64",
+      "type": "tasks",
+      "order": 18,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a68",
+      "type": "tasks",
+      "order": 19,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a6c",
+      "type": "tasks",
+      "order": 20,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a70",
+      "type": "tasks",
+      "order": 21,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67d576eaae2fb5ada3c65a74",
+      "type": "tasks",
+      "order": 22,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "__v": 0,
+  "createdAt": "2025-03-15T12:47:38.624Z",
+  "updatedAt": "2025-04-08T14:42:53.606Z"
+}

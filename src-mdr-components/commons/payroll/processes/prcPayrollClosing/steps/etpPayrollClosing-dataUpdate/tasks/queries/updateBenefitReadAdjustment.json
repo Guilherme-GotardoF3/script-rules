@@ -1,0 +1,365 @@
+{
+  "_id": "671bf04ad55fe0585b640c71",
+  "type": {
+    "_id": "671bf04aa833e770b4c4c9a3",
+    "name": "queries"
+  },
+  "name": "updateBenefitReadAdjustment",
+  "description": "Atualiza o campo de paymentMethods na collection benefit quando tem reajuste",
+  "main_collection": "benefits",
+  "output_name": "otp_updateBenefitReadAdjustment",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_rubrica_beneficio_aposentadoria",
+      "type": "Parameter",
+      "description": "Id que identifica o provento de aposentadoria.",
+      "value": "674e6e04519c6b3b81a2d234"
+    },
+    {
+      "name": "id_rubrica_pensao_por_morte",
+      "type": "Parameter",
+      "description": "Id da rubrica do provento da pensão por morte",
+      "value": "674e6d8e519c6b3b81a2d136"
+    },
+    {
+      "name": "regressiveRubricBenefitId",
+      "type": "Parameter",
+      "description": "id da rubrica de provento de beneficio regressivo",
+      "value": "674e6d67519c6b3b81a2d0d0"
+    },
+    {
+      "name": "regressiveRubricDeathPension",
+      "type": "Parameter",
+      "description": "id da rubrica de provento do beneficio de pensão por morte regressivo",
+      "value": "674e6d67519c6b3b81a2d10e"
+    },
+    {
+      "name": "exemptRubric",
+      "type": "Parameter",
+      "description": "id da rubrica do Benefício Isento (exigibilidade suspensa)",
+      "value": "674e6db6519c6b3b81a2d1f9"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC",
+    "plan_readjustments"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "payrollPlanningId": "$.payrollPlanningId"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "bundle": 1,
+        "history": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "benefit._id",
+        "as": "payroll",
+        "let": {
+          "payrollPlanningId": "$bundle.payrollPlanningId"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollPlanning._id",
+                  "$$payrollPlanningId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "person": 1,
+              "payrollPlanning": 1,
+              "benefit": 1,
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll.payrollItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "payroll.payrollItems.rubric._id": {
+          "$in": [
+            "p:6418be2e6dcafc9b25c1679d",
+            "p:66eb7ceff772590b47bef18f",
+            "p:6418be6a6dcafc9b25c167a4",
+            "p:66eb925d10685a5a03d38e7c",
+            "p:671abc3294fdb65603771749"
+          ]
+        },
+        "payroll.payrollItems.finalAmount": {
+          "$ne": 0
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$payroll.benefit._id",
+        "finalAmount": {
+          "$sum": "$payroll.payrollItems.finalAmount"
+        },
+        "root": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "lastHistory": "$root.history",
+        "lastPaymentMethod": "$root.payroll.benefit.paymentMethods"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$lastHistory",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$ne": [
+                "$lastHistory.effectiveDate",
+                null
+              ]
+            },
+            {
+              "$ne": [
+                "$lastHistory",
+                null
+              ]
+            },
+            {
+              "$or": [
+                {
+                  "$eq": [
+                    "$lastHistory.expirationDate",
+                    null
+                  ]
+                },
+                {
+                  "$gt": [
+                    "$lastHistory.expirationDate",
+                    "$root.payroll.payrollPlanning.competenceDate"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$lastPaymentMethod",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "monthReadjustment": {
+          "$dateToString": {
+            "format": "%B",
+            "date": "$root.payroll.payrollPlanning.competenceDate"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "plan_readjustments",
+        "localField": "root.payroll.person.participation.participationClass.plan._id",
+        "foreignField": "plan._id",
+        "as": "planReadjustments",
+        "let": {
+          "monthReadjustment": "$monthReadjustment"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$readjustmentMonth",
+                  "$$monthReadjustment"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$planReadjustments",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "newEffectiveDate": {
+          "$dateTrunc": {
+            "date": "$root.payroll.payrollPlanning.paymentDate",
+            "unit": "month"
+          }
+        },
+        "newBenefitStartDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        },
+        "newPaymentStartDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        },
+        "lastHistory.expirationDate": {
+          "$dateSubtract": {
+            "startDate": {
+              "$dateTrunc": {
+                "date": "$root.payroll.payrollPlanning.paymentDate",
+                "unit": "month",
+                "binSize": 1
+              }
+            },
+            "unit": "day",
+            "amount": 1
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$lastHistory.status",
+            "Ativo"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$root.history",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "newHistory": {
+          "_id": "$_id",
+          "history": {
+            "$concatArrays": [
+              [
+                "$lastHistory"
+              ],
+              [
+                {
+                  "optingExemption": "$lastHistory.optingExemption",
+                  "immediatePercentage": "$lastHistory.immediatePercentage",
+                  "quotaImmediateParcelValue": "$lastHistory.quotaImmediateParcelValue",
+                  "cashImmediateParcelValue": "$lastHistory.cashImmediateParcelValue",
+                  "accountQuotaBalance": "$lastHistory.accountQuotaBalance",
+                  "accountCashBalance": "$lastHistory.accountCashBalance",
+                  "monthlyValueInCash": "$lastHistory.monthlyValueInCash",
+                  "monthlyValueInQuotas": "$lastHistory.monthlyValueInQuotas",
+                  "paymentMethods": [
+                    {
+                      "method": "$lastPaymentMethod.method",
+                      "value": "$finalAmount",
+                      "parcelsQuantity": "$lastPaymentMethod.parcelsQuantity",
+                      "percentage": "$lastPaymentMethod.percentage"
+                    }
+                  ],
+                  "status": "Ativo",
+                  "effectiveDate": "$newEffectiveDate",
+                  "expirationDate": {
+                    "$cond": {
+                      "if": {
+                        "$and": [
+                          {
+                            "$ne": [
+                              "$root.history.expirationDate",
+                              null
+                            ]
+                          },
+                          {
+                            "$gt": [
+                              "$root.history.expirationDate",
+                              "$root.payroll.payrollPlanning.paymentDate"
+                            ]
+                          }
+                        ]
+                      },
+                      "then": "$root.history.expirationDate",
+                      "else": null
+                    }
+                  },
+                  "updatedBy": null,
+                  "statusReason": "Benefício sofreu alteração por reajuste"
+                }
+              ]
+            ]
+          }
+        },
+        "newPaymentMethod": {
+          "_id": "$_id",
+          "paymentMethods": [
+            {
+              "method": "$lastPaymentMethod.method",
+              "value": "$finalAmount",
+              "parcelsQuantity": "$lastPaymentMethod.parcelsQuantity",
+              "percentage": "$lastPaymentMethod.percentage"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$_id",
+        "history": "$newHistory.history",
+        "paymentMethods": "$newPaymentMethod.paymentMethods"
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "_id": "6787ce3dcb3ca9477b5916ff",
+  "name": "prcWithdrawalAditional",
+  "description": "Processo que faz o saque adicional por opção do participante.",
+  "context": "benefit",
+  "steps": [
+    {
+      "step": "6787ce2dcd996a280e8f55f3",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "152dc485-afcd-46c6-ad92-6a6dadf95732",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "152dc485-afcd-46c6-ad92-6a6dadf95732",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false,
+  "createdAt": "2025-01-15T15:03:25.868Z",
+  "updatedAt": "2025-01-15T15:03:25.868Z",
+  "__v": 0
+}

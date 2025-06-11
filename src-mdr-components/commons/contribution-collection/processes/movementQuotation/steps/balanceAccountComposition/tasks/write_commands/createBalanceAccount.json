@@ -1,0 +1,31 @@
+{
+  "_id": "66d7a949fda0202d2bdb955f",
+  "type": {
+    "_id": "66d7a9495aa84dc5dd16518a",
+    "name": "write_commands"
+  },
+  "name": "createBalanceAccount",
+  "description": "Cria item de saldo na account balance",
+  "main_collection": "account_balances_rmdrc",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_balanceAccountComposition"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person.participation._id": "$.$$.otp_balanceAccountComposition.person.participation._id"
+          },
+          {
+            "competenceDate": "$.$$.otp_balanceAccountComposition.competenceDate"
+          },
+          {
+            "date": "$.$$.otp_balanceAccountComposition.date"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

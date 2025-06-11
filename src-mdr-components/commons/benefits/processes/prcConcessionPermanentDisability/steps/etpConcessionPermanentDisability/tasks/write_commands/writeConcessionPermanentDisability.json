@@ -1,0 +1,25 @@
+{
+  "_id": "678e9f80cf9917d0e7907833",
+  "type": {
+    "_id": "678e9f803b238fe0ba1a0fa1",
+    "name": "write_commands"
+  },
+  "name": "writeConcessionPermanentDisability",
+  "description": "Escreve a concessão gerada na collection benefits",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_concessionPermanentDisability"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation": "$.$$.otp_concessionPermanentDisability.participation"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

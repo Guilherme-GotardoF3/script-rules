@@ -1,0 +1,182 @@
+{
+  "_id": "66b10ffbee5cd549d1f84be2",
+  "type": {
+    "_id": "66b10ffabb5d61318f3f9aaa",
+    "name": "queries"
+  },
+  "name": "calculateBenefitStartDate",
+  "description": "Calcula a data de início do benefício (DIB)",
+  "main_collection": "people",
+  "output_name": "otp_calculateBenefitStartDate",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "telefonicaBdPlanId",
+      "type": "Parameter",
+      "description": "parâmetro que guarda o id do plano Telefônica BD",
+      "value": "665cd426d11b2a523e4708b5"
+    },
+    {
+      "name": "id_benefitType_PensionDeathOfRetiree",
+      "type": "Parameter",
+      "description": "Id do tipo de benefício de pensão por morte oriunda de assistido (conversão de aposentadoria para pensão por morte)",
+      "value": "67d3330dd939441008248ac0"
+    },
+    {
+      "name": "id_processFirstStepOceano",
+      "type": "Parameter",
+      "description": "Seleciona o id do processo do firstStepOceano que faz a transformação da aposentadoria em pensão por morte via oceano",
+      "value": "67dae893d939441008248ad7"
+    },
+    {
+      "name": "processId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefitTypeId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefitStartDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "paymentStartDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "processId": "$.processId",
+          "participationId": "$.participationId",
+          "destinationBenefitId": "$.benefitTypeId",
+          "benefitStartDate": {
+            "$toDate": "$.benefitStartDate"
+          },
+          "paymentStartDate": {
+            "$toDate": "$.paymentStartDate"
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$in": [
+            "$bundle.participationId",
+            "$participations._id"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$participations._id",
+            "$bundle.participationId"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "dib": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$eq": [
+                        "$bundle.processId",
+                        "p:67ded2f816b2d5085d5191f6"
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        "$bundle.destinationBenefitId",
+                        "p:67d33bf1d119a43d3369b292"
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        "$participations.participationClass.plan._id",
+                        "p:66e03abdd0e7f4f32d0bf537"
+                      ]
+                    }
+                  ]
+                },
+                "then": "$deathDate"
+              }
+            ],
+            "default": "$bundle.benefitStartDate"
+          }
+        },
+        "dip": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$eq": [
+                        "$bundle.processId",
+                        "p:67ded2f816b2d5085d5191f6"
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        "$bundle.destinationBenefitId",
+                        "p:67d33bf1d119a43d3369b292"
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        "$participations.participationClass.plan._id",
+                        "p:66e03abdd0e7f4f32d0bf537"
+                      ]
+                    }
+                  ]
+                },
+                "then": "$deathDate"
+              }
+            ],
+            "default": "$bundle.paymentStartDate"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "participationId": "$bundle.participationId",
+        "benefitStartDate": {
+          "$toDate": "$dib"
+        },
+        "paymentStartDate": {
+          "$toDate": "$dip"
+        }
+      }
+    }
+  ]
+}

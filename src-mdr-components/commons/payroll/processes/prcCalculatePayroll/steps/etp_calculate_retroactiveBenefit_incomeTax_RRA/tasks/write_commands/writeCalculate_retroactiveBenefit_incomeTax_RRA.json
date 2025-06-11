@@ -1,0 +1,27 @@
+{
+  "_id": "674881c3c7d151fc2f24c6a1",
+  "type": {
+    "_id": "674881c375785074ea02b34e",
+    "name": "write_commands"
+  },
+  "name": "writeCalculate_retroactiveBenefit_incomeTax_RRA",
+  "description": "Escreve os valores retroativos de um benefício concedido no mês e escreve também o valor do IR RRA",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payrollItems": "$.$$.otp_projectRRA_ItemsToWrite.payrollItems"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_projectRRA_ItemsToWrite._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

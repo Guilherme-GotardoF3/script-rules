@@ -1,0 +1,21 @@
+{
+  "_id": "65d8f21b0ee692ef28d67264",
+  "name": "etpPayrollClosing-dataValidation",
+  "description": "Etapa para validação de inconsistências na folha de pagamento",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "648b16dab1e349c7afd83612",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    }
+  ],
+  "createdAt": "2024-02-23T19:29:31.052Z",
+  "updatedAt": "2024-02-23T19:41:29.979Z",
+  "__v": 0
+}

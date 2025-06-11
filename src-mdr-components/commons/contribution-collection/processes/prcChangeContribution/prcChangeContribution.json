@@ -1,0 +1,25 @@
+{
+  "_id": "674dfc0f2a7eee1465d55187",
+  "name": "prcChangeContribution",
+  "description": "Processo de alteração da contribuição mensal. O participante fará uma solicitação de alteração do parâmetro de contribuição que quando aceita pelo usuário no GDS deve iniciar esse processo.",
+  "context": "collection",
+  "steps": [
+    {
+      "step": "674dfa7be5c2e5768012e1a8",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "152dc485-afcd-46c6-ad92-6a6dadf95732",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "152dc485-afcd-46c6-ad92-6a6dadf95732",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false,
+  "createdAt": "2024-12-02T18:27:27.462Z",
+  "updatedAt": "2024-12-02T18:27:27.462Z",
+  "__v": 0
+}

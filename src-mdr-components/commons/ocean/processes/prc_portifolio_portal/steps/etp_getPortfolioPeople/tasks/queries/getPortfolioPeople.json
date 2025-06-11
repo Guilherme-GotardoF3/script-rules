@@ -1,0 +1,77 @@
+{
+  "_id": "66607618ec3626f189eac6b9",
+  "type": {
+    "_id": "666076185118b63262c3f256",
+    "name": "queries"
+  },
+  "name": "getPortfolioPeople",
+  "description": "Busca dos dados do participante ",
+  "main_collection": "people",
+  "output_name": "otp_getPortfolioPeople",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "people",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "company_history"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.people"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "company_history",
+        "localField": "_id",
+        "foreignField": "person",
+        "as": "companyHistory"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$companyHistory",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "companyHistory.registry": {
+          "$ifNull": [
+            "$companyHistory.registry",
+            null
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$documents",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "documents.type.name": "CPF"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "person": {
+          "_id": "$_id",
+          "name": "$name",
+          "document": "$documents.document",
+          "registry": "$companyHistory.registry",
+          "participations": "$participations"
+        }
+      }
+    }
+  ]
+}

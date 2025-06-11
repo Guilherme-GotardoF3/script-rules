@@ -1,0 +1,92 @@
+{
+  "_id": "674de7de0a9a44f79baa7fef",
+  "type": {
+    "_id": "674de7decaecf37354f13396",
+    "name": "queries"
+  },
+  "name": "updateEndedAtIndividualCollectionsParameters",
+  "description": "Documento a ser encerrado colocando uma data fim no effectiveDate",
+  "main_collection": "individual_collections_parameters",
+  "output_name": "otpUpdateEndedAtIndividualCollectionsParameters",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "origin",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "value",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "dataType",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "rubricId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "requestDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "_id": "$.id",
+          "origin": "$.origin",
+          "value": "$.value",
+          "dataType": "$.dataType",
+          "participationId": "$.participationId",
+          "rubricId": "$.rubricId",
+          "requestDate": "$.requestDate"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$_id",
+            "$bundle._id"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "origin": 1,
+        "value": 1,
+        "dataType": 1,
+        "participation": 1,
+        "rubric": 1,
+        "effectiveDate": {
+          "startedAt": "$effectiveDate.startedAt",
+          "endedAt": {
+            "$toDate": "$bundle.requestDate"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,1116 @@
+{
+  "_id": "66b65f2fe9c0c08e8ffeb4e7",
+  "type": {
+    "_id": "66b65f2fdd379cf3a0ce9b74",
+    "name": "queries"
+  },
+  "name": "portfolio_provisorio",
+  "description": "Tarefa provisória para projetar o portfólio do portal",
+  "main_collection": "people",
+  "output_name": "otp_portfolio",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "peopleId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "employment_history",
+    "plans",
+    "private_pension_entities",
+    "document_types",
+    "participation_investment_profiles",
+    "investment_profile_option_windows",
+    "family_groups",
+    "collection_records",
+    "account_balances_rmdrc",
+    "benefits",
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.peopleId"
+      }
+    },
+    {
+      "$project": {
+        "name": 1,
+        "documents": 1,
+        "birthDate": 1,
+        "updatedAt": 1,
+        "image": 1,
+        "participations": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "employment_history",
+        "localField": "_id",
+        "foreignField": "person._id",
+        "as": "employmentHistory"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$employmentHistory",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "employmentHistory.registry": {
+          "$ifNull": [
+            "$employmentHistory.registry",
+            null
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$documents",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "documents.type.name": "CPF"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "person": {
+          "_id": "$_id",
+          "name": "$name",
+          "document": "$documents.document",
+          "registry": "$employmentHistory.registry",
+          "birthDate": "$birthDate",
+          "updatedAt": "$updatedAt",
+          "image": "$image",
+          "participations": "$participations"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person.participations",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "person.participations": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$not": {
+                    "$regexMatch": {
+                      "input": "$person.participations.participationClass.type.name",
+                      "regex": "^Cancelado$",
+                      "options": "i"
+                    }
+                  }
+                },
+                "then": "$person.participations"
+              }
+            ],
+            "default": "$$REMOVE"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "person.participations": {
+          "$ifNull": [
+            "$person.participations",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "plans",
+        "localField": "person.participations.participationClass.plan._id",
+        "foreignField": "_id",
+        "as": "person.participations.participationClass.plan",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "documents": 1,
+              "type": 1,
+              "entity": 1
+            }
+          },
+          {
+            "$lookup": {
+              "from": "private_pension_entities",
+              "localField": "entity._id",
+              "foreignField": "_id",
+              "as": "entity",
+              "pipeline": [
+                {
+                  "$project": {
+                    "_id": 1,
+                    "companyName": 1,
+                    "document": 1,
+                    "documentType": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$entity",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$lookup": {
+              "from": "document_types",
+              "localField": "entity.documentType",
+              "foreignField": "_id",
+              "as": "documenType"
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$documenType",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "type": 1,
+              "documents": 1,
+              "entity": {
+                "_id": "$entity._id",
+                "companyName": "$entity.companyName",
+                "document": {
+                  "document": "$entity.document",
+                  "type": {
+                    "_id": "$documenType._id",
+                    "name": "$documenType.name"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person.participations.participationClass.plan",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "participation_investment_profiles",
+        "localField": "person.participations._id",
+        "foreignField": "person.participation._id",
+        "as": "person.participations.investmentProfile",
+        "pipeline": [
+          {
+            "$sort": {
+              "effectiveDate.startedAt": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "_id": "$investmentProfile._id",
+              "name": "$investmentProfile.name"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person.participations.investmentProfile",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "participation_investment_profiles",
+        "localField": "person.participations._id",
+        "foreignField": "person.participation._id",
+        "as": "person.participations.investmentProfile.eligible",
+        "let": {
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          }
+        },
+        "pipeline": [
+          {
+            "$lookup": {
+              "from": "participation_investment_profiles",
+              "localField": "_id",
+              "foreignField": "_id",
+              "as": "updateInvestmentProfile",
+              "let": {
+                "competenceDate": {
+                  "$toDate": "$.competenceDate"
+                },
+                "planId": "$person.participation.participationClass.plan._id"
+              },
+              "pipeline": [
+                {
+                  "$match": {
+                    "$expr": {
+                      "$eq": [
+                        "$person.participation.participationClass.plan._id",
+                        "$$planId"
+                      ]
+                    }
+                  }
+                },
+                {
+                  "$match": {
+                    "$expr": {
+                      "$eq": [
+                        {
+                          "$dateToString": {
+                            "format": "%Y",
+                            "date": "$effectiveDate.startedAt"
+                          }
+                        },
+                        {
+                          "$dateToString": {
+                            "format": "%Y",
+                            "date": "$$competenceDate"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "$addFields": {
+                    "effectiveDate.endedAt": {
+                      "$ifNull": [
+                        "$effectiveDate.endedAt",
+                        null
+                      ]
+                    }
+                  }
+                },
+                {
+                  "$lookup": {
+                    "from": "investment_profile_option_windows",
+                    "localField": "person.participation.participationClass.plan._id",
+                    "foreignField": "plan._id",
+                    "as": "optionsWindows",
+                    "let": {
+                      "startedAt": "$effectiveDate.startedAt",
+                      "endedAt": "$effectiveDate.endedAt"
+                    },
+                    "pipeline": [
+                      {
+                        "$match": {
+                          "$expr": {
+                            "$and": [
+                              {
+                                "$lte": [
+                                  {
+                                    "$dateToString": {
+                                      "format": "%Y-%m-%d",
+                                      "date": "$windowStartDate"
+                                    }
+                                  },
+                                  {
+                                    "$dateToString": {
+                                      "format": "%Y-%m-%d",
+                                      "date": "$$startedAt"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "$gte": [
+                                  {
+                                    "$dateToString": {
+                                      "format": "%Y-%m-%d",
+                                      "date": "$windowEndDate"
+                                    }
+                                  },
+                                  {
+                                    "$dateToString": {
+                                      "format": "%Y-%m-%d",
+                                      "date": "$$startedAt"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "$unwind": {
+                    "path": "$optionsWindows",
+                    "preserveNullAndEmptyArrays": true
+                  }
+                },
+                {
+                  "$match": {
+                    "optionsWindows": {
+                      "$exists": false
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$updateInvestmentProfile",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$group": {
+              "_id": "$person._id",
+              "updateInvestmentProfile": {
+                "$push": "$updateInvestmentProfile"
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "isElegibleSecondValidation": {
+                "$cond": {
+                  "if": {
+                    "$gt": [
+                      {
+                        "$size": "$updateInvestmentProfile"
+                      },
+                      0
+                    ]
+                  },
+                  "then": false,
+                  "else": true
+                }
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "hasExtraInvestmentProfileChange": {
+                "$cond": {
+                  "if": {
+                    "$and": [
+                      {
+                        "$eq": [
+                          "$isElegibleSecondValidation",
+                          true
+                        ]
+                      }
+                    ]
+                  },
+                  "then": true,
+                  "else": false
+                }
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "hasExtraInvestmentProfileChange": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person.participations.investmentProfile.eligible",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "person.participations.investmentProfile.eligible.hasExtraInvestmentProfileChange": {
+          "$ifNull": [
+            "$person.participations.investmentProfile.eligible.hasExtraInvestmentProfileChange",
+            false
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "person.participations.investmentProfile": {
+          "$ifNull": [
+            "$person.participations.investmentProfile",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "family_groups",
+        "localField": "_id",
+        "foreignField": "person",
+        "as": "familyGroup",
+        "pipeline": [
+          {
+            "$project": {
+              "dependents": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$familyGroup",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "person.participations.familyGroup": {
+          "$ifNull": [
+            "$familyGroup",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "collection_records",
+        "localField": "person.participations._id",
+        "foreignField": "person.participation._id",
+        "as": "contribuitions",
+        "pipeline": [
+          {
+            "$sort": {
+              "referenceDate": -1
+            }
+          },
+          {
+            "$limit": 10
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$contribuitions",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "person.participations.contribuitions": {
+          "$ifNull": [
+            "$contribuitions",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "account_balances_rmdrc",
+        "localField": "_id",
+        "foreignField": "person._id",
+        "as": "balance",
+        "let": {
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          },
+          "participationId": "$person.participations._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$competenceDate",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$person.participation._id",
+                      "$$participationId"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "competenceDate": -1,
+              "date": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "_id": "$_id",
+              "participation": "$person.participation._id",
+              "competenceDate": "$competenceDate",
+              "date": "$date",
+              "operationDate": "$operationDate",
+              "pensionAccountList": "$pensionAccountList",
+              "value": "$value"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$balance",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "person.participations.balance": {
+          "$ifNull": [
+            "$balance",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "person.participations._id",
+        "foreignField": "participation",
+        "as": "benefit",
+        "let": {
+          "lastBalance": "$balance.value",
+          "pensionAccountList": "$balance.pensionAccountList"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "actualPensionAccountList": "$$pensionAccountList"
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$actualPensionAccountList",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$addFields": {
+              "amountQuota": "$actualPensionAccountList.totalValue.amountQuotas",
+              "monetaryUnitValue": "$actualPensionAccountList.monetaryUnitValue.value"
+            }
+          },
+          {
+            "$lookup": {
+              "from": "account_balances_rmdrc",
+              "localField": "participation",
+              "foreignField": "person.participation._id",
+              "as": "firstBalance",
+              "pipeline": [
+                {
+                  "$sort": {
+                    "competenceDate": 1
+                  }
+                },
+                {
+                  "$limit": 1
+                },
+                {
+                  "$unwind": {
+                    "path": "$pensionAccountList"
+                  }
+                },
+                {
+                  "$project": {
+                    "_id": "$_id",
+                    "participation": "$person.participation._id",
+                    "competenceDate": "$competenceDate",
+                    "date": "$date",
+                    "value": "$value",
+                    "amountQuotas": "$pensionAccountList.totalValue.amountQuotas"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$firstBalance",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$addFields": {
+              "amountValue": {
+                "$round": [
+                  {
+                    "$multiply": [
+                      {
+                        "$subtract": [
+                          "$firstBalance.amountQuotas",
+                          "$amountQuota"
+                        ]
+                      },
+                      "$monetaryUnitValue"
+                    ]
+                  },
+                  2
+                ]
+              },
+              "percentage": {
+                "$round": [
+                  {
+                    "$subtract": [
+                      1,
+                      {
+                        "$divide": [
+                          "$amountQuota",
+                          "$firstBalance.amountQuotas"
+                        ]
+                      }
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "saldoConsumido": {
+                "value": "$amountValue",
+                "percentage": {
+                  "$multiply": [
+                    "$percentage",
+                    100
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "type": 1,
+              "participation": 1,
+              "benefitSource": 1,
+              "benefitStartDate": 1,
+              "paymentStartDate": 1,
+              "lastParcel": 1,
+              "lastPaymentDate": 1,
+              "sheetEntryDate": 1,
+              "lifetimeBenefit": 1,
+              "quota": 1,
+              "paymentMethods": 1,
+              "history": 1,
+              "immediatePercentage": 1,
+              "taxRegimeTypes": 1,
+              "remainingBalance": "$$lastBalance",
+              "saldoConsumido": "$saldoConsumido"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefit",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "person.participations.benefit": {
+          "$ifNull": [
+            "$benefit",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "benefit": "$benefit._id",
+          "participation": "$person.participations._id"
+        },
+        "root": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$root.person._id",
+        "name": {
+          "$first": "$root.person.name"
+        },
+        "document": {
+          "$first": "$root.person.document"
+        },
+        "registry": {
+          "$first": "$root.person.registry"
+        },
+        "birthDate": {
+          "$first": "$root.person.birthDate"
+        },
+        "image": {
+          "$first": "$root.person.image"
+        },
+        "updatedAt": {
+          "$first": "$root.person.updatedAt"
+        },
+        "participations": {
+          "$push": "$root.person.participations"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "family_groups",
+        "localField": "_id",
+        "foreignField": "dependents.person._id",
+        "as": "beneficiaryParticipations",
+        "let": {
+          "personId": "$_id",
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          }
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$dependents"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$$personId",
+                  "$dependents.person._id"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$dependents.beneficiaries"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$dependents.beneficiaries.effectiveDate.startedAt",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$dependents.beneficiaries.effectiveDate.endedAt",
+                          null
+                        ]
+                      },
+                      {
+                        "$gte": [
+                          "$dependents.beneficiaries.effectiveDate.endedAt",
+                          "$$competenceDate"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$lookup": {
+              "from": "benefits",
+              "localField": "dependents.beneficiaries.fromParticipation",
+              "foreignField": "participation",
+              "as": "benefit"
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$benefit",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$lookup": {
+              "from": "people",
+              "localField": "person",
+              "foreignField": "_id",
+              "as": "personDeath",
+              "let": {
+                "fromParticipation": "$dependents.beneficiaries.fromParticipation"
+              },
+              "pipeline": [
+                {
+                  "$unwind": {
+                    "path": "$participations"
+                  }
+                },
+                {
+                  "$match": {
+                    "$expr": {
+                      "$eq": [
+                        "$participations._id",
+                        "$$fromParticipation"
+                      ]
+                    }
+                  }
+                },
+                {
+                  "$lookup": {
+                    "from": "plans",
+                    "localField": "participations.participationClass.plan._id",
+                    "foreignField": "_id",
+                    "as": "participations.participationClass.plan",
+                    "pipeline": [
+                      {
+                        "$project": {
+                          "_id": 1,
+                          "name": 1,
+                          "documents": 1,
+                          "type": 1,
+                          "entity": 1
+                        }
+                      },
+                      {
+                        "$lookup": {
+                          "from": "private_pension_entities",
+                          "localField": "entity._id",
+                          "foreignField": "_id",
+                          "as": "entity",
+                          "pipeline": [
+                            {
+                              "$project": {
+                                "_id": 1,
+                                "companyName": 1,
+                                "document": 1,
+                                "documentType": 1
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "$unwind": {
+                          "path": "$entity",
+                          "preserveNullAndEmptyArrays": true
+                        }
+                      },
+                      {
+                        "$lookup": {
+                          "from": "document_types",
+                          "localField": "entity.documentType",
+                          "foreignField": "_id",
+                          "as": "documenType"
+                        }
+                      },
+                      {
+                        "$unwind": {
+                          "path": "$documenType",
+                          "preserveNullAndEmptyArrays": true
+                        }
+                      },
+                      {
+                        "$project": {
+                          "_id": 1,
+                          "name": 1,
+                          "type": 1,
+                          "documents": 1,
+                          "entity": {
+                            "_id": "$entity._id",
+                            "companyName": "$entity.companyName",
+                            "document": {
+                              "document": "$entity.document",
+                              "type": {
+                                "_id": "$documenType._id",
+                                "name": "$documenType.name"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "$unwind": {
+                    "path": "$participations.participationClass.plan",
+                    "preserveNullAndEmptyArrays": true
+                  }
+                },
+                {
+                  "$project": {
+                    "_id": 1,
+                    "name": 1,
+                    "documents": 1,
+                    "participation": {
+                      "_id": "$participations._id",
+                      "number": "$participations.number",
+                      "participationClass": "$participations.participationClass"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$personDeath",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$project": {
+              "_id": "$personDeath._id",
+              "name": "$personDeath.name",
+              "documents": "$personDeath.documents",
+              "participation": "$personDeath.participation",
+              "benefit": "$benefit",
+              "eligible": {
+                "$toBool": true
+              }
+            }
+          },
+          {
+            "$match": {
+              "participation": {
+                "$exists": true
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "participations": {
+          "$cond": {
+            "if": {
+              "$gt": [
+                {
+                  "$size": {
+                    "$filter": {
+                      "input": "$participations",
+                      "as": "item",
+                      "cond": {
+                        "$ifNull": [
+                          "$$item.number",
+                          false
+                        ]
+                      }
+                    }
+                  }
+                },
+                0
+              ]
+            },
+            "then": "$participations",
+            "else": []
+          }
+        },
+        "beneficiaryParticipations": {
+          "$filter": {
+            "input": "$beneficiaryParticipations",
+            "as": "beneficiary",
+            "cond": {
+              "$not": {
+                "$in": [
+                  "$$beneficiary.participation._id",
+                  "$participations.participationSource._id"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": {
+          "_id": "$_id",
+          "name": "$name",
+          "document": "$document",
+          "registry": "$registry",
+          "birthDate": "$birthDate",
+          "image": "$image",
+          "updatedAt": "$updatedAt",
+          "participations": {
+            "$filter": {
+              "input": "$participations",
+              "as": "item",
+              "cond": {
+                "$and": [
+                  {
+                    "$gt": [
+                      {
+                        "$type": "$$item.number"
+                      },
+                      "missing"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "beneficiaryParticipations": {
+            "$ifNull": [
+              "$beneficiaryParticipations",
+              null
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

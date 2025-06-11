@@ -1,0 +1,10 @@
+{
+  "_id": "672e58e9dab585ef9f4a5580",
+  "name": "id_type_retirees_contribuition",
+  "description": "Seleciona o id do tipo de contribuição para os assistidos",
+  "data": {
+    "value": "66a024034a8cbbfe43a6b15b",
+    "type": "constant",
+    "isDefault": false
+  }
+}

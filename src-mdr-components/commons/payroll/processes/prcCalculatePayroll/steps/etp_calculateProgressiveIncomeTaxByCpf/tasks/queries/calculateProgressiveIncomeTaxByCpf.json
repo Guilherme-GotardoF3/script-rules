@@ -1,0 +1,663 @@
+{
+  "_id": "674853d78c4d6d801c98afc0",
+  "type": {
+    "_id": "674853d631e0e1fa2d9361a0",
+    "name": "queries"
+  },
+  "name": "calculateProgressiveIncomeTaxByCpf",
+  "description": "Calcula o IR por CPF no caso de assistidos/pensionistas que tenham dois ou mais benefícios no mesmo plano ou em planos diferentes",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_calculateProgressiveIncomeTaxByCpf",
+  "fixed_value": false,
+  "input_parameters": [
+    {
+      "name": "rubrica_ir_progressivo",
+      "type": "Parameter",
+      "description": "Parâmetro que define a rubrica do IR Progressivo.",
+      "value": "674e6eb6519c6b3b81a2d330"
+    }
+  ],
+  "collections": [
+    "benefits",
+    "payrolls_RMDRC",
+    "income_tax",
+    "rubrics"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "peopleId": "$.$$.otp_getBenefitsInPayrollProcess.payload.person._id",
+          "payrollPlanningId": "$.$$.opt_trf_buscar_beneficios_ativos.payrollPlanning",
+          "MesAnoPayrollPlanning": "$payrollPlanning.competenceDate"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$payrollPlanning._id",
+                "$bundle.payrollPlanningId"
+              ]
+            },
+            {
+              "$eq": [
+                "$person._id",
+                "$bundle.peopleId"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "personId": "$person._id",
+          "MesAnoPayrollPlanning": "$bundle.MesAnoPayrollPlanning"
+        },
+        "uniqueParticipations": {
+          "$addToSet": "$participation._id"
+        },
+        "count": {
+          "$sum": 1
+        },
+        "root1": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$match": {
+        "uniqueParticipations.1": {
+          "$exists": true
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "root1.benefit._id",
+        "foreignField": "_id",
+        "as": "taxRegimeType1",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$taxRegimeTypes"
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "taxRegimeTypes": "$taxRegimeTypes.type._id"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$taxRegimeType1",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "let": {
+          "competenceDateOther": {
+            "$dateToString": {
+              "format": "%Y%m",
+              "date": "$root1.bundle.MesAnoPayrollPlanning"
+            }
+          },
+          "peopleId": "$root1.person._id",
+          "benefitIdOther": "$root1.benefit._id"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "competenceYearMonth": {
+                "$dateToString": {
+                  "format": "%Y%m",
+                  "date": "$payrollPlanning.competenceDate"
+                }
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$competenceYearMonth",
+                  "$$competenceDateOther"
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$ne": [
+                  "$benefit._id",
+                  "$$benefitIdOther"
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$person._id",
+                  "$$peopleId"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$payrollItems"
+            }
+          },
+          {
+            "$addFields": {
+              "payrollItems.benefit": "$benefit._id",
+              "payrollItems.payrollId": "$_id"
+            }
+          },
+          {
+            "$replaceRoot": {
+              "newRoot": "$payrollItems"
+            }
+          },
+          {
+            "$project": {
+              "_id": 0
+            }
+          }
+        ],
+        "as": "payrollsItemsOther"
+      }
+    },
+    {
+      "$group": {
+        "_id": "$root1.person._id",
+        "payrollItems": {
+          "$first": "$root1.payrollItems"
+        },
+        "taxRegimeType1": {
+          "$first": "$taxRegimeType1"
+        },
+        "payrollsItemsOther": {
+          "$first": "$payrollsItemsOther"
+        },
+        "root": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "benefitIdOther": {
+          "$arrayElemAt": [
+            "$payrollsItemsOther.benefit",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "valorIrCobrado": {
+          "$sum": [
+            {
+              "$sum": {
+                "$map": {
+                  "input": {
+                    "$filter": {
+                      "input": "$payrollItems",
+                      "as": "item",
+                      "cond": {
+                        "$eq": [
+                          "$$item.rubric._id",
+                          "p:63ebaf899db9eb4252c06e5a"
+                        ]
+                      }
+                    }
+                  },
+                  "as": "filteredItem",
+                  "in": "$$filteredItem.finalAmount"
+                }
+              }
+            },
+            {
+              "$sum": {
+                "$map": {
+                  "input": {
+                    "$filter": {
+                      "input": "$payrollsItemsOther",
+                      "as": "otherItem",
+                      "cond": {
+                        "$eq": [
+                          "$$otherItem.rubric._id",
+                          "p:63ebaf899db9eb4252c06e5a"
+                        ]
+                      }
+                    }
+                  },
+                  "as": "filteredOtherItem",
+                  "in": "$$filteredOtherItem.finalAmount"
+                }
+              }
+            }
+          ]
+        },
+        "rubricIR": "p:63ebaf899db9eb4252c06e5a"
+      }
+    },
+    {
+      "$set": {
+        "payrollItemsJuntos": {
+          "$concatArrays": [
+            "$payrollItems.payrollReferenceBases.rubricList",
+            "$payrollsItemsOther.payrollReferenceBases.rubricList"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": {
+          "$arrayElemAt": [
+            "$payrollsItemsOther.payrollId",
+            0
+          ]
+        },
+        "taxRegimeType1": 1,
+        "benefitIdOther": 1,
+        "payrollItemsJuntos": 1,
+        "valorIrCobrado": 1,
+        "rubricIR": 1,
+        "root": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItemsJuntos",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItemsJuntos",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "documentId": "$_id",
+          "rubricId": "$payrollItemsJuntos.rubric._id"
+        },
+        "payrollItem": {
+          "$first": "$payrollItemsJuntos"
+        },
+        "taxRegimeType1": {
+          "$first": "$taxRegimeType1"
+        },
+        "benefitIdOther": {
+          "$first": "$benefitIdOther"
+        },
+        "valorIrCobrado": {
+          "$first": "$valorIrCobrado"
+        },
+        "rubricIR": {
+          "$first": "$rubricIR"
+        },
+        "root": {
+          "$first": "$root"
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id.documentId",
+        "payrollItemsJuntos": {
+          "$push": "$payrollItem"
+        },
+        "taxRegimeType1": {
+          "$first": "$taxRegimeType1"
+        },
+        "benefitIdOther": {
+          "$first": "$benefitIdOther"
+        },
+        "valorIrCobrado": {
+          "$first": "$valorIrCobrado"
+        },
+        "rubricIR": {
+          "$first": "$rubricIR"
+        },
+        "root": {
+          "$first": "$root"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "benefitIdOther",
+        "foreignField": "_id",
+        "as": "taxRegimeType2",
+        "let": {
+          "taxRegimeTypes1": "$taxRegimeType1.taxRegimeTypes"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$taxRegimeTypes"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$taxRegimeTypes.type._id",
+                  "$$taxRegimeTypes1"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$taxRegimeType2",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "income_tax",
+        "localField": "root.taxRegimeType1.taxRegimeTypes",
+        "foreignField": "taxRegimeType",
+        "as": "incomeTax",
+        "let": {
+          "competenceDate": "$root.root1.payrollPlanning.competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$or": [
+                  {
+                    "$gte": [
+                      "$effectiveDate.endedAt",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$effectiveDate.endedAt",
+                      null
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "effectiveDate.startedAt": 1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$incomeTax",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubricIR",
+        "foreignField": "_id",
+        "as": "rubric",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "base_calculation": "$rubricList",
+        "amountCalculate": {
+          "$function": {
+            "body": "function (payrollItem, rubrics) {  let result = 0;   if (rubrics.length > 0) {    payrollItem.forEach(  (x) => {  const res = rubrics.find( (y) =>  y._id.toString() === x.rubric.toString());   if (res && res.configurations.isDiscount) result -= parseFloat(x.finalAmount); else result += parseFloat(x.finalAmount); } ); }  return result; }",
+            "args": [
+              "$payrollItemsJuntos",
+              "$rubric"
+            ],
+            "lang": "js"
+          }
+        },
+        "amountCalculateSimplify": {
+          "$function": {
+            "body": "function (payrollItem, rubrics, incometax) {  let result = 0;   if (rubrics.length > 0) {    payrollItem.forEach(  (x) => {  const res = rubrics.find( (y) =>  y._id.toString() === x.rubric.toString());   if (res && !res.configurations.isDiscount) result -= parseFloat(x.finalAmount); else result += x.finalAmount   } ); }  return result; }",
+            "args": [
+              "$payrollItemsJuntos",
+              "$rubric"
+            ],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "percentage_aliquot": {
+          "$function": {
+            "body": "function (incomeTax, amount_base_calculation) {  if (!incomeTax) return {};  if (!incomeTax.tracks || incomeTax.tracks.length === 0) return {};  incomeTax.track = incomeTax.tracks[0];  for (const curr of incomeTax.tracks) {    if (amount_base_calculation < curr.track) {      return incomeTax;    } else {      incomeTax.track = curr;    }  } return incomeTax;}",
+            "args": [
+              "$incomeTax",
+              "$amountCalculate"
+            ],
+            "lang": "js"
+          }
+        },
+        "percentageAliquotSimplify": {
+          "$function": {
+            "body": "function (incomeTax, amount_base_calculation) {  if (!incomeTax) return {};  if (!incomeTax.tracks || incomeTax.tracks.length === 0) return {};  incomeTax.track = incomeTax.tracks[0];  for (const curr of incomeTax.tracks) {    if ((amount_base_calculation) < curr.track) {      return incomeTax;    } else {      incomeTax.track = curr;    }  } return incomeTax;}",
+            "args": [
+              "$incomeTax",
+              "$amountCalculateSimplify"
+            ],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "amount": {
+          "$toDouble": {
+            "$round": [
+              {
+                "$subtract": [
+                  {
+                    "$multiply": [
+                      "$amountCalculate",
+                      {
+                        "$divide": [
+                          "$percentage_aliquot.track.aliquot",
+                          100
+                        ]
+                      }
+                    ]
+                  },
+                  "$percentage_aliquot.track.deduction"
+                ]
+              },
+              2
+            ]
+          }
+        },
+        "amountSimplify": {
+          "$toDouble": {
+            "$round": [
+              {
+                "$subtract": [
+                  {
+                    "$multiply": [
+                      {
+                        "$subtract": [
+                          "$amountCalculateSimplify",
+                          0
+                        ]
+                      },
+                      {
+                        "$divide": [
+                          "$percentageAliquotSimplify.track.aliquot",
+                          100
+                        ]
+                      }
+                    ]
+                  },
+                  "$percentageAliquotSimplify.track.deduction"
+                ]
+              },
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "amountUsed": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$gt": [
+                    "$amount",
+                    "$amountSimplify"
+                  ]
+                },
+                "then": {
+                  "$add": [
+                    "$amountSimplify",
+                    "$valorIrCobrado"
+                  ]
+                }
+              }
+            ],
+            "default": {
+              "$add": [
+                "$amount",
+                "$valorIrCobrado"
+              ]
+            }
+          }
+        },
+        "exceptionAmount": 0,
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        },
+        "percentageUsed": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$gt": [
+                    "$percentage_aliquot.track.aliquot",
+                    "$percentageAliquotSimplify.track.aliquot"
+                  ]
+                },
+                "then": {
+                  "aliquot": "$percentageAliquotSimplify.track.aliquot",
+                  "deduction": "$percentageAliquotSimplify.track.deduction"
+                }
+              }
+            ],
+            "default": {
+              "aliquot": "$percentage_aliquot.track.aliquot",
+              "deduction": "$percentage_aliquot.track.deduction"
+            }
+          }
+        },
+        "payrollItem": "$root2.payrollItemsReferenceBase"
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payroll": "$_id",
+        "rubric": {
+          "$arrayElemAt": [
+            "$rubric",
+            0
+          ]
+        },
+        "finalAmount": {
+          "$round": [
+            {
+              "$toDouble": {
+                "$multiply": [
+                  "$amountUsed",
+                  -1
+                ]
+              }
+            },
+            2
+          ]
+        },
+        "amount": {
+          "$round": [
+            {
+              "$toDouble": {
+                "$multiply": [
+                  "$amountUsed",
+                  -1
+                ]
+              }
+            },
+            2
+          ]
+        },
+        "exceptionAmount": "$exceptionAmount",
+        "status": "CALCULATED",
+        "type": "CALCULATED",
+        "competenceDate": "$root._id.MesAnoPayrollPlanning",
+        "payrollReferenceBases": {
+          "percentage": "$percentageUsed.aliquot",
+          "deduction": "$percentageUsed.deduction",
+          "rubricList": "$payrollItemsJuntos"
+        },
+        "createdAt": "$getdate"
+      }
+    }
+  ]
+}

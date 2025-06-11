@@ -1,0 +1,1321 @@
+{
+  "_id": "6737a4e822e68b4ba5daeb39",
+  "type": {
+    "_id": "6737a4e8459ca74fcaed49d2",
+    "name": "queries"
+  },
+  "name": "calculate_retroactiveBenefit_incomeTax_RRA",
+  "description": "Calcula os benefícios retroativos referente às novas concessões de benefício e também apura o valor do IR RRA se for o caso",
+  "main_collection": "benefits",
+  "output_name": "otp_calculate_retroactiveBenefit_incomeTax_RRA",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "rubrica_RRA",
+      "type": "Parameter",
+      "description": "Parâmetro que define a rubrica de Rendimentos Recebidos Acumuladamente (RRA).",
+      "value": "674e6e82519c6b3b81a2d2d9"
+    },
+    {
+      "name": "id_tipo_ir_progressivo",
+      "type": "Parameter",
+      "description": "Id do tipo de ir progressivo",
+      "value": "66bd44764eb4534a4f834c3c"
+    },
+    {
+      "name": "rubric_RRA_annual_allowance",
+      "type": "Parameter",
+      "description": "Seleciona o Id da rubrica do benefício de abono Anual referente à RRA",
+      "value": "674e6e59519c6b3b81a2d27c"
+    },
+    {
+      "name": "id_rubric_retroactive_benefit",
+      "type": "Parameter",
+      "description": "Seleciona o id da rubrica do beneficio retroativo",
+      "value": "674e6e7a519c6b3b81a2d2c0"
+    },
+    {
+      "name": "id_rubric_incomeTax_RRA",
+      "type": "Parameter",
+      "description": "Seleciona o id da rubrica do IR RRA",
+      "value": "674e6e9e519c6b3b81a2d318"
+    },
+    {
+      "name": "benefits",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC",
+    "people",
+    "rubrics",
+    "income_tax",
+    "plans",
+    "plan_readjustments"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "benefitId": "$.benefits",
+          "payrollPlanningId": "$.payrollPlanningId"
+        },
+        "rubrics": {
+          "rubricBenefRRAId": "p:63d816bd08d1ef0008bdf76b",
+          "rubricAbAnualRRAId": "p:673540009fda868cb7502313",
+          "rubricBenefRetroId": "p:6737a27c0cd3a5be1abdd249",
+          "rubricIrRRAId": "p:6737a3350cd3a5be1abdd250"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$in": [
+                "$_id",
+                "$bundle.benefitId"
+              ]
+            },
+            {
+              "$in": [
+                "p:6418c40ee89a5fcee1d873c3",
+                "$taxRegimeTypes.type._id"
+              ]
+            },
+            {
+              "$eq": [
+                "$lastPaymentDate",
+                null
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "benefit._id",
+        "as": "payroll",
+        "let": {
+          "payrollPlanningId": "$bundle.payrollPlanningId"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollPlanning._id",
+                  "$$payrollPlanningId"
+                ]
+              },
+              "judicialPension": {
+                "$exists": false
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$payrollItems"
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "planId": "$person.participation.participationClass.plan._id",
+              "payrollPlanning": 1,
+              "payrollItems": {
+                "rubric": "$payrollItems.rubric",
+                "amount": "$payrollItems.amount",
+                "exceptionAmount": "$payrollItems.exceptionAmount",
+                "finalAmount": "$payrollItems.finalAmount"
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "planId": {
+                "$first": "$planId"
+              },
+              "payrollPlanning": {
+                "$first": "$payrollPlanning"
+              },
+              "payrollItems": {
+                "$push": "$payrollItems"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "participation",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participationId": "$participation",
+          "dateFilter": "$payroll.payrollPlanning.competenceDate"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$participations._id",
+                      "$$participationId"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$incomeTaxFree.effectiveDate.startedAt",
+                          null
+                        ]
+                      },
+                      {
+                        "$eq": [
+                          "$incomeTaxFree",
+                          null
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "incomeTaxFree": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "retroativosMesesTotal": {
+          "$map": {
+            "input": {
+              "$range": [
+                0,
+                {
+                  "$add": [
+                    1,
+                    {
+                      "$dateDiff": {
+                        "startDate": "$benefitStartDate",
+                        "endDate": {
+                          "$dateSubtract": {
+                            "startDate": "$paymentStartDate",
+                            "unit": "month",
+                            "amount": 1
+                          }
+                        },
+                        "unit": "month"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "as": "mes",
+            "in": {
+              "competenceDate": {
+                "$dateAdd": {
+                  "startDate": "$benefitStartDate",
+                  "unit": "month",
+                  "amount": "$$mes"
+                }
+              },
+              "benefitValue": {
+                "$arrayElemAt": [
+                  "$paymentMethods.value",
+                  0
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "retroativosMesesTotal": {
+          "$let": {
+            "vars": {
+              "extraEntries": {
+                "$filter": {
+                  "input": "$retroativosMesesTotal",
+                  "as": "entry",
+                  "cond": {
+                    "$and": [
+                      {
+                        "$eq": [
+                          {
+                            "$month": "$$entry.competenceDate"
+                          },
+                          12
+                        ]
+                      },
+                      {
+                        "$eq": [
+                          "$hasAnnualAllowance",
+                          true
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "in": {
+              "$concatArrays": [
+                "$retroativosMesesTotal",
+                {
+                  "$map": {
+                    "input": "$$extraEntries",
+                    "as": "entry",
+                    "in": {
+                      "competenceDate": "$$entry.competenceDate",
+                      "benefitValue": "$$entry.benefitValue"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubrics.rubricBenefRRAId",
+        "foreignField": "_id",
+        "as": "rubrics.rubricBenefRRA",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubrics.rubricAbAnualRRAId",
+        "foreignField": "_id",
+        "as": "rubrics.rubricAbAnualRRA",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubrics.rubricBenefRetroId",
+        "foreignField": "_id",
+        "as": "rubrics.rubricBenefRetro",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubrics.rubricIrRRAId",
+        "foreignField": "_id",
+        "as": "rubrics.rubricIrRRA",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "qtdeMesesTotal": {
+          "$size": "$retroativosMesesTotal"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "retroativosMesesRRA": {
+          "$filter": {
+            "input": "$retroativosMesesTotal",
+            "as": "retroativo",
+            "cond": {
+              "$lt": [
+                {
+                  "$year": "$$retroativo.competenceDate"
+                },
+                {
+                  "$year": "$paymentStartDate"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$retroativosMesesTotal",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "qtdeMesesRRA": {
+          "$size": "$retroativosMesesRRA"
+        },
+        "valorTotalRRA": {
+          "$sum": "$retroativosMesesRRA.benefitValue"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "income_tax",
+        "localField": "taxRegimeTypes.type._id",
+        "foreignField": "taxRegimeType",
+        "as": "incomeTax",
+        "let": {
+          "dateFilter": {
+            "$toDate": "$paymentStartDate"
+          },
+          "qtdeMesesRRA": "$qtdeMesesRRA"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$effectiveDate.startedAt",
+                      "$$dateFilter"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          null
+                        ]
+                      },
+                      {
+                        "$gte": [
+                          "$effectiveDate.endedAt",
+                          "$$dateFilter"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$tracks"
+            }
+          },
+          {
+            "$group": {
+              "_id": {
+                "_id": "$_id",
+                "rescuePercentage": "$rescuePercentage",
+                "nonResident": "$nonResident",
+                "ageDeduction": "$ageDeduction",
+                "effectiveDate": "$effectiveDate",
+                "taxRegimeType": "$taxRegimeType",
+                "simplifiedDiscountDeduction": "$simplifiedDiscountDeduction"
+              },
+              "tracks": {
+                "$push": {
+                  "track": {
+                    "$round": [
+                      {
+                        "$multiply": [
+                          "$tracks.track",
+                          "$$qtdeMesesRRA"
+                        ]
+                      },
+                      2
+                    ]
+                  },
+                  "aliquot": "$tracks.aliquot",
+                  "deduction": {
+                    "$round": [
+                      {
+                        "$multiply": [
+                          "$tracks.deduction",
+                          "$$qtdeMesesRRA"
+                        ]
+                      },
+                      2
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": "$_id._id",
+              "rescuePercentage": "$_id.rescuePercentage",
+              "nonResident": "$_id.nonResident",
+              "ageDeduction": "$_id.ageDeduction",
+              "effectiveDate": "$_id.effectiveDate",
+              "taxRegimeType": "$_id.taxRegimeType",
+              "simplifiedDiscountDeduction": "$_id.simplifiedDiscountDeduction",
+              "tracks": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$incomeTax",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "percentage_aliquot": {
+          "$function": {
+            "body": "function (incomeTax, valorTotalRRA) {  if (!incomeTax) return {};  if (!incomeTax.tracks || incomeTax.tracks.length === 0) return {};  incomeTax.track = incomeTax.tracks[0];  for (const curr of incomeTax.tracks) {    if (valorTotalRRA < curr.track) {      return incomeTax;    } else {      incomeTax.track = curr;    }  } return incomeTax;}",
+            "args": [
+              "$incomeTax",
+              "$valorTotalRRA"
+            ],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "valorIRRRA": {
+          "$round": [
+            {
+              "$subtract": [
+                {
+                  "$multiply": [
+                    {
+                      "$subtract": [
+                        "$valorTotalRRA",
+                        0
+                      ]
+                    },
+                    {
+                      "$divide": [
+                        "$percentage_aliquot.track.aliquot",
+                        100
+                      ]
+                    }
+                  ]
+                },
+                "$percentage_aliquot.track.deduction"
+              ]
+            },
+            2
+          ]
+        },
+        "rubric": {
+          "$concatArrays": [
+            "$rubrics.rubricBenefRRA",
+            "$rubrics.rubricAbAnualRRA",
+            "$rubrics.rubricBenefRetro",
+            "$rubrics.rubricIrRRA"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubric",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "amountUsedFinal": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$eq": [
+                        "$rubrics.rubricBenefRRAId",
+                        "$rubric._id"
+                      ]
+                    },
+                    {
+                      "$lt": [
+                        {
+                          "$year": "$retroativosMesesTotal.competenceDate"
+                        },
+                        {
+                          "$year": "$paymentStartDate"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "then": "$retroativosMesesTotal.benefitValue"
+              },
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$eq": [
+                        "$rubrics.rubricAbAnualRRAId",
+                        "$rubric._id"
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        "$hasAnnualAllowance",
+                        true
+                      ]
+                    },
+                    {
+                      "$lt": [
+                        {
+                          "$year": "$retroativosMesesTotal.competenceDate"
+                        },
+                        {
+                          "$year": "$paymentStartDate"
+                        }
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        {
+                          "$month": "$retroativosMesesTotal.competenceDate"
+                        },
+                        12
+                      ]
+                    }
+                  ]
+                },
+                "then": "$retroativosMesesTotal.benefitValue"
+              },
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$eq": [
+                        "$rubrics.rubricBenefRetroId",
+                        "$rubric._id"
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        {
+                          "$year": "$retroativosMesesTotal.competenceDate"
+                        },
+                        {
+                          "$year": "$paymentStartDate"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "then": "$retroativosMesesTotal.benefitValue"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$rubrics.rubricIrRRAId",
+                    "$rubric._id"
+                  ]
+                },
+                "then": "$valorIRRRA"
+              }
+            ],
+            "default": null
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "planId": "$payroll.planId",
+        "benefitStartDate": 1,
+        "rubricIrRRAId": "$rubrics.rubricIrRRAId",
+        "payroll": "$payroll._id",
+        "rubrics": "$rubrics",
+        "rubric": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$eq": [
+                        "$rubrics.rubricBenefRRAId",
+                        "$rubric._id"
+                      ]
+                    },
+                    {
+                      "$lt": [
+                        {
+                          "$year": "$retroativosMesesTotal.competenceDate"
+                        },
+                        {
+                          "$year": "$paymentStartDate"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "then": "$rubric"
+              },
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$eq": [
+                        "$rubrics.rubricAbAnualRRAId",
+                        "$rubric._id"
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        "$hasAnnualAllowance",
+                        true
+                      ]
+                    },
+                    {
+                      "$lt": [
+                        {
+                          "$year": "$retroativosMesesTotal.competenceDate"
+                        },
+                        {
+                          "$year": "$paymentStartDate"
+                        }
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        {
+                          "$month": "$retroativosMesesTotal.competenceDate"
+                        },
+                        12
+                      ]
+                    }
+                  ]
+                },
+                "then": "$rubric"
+              },
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$eq": [
+                        "$rubrics.rubricBenefRetroId",
+                        "$rubric._id"
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        {
+                          "$year": "$retroativosMesesTotal.competenceDate"
+                        },
+                        {
+                          "$year": "$paymentStartDate"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "then": "$rubric"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$rubrics.rubricIrRRAId",
+                    "$rubric._id"
+                  ]
+                },
+                "then": "$rubric"
+              }
+            ],
+            "default": null
+          }
+        },
+        "finalAmount": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$rubric.configurations.isDiscount",
+                true
+              ]
+            },
+            "then": {
+              "$multiply": [
+                "$amountUsedFinal",
+                -1
+              ]
+            },
+            "else": "$amountUsedFinal"
+          }
+        },
+        "amount": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$rubric.configurations.isDiscount",
+                true
+              ]
+            },
+            "then": {
+              "$multiply": [
+                "$amountUsedFinal",
+                -1
+              ]
+            },
+            "else": "$amountUsedFinal"
+          }
+        },
+        "exceptionAmount": {
+          "$toInt": 0
+        },
+        "competenceDate": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$rubric._id",
+                "$rubrics.rubricIrRRAId"
+              ]
+            },
+            "then": "$paymentStartDate",
+            "else": "$retroativosMesesTotal.competenceDate"
+          }
+        },
+        "type": "CALCULATED",
+        "status": "CALCULATED",
+        "quota": "$quota",
+        "payrollReferenceBases": {
+          "percentage": {
+            "$switch": {
+              "branches": [
+                {
+                  "case": {
+                    "$eq": [
+                      "$rubric._id",
+                      "$rubrics.rubricIrRRAId"
+                    ]
+                  },
+                  "then": "$percentage_aliquot.track.aliquot"
+                }
+              ],
+              "default": 0
+            }
+          },
+          "deduction": {
+            "$switch": {
+              "branches": [
+                {
+                  "case": {
+                    "$eq": [
+                      "$rubric._id",
+                      "$rubrics.rubricIrRRAId"
+                    ]
+                  },
+                  "then": "$percentage_aliquot.track.deduction"
+                }
+              ],
+              "default": 0
+            }
+          },
+          "rubricList": {
+            "$switch": {
+              "branches": [
+                {
+                  "case": {
+                    "$eq": [
+                      "$rubric._id",
+                      "$rubrics.rubricIrRRAId"
+                    ]
+                  },
+                  "then": "$listRubricsProg"
+                }
+              ],
+              "default": "$listRubricsPA"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$planId",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "rubric": {
+          "$ne": null
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "rubric": "$rubric._id",
+          "competenceDate": "$competenceDate"
+        },
+        "root": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$sort": {
+        "root.competenceDate": 1
+      }
+    },
+    {
+      "$replaceRoot": {
+        "newRoot": "$root"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "plans",
+        "localField": "planId",
+        "foreignField": "_id",
+        "as": "plan"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$plan",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "finalAmount": {
+          "$ne": 0
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "plan_readjustments",
+        "localField": "planId",
+        "foreignField": "plan._id",
+        "as": "reajuste_anual",
+        "let": {
+          "benefitStartDate": {
+            "$toDate": "$benefitStartDate"
+          },
+          "competenceDatePayrollPlanning": {
+            "$toDate": "$competenceDate"
+          },
+          "adjustmentPeriod": "$plan.adjustmentPeriod"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "benefitStartDate": "$$benefitStartDate",
+              "competenceDatePayrollPlanning": "$$competenceDatePayrollPlanning"
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$readjustmentIndex.readjustmentDate",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$readjustmentIndex.readjustmentDate.reference",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$readjustmentMonth",
+                      "$$adjustmentPeriod"
+                    ]
+                  },
+                  {
+                    "$gte": [
+                      {
+                        "$add": [
+                          {
+                            "$multiply": [
+                              {
+                                "$year": "$competenceDatePayrollPlanning"
+                              },
+                              100
+                            ]
+                          },
+                          {
+                            "$month": "$competenceDatePayrollPlanning"
+                          }
+                        ]
+                      },
+                      {
+                        "$add": [
+                          {
+                            "$multiply": [
+                              {
+                                "$year": "$readjustmentIndex.readjustmentDate.date"
+                              },
+                              100
+                            ]
+                          },
+                          {
+                            "$month": "$readjustmentIndex.readjustmentDate.date"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": null,
+              "root": {
+                "$push": "$$ROOT"
+              },
+              "menorCompetenceDate": {
+                "$min": {
+                  "$add": [
+                    {
+                      "$multiply": [
+                        {
+                          "$year": "$readjustmentIndex.readjustmentDate.reference.competenceDate"
+                        },
+                        100
+                      ]
+                    },
+                    {
+                      "$month": "$readjustmentIndex.readjustmentDate.reference.competenceDate"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$root",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$addFields": {
+              "dibFindIndex": {
+                "$cond": {
+                  "if": {
+                    "$lte": [
+                      {
+                        "$add": [
+                          {
+                            "$multiply": [
+                              {
+                                "$year": {
+                                  "$toDate": "$root.benefitStartDate"
+                                }
+                              },
+                              100
+                            ]
+                          },
+                          {
+                            "$month": {
+                              "$toDate": "$root.benefitStartDate"
+                            }
+                          }
+                        ]
+                      },
+                      "$menorCompetenceDate"
+                    ]
+                  },
+                  "then": "$menorCompetenceDate",
+                  "else": {
+                    "$add": [
+                      {
+                        "$multiply": [
+                          {
+                            "$year": {
+                              "$toDate": "$root.benefitStartDate"
+                            }
+                          },
+                          100
+                        ]
+                      },
+                      {
+                        "$month": {
+                          "$toDate": "$root.benefitStartDate"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  {
+                    "$add": [
+                      {
+                        "$multiply": [
+                          {
+                            "$year": {
+                              "$toDate": "$root.readjustmentIndex.readjustmentDate.reference.competenceDate"
+                            }
+                          },
+                          100
+                        ]
+                      },
+                      {
+                        "$month": {
+                          "$toDate": "$root.readjustmentIndex.readjustmentDate.reference.competenceDate"
+                        }
+                      }
+                    ]
+                  },
+                  "$dibFindIndex"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$reajuste_anual",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "finalAmount": {
+          "$cond": [
+            {
+              "$ne": [
+                "$rubric._id",
+                "$rubricIrRRAId"
+              ]
+            },
+            {
+              "$multiply": [
+                "$finalAmount",
+                {
+                  "$ifNull": [
+                    "$reajuste_anual.root.readjustmentIndex.readjustmentDate.reference.cumulativeIndexValue",
+                    1
+                  ]
+                }
+              ]
+            },
+            "$finalAmount"
+          ]
+        },
+        "amount": {
+          "$cond": [
+            {
+              "$ne": [
+                "$rubric._id",
+                "$rubricIrRRAId"
+              ]
+            },
+            {
+              "$multiply": [
+                "$amount",
+                {
+                  "$ifNull": [
+                    "$reajuste_anual.root.readjustmentIndex.readjustmentDate.reference.cumulativeIndexValue",
+                    1
+                  ]
+                }
+              ]
+            },
+            "$amount"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "rubricList": {
+          "$cond": {
+            "if": {
+              "$and": [
+                {
+                  "$or": [
+                    {
+                      "$eq": [
+                        "$rubric._id",
+                        "$rubrics.rubricBenefRRAId"
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        "$rubric._id",
+                        "$rubrics.rubricAbAnualRRAId"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "$ne": [
+                    "$finalAmount",
+                    null
+                  ]
+                }
+              ]
+            },
+            "then": {
+              "rubric": {
+                "_id": "$rubric._id",
+                "name": "$rubric.name",
+                "number": "$rubric.number"
+              },
+              "amount": "$finalAmount",
+              "exceptionAmount": 0,
+              "finalAmount": "$finalAmount"
+            },
+            "else": "$$REMOVE"
+          }
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$payroll",
+        "rubricList": {
+          "$push": "$rubricList"
+        },
+        "root": {
+          "$push": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$root",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payroll": "$root.payroll",
+        "rubric": "$root.rubric",
+        "finalAmount": "$root.finalAmount",
+        "amount": "$root.amount",
+        "exceptionAmount": "$root.exceptionAmount",
+        "competenceDate": "$root.competenceDate",
+        "type": "$root.type",
+        "status": "$root.status",
+        "quota": "$root.quota",
+        "payrollReferenceBases": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$root.rubric._id",
+                "$root.rubrics.rubricIrRRAId"
+              ]
+            },
+            "then": {
+              "percentage": "$root.payrollReferenceBases.percentage",
+              "deduction": "$root.payrollReferenceBases.deduction",
+              "rubricList": "$rubricList"
+            },
+            "else": "$$REMOVE"
+          }
+        }
+      }
+    }
+  ]
+}

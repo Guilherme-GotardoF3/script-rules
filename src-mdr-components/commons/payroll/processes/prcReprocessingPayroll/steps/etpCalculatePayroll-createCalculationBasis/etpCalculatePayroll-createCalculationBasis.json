@@ -1,0 +1,23 @@
+{
+  "_id": "65d8f1d30ee692ef28d67200",
+  "name": "etpCalculatePayroll-createCalculationBasis",
+  "description": "Etapa para a apuração da base de calculo utilizada no processo de calculo da folha",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "63ebdd3a7194600008215c29",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66900f194887e25bb93e437d",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:28:19.970Z",
+  "updatedAt": "2024-07-11T17:15:31.633Z",
+  "__v": 0
+}

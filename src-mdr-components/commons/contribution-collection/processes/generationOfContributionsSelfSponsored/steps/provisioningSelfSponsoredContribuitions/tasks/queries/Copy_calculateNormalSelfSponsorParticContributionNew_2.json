@@ -1,0 +1,821 @@
+{
+  "_id": "67e808dfdcc300eb829945a1",
+  "type": {
+    "_id": "67e808dfdcc300eb829945a2",
+    "name": "queries"
+  },
+  "name": "Copy_calculateNormalSelfSponsorParticContributionNew_2",
+  "description": "Calcula valor da contribuição normal do participante auto-patrocinado",
+  "main_collection": "costing_plans",
+  "output_name": "otp_calculateNormalSelfSponsorParticContNew",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "plan",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "rubricId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "upId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "directContributionCalculationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "dueDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participations",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "contributionType",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "contributionTypeName",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "individual_collections_parameters",
+    "people",
+    "salary_imports",
+    "recovery_temporal_indexes",
+    "recovery_temporal_series",
+    "employment_history",
+    "base_salaries",
+    "plans",
+    "competence_managements",
+    "contribution_provisioning_temp"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "plan": "$.plan",
+        "rubric._id": "$.rubricId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "rubric": 1,
+        "individualCalculation": 1,
+        "pensionAccount": 1,
+        "rangeItems": 1,
+        "effectiveDate": 1,
+        "UP_code": "$.upId",
+        "competenceDate": {
+          "$toDate": "$.competenceDate"
+        },
+        "directContributionCalculation": "$.directContributionCalculationId",
+        "dueDate": {
+          "$toDate": {
+            "$ifNull": [
+              "$.dueDate",
+              null
+            ]
+          }
+        },
+        "participations": {
+          "$ifNull": [
+            "$.participations",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$lte": [
+                "$effectiveDate.startedAt",
+                "$competenceDate"
+              ]
+            },
+            {
+              "$or": [
+                {
+                  "$eq": [
+                    "$effectiveDate.endedAt",
+                    null
+                  ]
+                },
+                {
+                  "$gte": [
+                    "$effectiveDate.endedAt",
+                    "$competenceDate"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "dueDateProcess": {
+          "$dateAdd": {
+            "startDate": "$dataMesSeguinte",
+            "unit": "day",
+            "amount": 7
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rangeItems"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "individual_collections_parameters",
+        "localField": "rubric._id",
+        "foreignField": "rubric._id",
+        "as": "individualContribuition",
+        "let": {
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "effectiveDate.endedAt": {
+                "$ifNull": [
+                  "$effectiveDate.endedAt",
+                  null
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$effectiveDate.startedAt",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          null
+                        ]
+                      },
+                      {
+                        "$gte": [
+                          "$effectiveDate.endedAt",
+                          "$$competenceDate"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "participation": 1,
+              "effectiveDate": 1,
+              "value": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$individualContribuition"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "individualContribuition.participation._id",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participation": "$individualContribuition.participation._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$$participation",
+                  "$participations._id"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "name": 1,
+              "participations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "salary_imports",
+        "localField": "individualContribuition.participation._id",
+        "foreignField": "person.participation._id",
+        "as": "salary",
+        "let": {
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$competenceDate",
+                      "$$competenceDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$salaries"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$salaries.type",
+                  "base"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "person": 1,
+              "salaries": 1,
+              "competenceDate": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$salary"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$or": [
+            {
+              "$in": [
+                "$salary.person._id",
+                "$participations"
+              ]
+            },
+            {
+              "$eq": [
+                "$participations",
+                []
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "recovery_temporal_indexes",
+        "localField": "UP_code",
+        "foreignField": "code",
+        "as": "UP_index",
+        "let": {
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$effectiveDate.startedAt",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          null
+                        ]
+                      },
+                      {
+                        "$gte": [
+                          "$effectiveDate.endedAt",
+                          "$$competenceDate"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$UP_index"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "recovery_temporal_series",
+        "localField": "UP_index._id",
+        "foreignField": "index._id",
+        "as": "UP_series",
+        "let": {
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$date",
+                      "$$competenceDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "date": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$UP_series",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "firstParcel": {
+          "$multiply": [
+            "$salary.salaries.amount",
+            "$individualContribuition.value"
+          ]
+        },
+        "secondParcel": {
+          "$multiply": [
+            {
+              "$divide": [
+                "$rangeItems.initial",
+                100
+              ]
+            },
+            {
+              "$subtract": [
+                "$salary.salaries.amount",
+                {
+                  "$divide": [
+                    "$UP_series.value",
+                    2
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "thirdParcel": {
+          "$cond": {
+            "if": {
+              "$gt": [
+                {
+                  "$subtract": [
+                    "$salary.salaries.amount",
+                    "$UP_series.value"
+                  ]
+                },
+                0
+              ]
+            },
+            "then": {
+              "$multiply": [
+                {
+                  "$divide": [
+                    "$rangeItems.final",
+                    100
+                  ]
+                },
+                {
+                  "$subtract": [
+                    "$salary.salaries.amount",
+                    "$UP_series.value"
+                  ]
+                }
+              ]
+            },
+            "else": 0
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "employment_history",
+        "localField": "salary.person._id",
+        "foreignField": "person._id",
+        "as": "employmentHistory",
+        "let": {
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$sort": {
+              "effectiveDate.startedAt": -1,
+              "effectiveDate.endedAt": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$employmentHistory",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "base_salaries",
+        "localField": "salary.person.participation.participationClass.plan._id",
+        "foreignField": "plan._id",
+        "as": "rubricSalary",
+        "pipeline": [
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricSalary",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "plans",
+        "localField": "person.participations.participationClass.plan._id",
+        "foreignField": "_id",
+        "as": "plans",
+        "pipeline": [
+          {
+            "$project": {
+              "operationalCollection": 1
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$operationalCollection.dueDateRule.dueDate",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$addFields": {
+              "operationalCollection.dueDateRule.dueDate": {
+                "$ifNull": [
+                  "$operationalCollection.dueDateRule.dueDate",
+                  null
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$plans",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "dueDate": {
+          "$cond": {
+            "if": {
+              "$or": [
+                {
+                  "$ne": [
+                    "$plans.operationalCollection.dueDateRule.dueDate",
+                    null
+                  ]
+                }
+              ]
+            },
+            "then": {
+              "$dateFromParts": {
+                "year": {
+                  "$year": "$competenceDate"
+                },
+                "month": {
+                  "$month": {
+                    "$dateAdd": {
+                      "startDate": "$competenceDate",
+                      "unit": "month",
+                      "amount": 1
+                    }
+                  }
+                },
+                "day": "$plans.operationalCollection.dueDateRule.dueDate",
+                "hour": {
+                  "$hour": "$competenceDate"
+                },
+                "minute": {
+                  "$minute": "$competenceDate"
+                },
+                "second": {
+                  "$second": "$competenceDate"
+                },
+                "millisecond": {
+                  "$millisecond": "$competenceDate"
+                }
+              }
+            },
+            "else": {
+              "$cond": {
+                "if": {
+                  "$or": [
+                    {
+                      "$eq": [
+                        "$person.participations.dueDate",
+                        null
+                      ]
+                    },
+                    {
+                      "$not": [
+                        "$person.participations.dueDate"
+                      ]
+                    }
+                  ]
+                },
+                "then": {
+                  "$toDate": "$dueDate"
+                },
+                "else": {
+                  "$dateFromParts": {
+                    "year": {
+                      "$year": "$competenceDate"
+                    },
+                    "month": {
+                      "$month": {
+                        "$dateAdd": {
+                          "startDate": "$competenceDate",
+                          "unit": "month",
+                          "amount": 1
+                        }
+                      }
+                    },
+                    "day": "$person.participations.dueDate",
+                    "hour": {
+                      "$hour": "$competenceDate"
+                    },
+                    "minute": {
+                      "$minute": "$competenceDate"
+                    },
+                    "second": {
+                      "$second": "$competenceDate"
+                    },
+                    "millisecond": {
+                      "$millisecond": "$competenceDate"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "competence_managements",
+        "localField": "competenceDate",
+        "foreignField": "competenceDate",
+        "as": "competenceManagement",
+        "pipeline": [
+          {
+            "$match": {
+              "status": "open"
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$competenceManagement",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "contribution_provisioning_temp",
+        "localField": "directContributionCalculation",
+        "foreignField": "directContributionCalculation",
+        "as": "otherRubrics",
+        "let": {
+          "personId": "$person._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$person._id",
+                  "$$personId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "rubrics": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otherRubrics",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "directContributionCalculation": 1,
+        "person": "$salary.person",
+        "rubrics": {
+          "$concatArrays": [
+            {
+              "$ifNull": [
+                "$otherRubrics.rubrics",
+                []
+              ]
+            },
+            [
+              {
+                "rubric": "$rubric",
+                "amount": {
+                  "$round": [
+                    {
+                      "$sum": [
+                        "$firstParcel",
+                        "$secondParcel",
+                        "$thirdParcel"
+                      ]
+                    },
+                    2
+                  ]
+                },
+                "referenceDate": "$competenceDate",
+                "baseCalculation": {
+                  "$cond": {
+                    "if": {
+                      "$or": [
+                        {
+                          "$eq": [
+                            {
+                              "$ifNull": [
+                                "$rubricSalary.rubric",
+                                null
+                              ]
+                            },
+                            null
+                          ]
+                        },
+                        {
+                          "$eq": [
+                            {
+                              "$ifNull": [
+                                "$salary.salaries.amount",
+                                null
+                              ]
+                            },
+                            null
+                          ]
+                        },
+                        {
+                          "$eq": [
+                            {
+                              "$ifNull": [
+                                "$competenceDate",
+                                null
+                              ]
+                            },
+                            null
+                          ]
+                        }
+                      ]
+                    },
+                    "then": [],
+                    "else": [
+                      {
+                        "rubric": "$rubricSalary.rubric",
+                        "value": "$salary.salaries.amount",
+                        "competenceDate": "$competenceDate"
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          ]
+        },
+        "competenceManagement": "$competenceManagement._id",
+        "referenceDate": "$competenceDate",
+        "source": "company",
+        "dueDate": 1,
+        "tipo_Contribuição": {
+          "_id": "$.contributionType",
+          "name": "$.contributionTypeName"
+        }
+      }
+    }
+  ]
+}

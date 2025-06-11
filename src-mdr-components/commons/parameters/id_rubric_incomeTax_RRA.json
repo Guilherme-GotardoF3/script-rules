@@ -1,0 +1,10 @@
+{
+  "_id": "6737a3350cd3a5be1abdd250",
+  "name": "id_rubric_incomeTax_RRA",
+  "description": "Seleciona o id da rubrica do IR RRA",
+  "data": {
+    "value": "674e6e9e519c6b3b81a2d318",
+    "type": "constant",
+    "isDefault": false
+  }
+}

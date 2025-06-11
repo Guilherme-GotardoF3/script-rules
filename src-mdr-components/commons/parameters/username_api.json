@@ -1,0 +1,10 @@
+{
+  "_id": "63bc4705fa21470008c8979a",
+  "name": "username_api",
+  "description": "Usuário com permissão de acesso a api.",
+  "data": {
+    "value": "ti@f3capital.com.br",
+    "type": "constant",
+    "isDefault": false
+  }
+}

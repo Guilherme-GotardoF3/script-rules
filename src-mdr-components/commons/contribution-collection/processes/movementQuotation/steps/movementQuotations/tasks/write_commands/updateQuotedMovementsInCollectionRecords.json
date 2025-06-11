@@ -1,0 +1,27 @@
+{
+  "_id": "66d714cc778dca2b9b092c33",
+  "type": {
+    "_id": "66d714cc571e93f6353ea764",
+    "name": "write_commands"
+  },
+  "name": "updateQuotedMovementsInCollectionRecords",
+  "description": " Atualiza movimentos cotizados na collection de contribuição",
+  "main_collection": "collection_records",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "rubrics": "$.$$.otp_getDataToCollectionRecordsQuotation.rubrics"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_getDataToCollectionRecordsQuotation._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

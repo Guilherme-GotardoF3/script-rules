@@ -1,0 +1,35 @@
+{
+  "_id": "66d78591a54b0429aaa24307",
+  "name": "collectiveMovementQuotation",
+  "description": "Cotiza os movimentos coletivos",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66d7854f6909823d77efe82e",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66d785816909823d77efe851",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66d8f81a73b0b6e1c4707005",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66d8fa8773b0b6e1c470709e",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-09-03T21:54:25.266Z",
+  "updatedAt": "2024-09-05T00:26:14.677Z",
+  "__v": 0
+}

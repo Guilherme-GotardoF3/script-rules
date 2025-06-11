@@ -1,0 +1,51 @@
+{
+  "_id": "63b5d409a3cb720008c66c29",
+  "type": {
+    "_id": "63b5d38fe7b35d8442cee861",
+    "name": "queries"
+  },
+  "name": "projectWritePayrollPlanning",
+  "description": "Atualiza o status da folha",
+  "main_collection": "payroll_plannings",
+  "output_name": "otp_projectWritePayrollPlanning",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "payrollPlanning._id",
+        "as": "payrolls_RMDRC"
+      }
+    },
+    {
+      "$match": {
+        "payrolls_RMDRC._id": {
+          "$exists": true
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$_id",
+        "status": "PROCESSED"
+      }
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+{
+  "_id": "67edb4a3436d0b0933008d81",
+  "type": {
+    "_id": "67edb4a3436d0b0933008d7f",
+    "name": "queries"
+  },
+  "name": "updateEmploymentHistorySalary",
+  "description": "Atualiza o salario e a data referencia na collection de histórico de emprego.",
+  "main_collection": "base_salaries",
+  "output_name": "otpUpdateEmploymentHistorySalary",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "plan",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "salaryImportGenerationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "financial_statements",
+    "employment_history"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "plan._id": "$.plan"
+      }
+    },
+    {
+      "$project": {
+        "rubric": 1,
+        "type": 1,
+        "company": 1
+      }
+    },
+    {
+      "$addFields": {
+        "bundle": {
+          "salaryImportGeneration": "$.salaryImportGenerationId",
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          },
+          "plan": "$.plan",
+          "person": "$.otp_financialPersonList"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$bundle.person"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "financial_statements",
+        "localField": "bundle.person._id",
+        "foreignField": "person._id",
+        "as": "financial_statements",
+        "let": {
+          "competenceDate": "$bundle.competenceDate",
+          "rubricId": "$rubric._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  {
+                    "$dateToString": {
+                      "format": "%Y-%m-%d",
+                      "date": "$$competenceDate"
+                    }
+                  },
+                  {
+                    "$dateToString": {
+                      "format": "%Y-%m-%d",
+                      "date": "$competenceDate"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$payslip"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$$rubricId",
+                  "$payslip.rubric._id"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "person": 1,
+              "competenceDate": 1,
+              "payslip": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$financial_statements",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "employment_history",
+        "localField": "bundle.person._id",
+        "foreignField": "person._id",
+        "as": "employmentHistory",
+        "let": {
+          "companyId": "$company._id",
+          "competenceDate": "$bundle.competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$company._id",
+                      "$$companyId"
+                    ]
+                  },
+                  {
+                    "$lte": [
+                      "$effectiveDate.startedAt",
+                      "$$competenceDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "effectiveDate.startedAt": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "person": 1,
+              "company": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$employmentHistory",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$group": {
+        "_id": "$bundle.person._id",
+        "root": {
+          "$first": "$$ROOT"
+        },
+        "amount": {
+          "$sum": "$financial_statements.payslip.value"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$root.employmentHistory._id",
+        "salary": "$amount",
+        "salaryReferenceDate": "$root.financial_statements.competenceDate"
+      }
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "_id": "648b16dab1e349c7afd83612",
+  "type": {
+    "_id": "648b0a3a12638ede03465960",
+    "name": "queries"
+  },
+  "name": "verificar_erro_folha",
+  "description": "restringe a folha que tem o status de error  para o processo de finalizacao da folha",
+  "main_collection": "sheet_processing_verifications",
+  "output_name": "otp_trf_verificar_erro_folha",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning": {
+          "$eq": "$.payrollPlanningId"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$status",
+            "ERROR"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "status": 1
+      }
+    }
+  ]
+}

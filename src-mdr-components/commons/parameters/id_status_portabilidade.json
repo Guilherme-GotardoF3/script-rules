@@ -1,0 +1,10 @@
+{
+  "_id": "676d51843d2a2dff8fe47a39",
+  "name": "id_status_portabilidade",
+  "description": "seleciona o id do status de portabilidade",
+  "data": {
+    "value": "66bd4ccc4eb4534a4f853088",
+    "type": "constant",
+    "isDefault": false
+  }
+}

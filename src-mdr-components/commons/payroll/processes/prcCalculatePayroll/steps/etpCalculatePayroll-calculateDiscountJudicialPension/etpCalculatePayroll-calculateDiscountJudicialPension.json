@@ -1,0 +1,47 @@
+{
+  "_id": "65fde04a660e0c5f9a403b01",
+  "name": "etpCalculatePayroll-calculateDiscountJudicialPension",
+  "description": "Etapa para o calculo das verbas de desconto de pensão judicial",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6601957bdb6266e84ce9dd55",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6601963edb6266e84ce9dd56",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6679fa10200949defc828b9c",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "660196a4db6266e84ce9dd58",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66997d6914ae66be08c87775",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66a92a313a6fc272a9f3ce93",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-03-22T19:47:23.013Z",
+  "updatedAt": "2024-09-11T17:02:52.842Z",
+  "__v": 0
+}

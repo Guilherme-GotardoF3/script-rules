@@ -1,0 +1,145 @@
+{
+  "_id": "63e162b65ab8dc000808eae6",
+  "type": {
+    "_id": "63e1617f886ce7000891fa12",
+    "name": "queries"
+  },
+  "name": "projectWriteReportRRA",
+  "description": "rendimentos recebidos acumuladamente (rra)",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_trf_project_write_report_rra",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "rubrica_RRA",
+      "type": "Parameter",
+      "description": "Parâmetro que define a rubrica de Rendimentos Recebidos Acumuladamente (RRA).",
+      "value": "674e6e82519c6b3b81a2d2d9"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "people",
+    "discount_calculation_basis"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId",
+        "judicialPension": {
+          "$exists": false
+        }
+      }
+    },
+    {
+      "$project": {
+        "participation": 1,
+        "payrollPlanning": 1,
+        "payrollItems": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "participation._id",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participationId": "$participation._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "foreignerData": 1,
+              "documents.document": 1,
+              "documents.type": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "payrollItem": "$payrollItems"
+      }
+    },
+    {
+      "$match": {
+        "payrollItem.rubric._id": "p:63d816bd08d1ef0008bdf76b"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "discount_calculation_basis",
+        "localField": "payrollItem.rubric._id",
+        "foreignField": "rubric",
+        "as": "discount_calculation_basis",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$discount_calculation_basis",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "participation": 1,
+        "person": {
+          "_id": "$person._id",
+          "name": "$person.name",
+          "documents": "$person.documents"
+        },
+        "payrollPlanning": "$payrollPlanning._id",
+        "country": "$person.foreignerData.country.name",
+        "valuesFromPreviousYears": "$payrollItem.amount",
+        "months": "0",
+        "taxableAverage": "0",
+        "rraValue": "0"
+      }
+    }
+  ]
+}

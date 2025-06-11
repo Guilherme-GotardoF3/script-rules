@@ -1,0 +1,27 @@
+{
+  "_id": "66020f53db6266e84ce9dd7b",
+  "type": {
+    "_id": "6602104ecba335f79fbecaf2",
+    "name": "write_commands"
+  },
+  "name": "createParticipationForBeneficiary",
+  "description": "Cria participação para beneficiário",
+  "main_collection": "people",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "participations": "$.$$.otp_trf_projectANewParticipationForBeneficiary.participations"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_trf_projectANewParticipationForBeneficiary.otp_trf_projectDataForNewGrantingBenefits.familyGroups.dependents.person._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "_id": "6418be2e6dcafc9b25c1679d",
+  "name": "id_rubrica_beneficio_aposentadoria",
+  "description": "Id que identifica o provento de aposentadoria.",
+  "data": {
+    "value": "674e6e04519c6b3b81a2d234",
+    "type": "constant",
+    "isDefault": false
+  }
+}

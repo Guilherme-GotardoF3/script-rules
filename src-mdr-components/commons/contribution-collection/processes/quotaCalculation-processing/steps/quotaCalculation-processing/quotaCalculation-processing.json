@@ -1,0 +1,35 @@
+{
+  "_id": "66e9a29be4df3712095db796",
+  "name": "quotaCalculation-processing",
+  "description": "Etapa para o calculo da cota",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66e9a293541f2af88c7903ba",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66e9c3b82e2320761f98e14f",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66e9be523afc3b8a1855db7b",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66e9c2932e2320761f98e131",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-09-17T15:39:07.075Z",
+  "updatedAt": "2024-09-17T20:06:54.539Z",
+  "__v": 0
+}

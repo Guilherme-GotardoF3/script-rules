@@ -1,0 +1,52 @@
+{
+  "_id": "66a10b45b7a9ce3757b14d26",
+  "name": "generationOfContribuitionSponsored",
+  "description": "Processo de geração|importação de contribuições dos participantes patrocinados",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "collection",
+  "owners": [
+    {
+      "ref": "a751f239-74df-44af-8f8a-69358d4d76fb",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "669ebd6871479a801b5e9850",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "66a10b6f0ec81be0d6561dcf",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "66a8ef9d8082256a91fad8ce",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "66cf40cd305353ad2631b563",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-07-24T14:10:13.408Z",
+  "updatedAt": "2025-03-29T14:50:51.937Z",
+  "__v": 0,
+  "dueDate": null,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "ec711d3c-19d7-4459-bd1c-6d02655cc979",
+    "username": "ansilva@f3capital.com.br"
+  },
+  "isSync": false
+}

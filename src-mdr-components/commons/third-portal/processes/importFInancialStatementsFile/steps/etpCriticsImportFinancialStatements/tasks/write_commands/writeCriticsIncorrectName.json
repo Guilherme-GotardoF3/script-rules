@@ -1,0 +1,31 @@
+{
+  "_id": "67d576eaae2fb5ada3c65a24",
+  "type": {
+    "_id": "67d576eaae2fb5ada3c65a22",
+    "name": "write_commands"
+  },
+  "name": "writeCriticsIncorrectName",
+  "description": "Escrita da consulta de nome do participante cadastrado que depara com arquivo de movimentação",
+  "main_collection": "processed_collection_review",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpCriticsIncorrectName"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otpCriticsIncorrectName.person._id"
+          },
+          {
+            "person.participation._id": "$.$$.otpCriticsIncorrectName.person.participation._id"
+          },
+          {
+            "referenceDate": "$.$$.otpCriticsIncorrectName.referenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "_id": "68013e26d87b4c78d5a30ccb",
+  "name": "id_recebimento_beneficio_purpose",
+  "description": "_id da purpose dentro do objeto bankAccounts - Recebimento de benefício",
+  "data": {
+    "value": "672ecef3bf79df4f579c7900",
+    "type": "constant",
+    "isDefault": false
+  }
+}

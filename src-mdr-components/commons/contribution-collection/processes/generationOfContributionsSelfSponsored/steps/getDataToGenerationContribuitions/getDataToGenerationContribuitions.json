@@ -1,0 +1,17 @@
+{
+  "_id": "669ebb859481323d12d978d8",
+  "name": "getDataToGenerationContribuitions",
+  "description": "Etapa para buscar dados do custeio do plano",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "669ebc59a1961cade3fcb1a1",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-07-22T20:05:25.396Z",
+  "updatedAt": "2025-03-29T14:51:11.774Z",
+  "__v": 0
+}

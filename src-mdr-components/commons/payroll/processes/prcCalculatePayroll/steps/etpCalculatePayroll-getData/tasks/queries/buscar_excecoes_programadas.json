@@ -1,0 +1,31 @@
+{
+  "_id": "637f8c800a122b0063e6b029",
+  "type": {
+    "_id": "637f842030eeb7006dc0c441",
+    "name": "queries"
+  },
+  "name": "buscar_excecoes_programadas",
+  "description": "Consulta as exceções programadas para folha no mês de referência.",
+  "main_collection": "payroll_item_exception_schedules",
+  "output_name": "opt_trf_buscar_excecoes_programadas",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "benefits",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "benefit": {
+          "$in": "$.benefits"
+        },
+        "payrollType": "$.opt_trf_buscar_planejamento_folha[0].payrollType"
+      }
+    }
+  ]
+}

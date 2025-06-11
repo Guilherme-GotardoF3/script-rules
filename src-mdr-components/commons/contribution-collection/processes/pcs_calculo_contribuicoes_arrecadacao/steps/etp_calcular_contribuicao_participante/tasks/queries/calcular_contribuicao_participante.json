@@ -1,0 +1,262 @@
+{
+  "_id": "642eebec4ab42e0066e7714b",
+  "type": {
+    "_id": "642eeba12a333e4f7d50a98d",
+    "name": "queries"
+  },
+  "name": "calcular_contribuicao_participante",
+  "description": "calcula qual o valor da contribuição do participante",
+  "main_collection": "people",
+  "output_name": "otp_trf_calcular_contribuicao_participante",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "referenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "costing_plans",
+    "salary_imports",
+    "individual_collections_parameters"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$project": {
+        "_id": 1,
+        "birthDate": 1,
+        "firstName": 1,
+        "lastName": 1
+      }
+    },
+    {
+      "$addFields": {
+        "dateFilter": {
+          "$toDate": "$.referenceDate"
+        },
+        "rubricIdFilter": "p:645bef7bb9d4cfa1ab29e844",
+        "planIdFilter": "$.planId",
+        "person": "$.otp_trf_buscar_participacoes_ativas"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$person._id",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "person.dateFilterMonth": {
+          "$toInt": {
+            "$dateToString": {
+              "format": "%m",
+              "date": "$dateFilter"
+            }
+          }
+        },
+        "person.dateFilterYear": {
+          "$toInt": {
+            "$dateToString": {
+              "format": "%Y",
+              "date": "$dateFilter"
+            }
+          }
+        },
+        "person.dateFilter": "$dateFilter",
+        "person.planIdFilter": "$planIdFilter",
+        "person.rubricIdFilter": "$rubricIdFilter"
+      }
+    },
+    {
+      "$replaceRoot": {
+        "newRoot": "$person"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plans",
+        "localField": "planIdFilter",
+        "foreignField": "plan",
+        "as": "costingPlans",
+        "let": {
+          "rubricFilter": "$rubricIdFilter"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$rubric",
+                  "$$rubricFilter"
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$costingPlans",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "salary_imports",
+        "localField": "participation._id",
+        "foreignField": "participation",
+        "let": {
+          "dateFilterMonth": "$dateFilterMonth",
+          "dateFilterYear": "$dateFilterYear"
+        },
+        "as": "salaryImports",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$$dateFilterMonth",
+                      "$referencyMonth"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$$dateFilterYear",
+                      "$referencyYear"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$salaryImports",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "individual_collections_parameters",
+        "localField": "participation._id",
+        "foreignField": "participation",
+        "as": "individualCollectionsParameter",
+        "let": {
+          "dateFilter": "$dateFilter",
+          "rubricFilter": "$rubricIdFilter"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$effectiveDate.startedAt",
+                      "$$dateFilter"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$rubric",
+                      "$$rubricFilter"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          null
+                        ]
+                      },
+                      {
+                        "$gte": [
+                          "$effectiveDate.endedAt",
+                          "$$dateFilter"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$individualCollectionsParameter",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "individualCollectionsParameter.value": {
+          "$ifNull": [
+            "$individualCollectionsParameter.value",
+            0
+          ]
+        },
+        "salaryImports.salaryBase": {
+          "$ifNull": [
+            "$salaryImports.salaryBase",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "contribuitionValue": {
+          "$round": [
+            {
+              "$multiply": [
+                "$individualCollectionsParameter.value",
+                "$salaryImports.salaryBase"
+              ]
+            },
+            100
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "personId": "$id",
+        "rubric": "$rubricIdFilter",
+        "contribuitionValue": 1,
+        "participation": "$participation._id",
+        "salarybase": "$salaryImports.salaryBase",
+        "percentageSelected": "$individualCollectionsParameter.value"
+      }
+    }
+  ]
+}

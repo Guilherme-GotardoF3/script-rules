@@ -1,0 +1,25 @@
+{
+  "_id": "66e86b988e33f136103cf974",
+  "name": "quotaCalculation-processing",
+  "description": "Calculo da cota, parte do processamento",
+  "context": "collection",
+  "steps": [
+    {
+      "step": "66e9a29be4df3712095db796",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "createdAt": "2024-09-16T17:32:08.567Z",
+  "updatedAt": "2024-09-17T15:40:02.694Z",
+  "__v": 0,
+  "isSync": false
+}

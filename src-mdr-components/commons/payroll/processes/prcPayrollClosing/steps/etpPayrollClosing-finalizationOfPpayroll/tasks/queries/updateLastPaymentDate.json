@@ -1,0 +1,127 @@
+{
+  "_id": "67d2cfd5e108ea324a3f5096",
+  "type": {
+    "_id": "67d2cfd54684ccae78a34dfd",
+    "name": "queries"
+  },
+  "name": "updateLastPaymentDate",
+  "description": "Atualiza o campo lastPaymentDate da collection benefits quando a folha do mês é finalizada.",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_updateLastPaymentDate",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payroll_plannings",
+    "benefits"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$addFields": {
+        "errorVerification": "$.otp_trf_verificar_erro_folha"
+      }
+    },
+    {
+      "$match": {
+        "errorVerification.status": {
+          "$ne": "ERROR"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payroll_plannings",
+        "localField": "payrollPlanning._id",
+        "foreignField": "_id",
+        "as": "payrollPlanningStatus",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$status",
+                  "FINISHED"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "status": 1,
+              "paymentDate": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollPlanningStatus",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "benefit._id",
+        "foreignField": "_id",
+        "as": "benefit",
+        "pipeline": [
+          {
+            "$project": {
+              "type": 1,
+              "lastPaymentDate": 1,
+              "paymentMethods": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefit",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "benefit": 1,
+        "lastPaymentDate": "$benefit.lastPaymentDate",
+        "paymentDate": "$payrollPlanningStatus.paymentDate"
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id",
+        "root": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "_id": "$root.benefit._id",
+        "lastPaymentDate": "$root.paymentDate"
+      }
+    },
+    {
+      "$project": {
+        "_id": "$root.benefit._id",
+        "lastPaymentDate": "$lastPaymentDate"
+      }
+    }
+  ]
+}

@@ -1,0 +1,191 @@
+{
+  "_id": "66e98aa5541f2af88c79034f",
+  "type": {
+    "_id": "66e98aa5ae9a81d90a46a5a2",
+    "name": "queries"
+  },
+  "name": "getPassiveToCalculationQuota",
+  "description": "Busca dados de passivo para o calculo da cota",
+  "main_collection": "quota_calculations",
+  "output_name": "otp_getPassiveToCalculationQuota",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "_id",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "quota_calculations",
+    "plans",
+    "investment_profiles",
+    "monetary_unit_values"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$._id"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "quota_calculations",
+        "localField": "plan",
+        "foreignField": "plan",
+        "as": "oldQuotaCalculations",
+        "let": {
+          "date": "$date"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$lt": [
+                  "$date",
+                  "$$date"
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "date": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$unwind": {
+              "path": "$items"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$oldQuotaCalculations",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "plans",
+        "localField": "plan._id",
+        "foreignField": "_id",
+        "as": "plans",
+        "pipeline": [
+          {
+            "$project": {
+              "name": 1,
+              "investmentProfiles": 1
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$investmentProfiles"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$plans"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "investment_profiles",
+        "localField": "plans.investmentProfiles._id",
+        "foreignField": "_id",
+        "as": "investment_profiles",
+        "pipeline": [
+          {
+            "$project": {
+              "name": 1,
+              "monetaryUnit": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$investment_profiles"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "monetary_unit_values",
+        "localField": "investment_profiles.monetaryUnit._id",
+        "foreignField": "monetaryUnit._id",
+        "as": "monetary_unit_values",
+        "let": {
+          "date": "$date"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$lte": [
+                  "$referenceDate",
+                  "$$date"
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "referenceDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$monetary_unit_values"
+      }
+    },
+    {
+      "$addFields": {
+        "previousFinancialValue": "$oldQuotaCalculations.items.activeValue"
+      }
+    },
+    {
+      "$project": {
+        "status": "$status",
+        "plan": "$plan",
+        "date": "$date",
+        "processExecution": "$processExecution",
+        "items": [
+          {
+            "investmentProfile": "$plans.investmentProfiles",
+            "qtdQuotas": null,
+            "previousFinancialValue": {
+              "$ifNull": [
+                "$previousFinancialValue",
+                0
+              ]
+            },
+            "lastQuotaDate": "$monetary_unit_values.referenceDate",
+            "activeValue": null,
+            "monetaryUnit": "$monetary_unit_values.monetaryUnit",
+            "quotaValue": {
+              "lastQuotaValue": "$monetary_unit_values.value",
+              "newQuotaValue": null
+            },
+            "variation": null
+          }
+        ]
+      }
+    }
+  ]
+}

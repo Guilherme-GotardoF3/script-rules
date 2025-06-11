@@ -1,0 +1,25 @@
+{
+  "_id": "6787e4dc8c4788c94cd3e180",
+  "type": {
+    "_id": "6787e4dc0ffc3fa69bece3f5",
+    "name": "write_commands"
+  },
+  "name": "writeWithdrawalAditional",
+  "description": "Tarefa que escreve o novo beneficio após o saque adicional realizado.",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_withdrawalAditional"
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_withdrawalAditional._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

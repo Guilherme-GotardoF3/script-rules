@@ -1,0 +1,10 @@
+{
+  "_id": "681cebfd294664c28097463c",
+  "name": "deathPensionPeculioId",
+  "description": "Id da rubrica do Pecúlio da Pensão por Morte",
+  "data": {
+    "value": "674e6e71519c6b3b81a2d2b3",
+    "type": "constant",
+    "isDefault": false
+  }
+}

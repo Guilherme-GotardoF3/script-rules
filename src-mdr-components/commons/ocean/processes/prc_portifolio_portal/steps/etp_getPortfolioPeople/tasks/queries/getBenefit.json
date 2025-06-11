@@ -1,0 +1,69 @@
+{
+  "_id": "668706531b872f17e0077f7b",
+  "type": {
+    "_id": "668706532d131889b2b9aa96",
+    "name": "queries"
+  },
+  "name": "getBenefit",
+  "description": "Pega os dados de beneficio do participante",
+  "main_collection": "people",
+  "output_name": "otp_getBenefit",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "people",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "benefits"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.people"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "participations": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "participations._id",
+        "foreignField": "participation",
+        "as": "benefit"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefit",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": "$benefit._id",
+        "type": "$benefit.type",
+        "participation": "$benefit.participation",
+        "benefitStartDate": "$benefit.benefitStartDate",
+        "benefitSource": "$benefit.benefitSource",
+        "paymentStartDate": "$benefit.paymentStartDate",
+        "lastPaymentDate": "$benefit.lastPaymentDate",
+        "quota": "$benefit.quota",
+        "paymentMethods": "$benefit.paymentMethods"
+      }
+    }
+  ]
+}

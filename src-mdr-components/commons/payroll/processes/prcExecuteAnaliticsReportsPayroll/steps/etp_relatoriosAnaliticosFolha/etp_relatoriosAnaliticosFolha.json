@@ -1,0 +1,41 @@
+{
+  "_id": "64eb5bb95e40036a222ad0f8",
+  "name": "etp_relatoriosAnaliticosFolha",
+  "description": "etp_relatoriosAnaliticosFolha",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "64eb5720e1878e085a62f9d8",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64eb5d650f616f24297b762e",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64eb61467f2344093be8fdaa",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    }
+  ],
+  "createdAt": "2023-08-27T14:20:41.548Z",
+  "updatedAt": "2023-09-06T21:17:15.022Z",
+  "__v": 0
+}

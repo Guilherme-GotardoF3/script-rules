@@ -1,0 +1,31 @@
+{
+  "_id": "66a92a313a6fc272a9f3ce93",
+  "type": {
+    "_id": "66a92a31a506fc7531452319",
+    "name": "write_commands"
+  },
+  "name": "writeProjectPayrollForRecipient",
+  "description": "escreve a folha pro recebedor da pensão judicial",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_projectPayrollForRecipient"
+      },
+      "filter": {
+        "$and": [
+          {
+            "payrollPlanning._id": "$.$$.otp_projectPayrollForRecipient.payrollPlanning._id"
+          },
+          {
+            "benefit._id": "$.$$.otp_projectPayrollForRecipient.benefit._id"
+          },
+          {
+            "judicialPension._id": "$.$$.otp_projectPayrollForRecipient.judicialPension._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

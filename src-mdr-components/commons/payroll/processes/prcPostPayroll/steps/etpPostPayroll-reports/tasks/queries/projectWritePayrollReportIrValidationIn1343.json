@@ -1,0 +1,196 @@
+{
+  "_id": "6425cd104f2705eed3f94486",
+  "type": {
+    "_id": "6425cc2784f93872e3fd43ef",
+    "name": "queries"
+  },
+  "name": "projectWritePayrollReportIrValidationIn1343",
+  "description": "O relatório tem por objetivo filtrar os benefícios que tiveram a dedução do importo de renda pela IN 1343",
+  "main_collection": "payroll_plannings",
+  "output_name": "otp_trf_projecao_escrita_relatorio_in_1343",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "rubrica_deducao_in1343",
+      "type": "Parameter",
+      "description": "Parâmetro que define a rubrica de dedução da IN 1343.",
+      "value": "637d62a87ade154dc2b8f717"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payroll_plannings",
+    "payrolls_RMDRC",
+    "discount_calculation_basis",
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1
+      }
+    },
+    {
+      "$addFields": {
+        "rubric_in_1343": "p:63d7b891fc21e000082e0283"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payroll_plannings",
+        "localField": "_id",
+        "foreignField": "_id",
+        "as": "payrollPlanning"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollPlanning",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "payrollPlanning._id",
+        "as": "payroll",
+        "pipeline": [
+          {
+            "$match": {
+              "judicialPension": {
+                "$exists": false
+              }
+            }
+          },
+          {
+            "$project": {
+              "benefit": 1,
+              "participation": 1,
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "payrollItem": "$payroll.payrollItems"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItem",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "discount_calculation_basis",
+        "localField": "payrollItem._id",
+        "foreignField": "payrollItem",
+        "as": "discountCalculationBasis",
+        "let": {
+          "rubric_in_1343": "$rubric_in_1343"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$$rubric_in_1343",
+                  "$rubric"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "value": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$discountCalculationBasis",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "payroll.participation._id",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participationId": "$payroll.participation._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "documents.document": 1,
+              "documents.type": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "participation": "$payroll.participation",
+        "person": 1,
+        "payrollPlanning": "$_id",
+        "balanceIn": "$discountCalculationBasis.value",
+        "taxableValue": {
+          "$toDouble": "1"
+        },
+        "remainingValue": {
+          "$toDouble": "1"
+        }
+      }
+    }
+  ]
+}

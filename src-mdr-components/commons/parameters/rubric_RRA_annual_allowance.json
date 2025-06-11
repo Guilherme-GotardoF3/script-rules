@@ -1,0 +1,10 @@
+{
+  "_id": "673540009fda868cb7502313",
+  "name": "rubric_RRA_annual_allowance",
+  "description": "Seleciona o Id da rubrica do benefício de abono Anual referente à RRA",
+  "data": {
+    "value": "674e6e59519c6b3b81a2d27c",
+    "type": "constant",
+    "isDefault": false
+  }
+}

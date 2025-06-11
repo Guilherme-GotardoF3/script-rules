@@ -1,0 +1,10 @@
+{
+  "_id": "652e7f9eb984a3f517d42187",
+  "name": "etp_consulta_dados_arrecadacao",
+  "description": "consulta os dados de arrecadacao para o relatorio de bi",
+  "isDefault": false,
+  "actions": [],
+  "createdAt": "2023-10-17T12:35:42.296Z",
+  "updatedAt": "2023-10-17T12:35:42.296Z",
+  "__v": 0
+}

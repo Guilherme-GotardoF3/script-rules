@@ -1,0 +1,34 @@
+{
+  "_id": "67e832a52e7ee50b6201b154",
+  "type": {
+    "_id": "67e832a5a008800842c1ea1e",
+    "name": "write_commands"
+  },
+  "name": "writeDeathSelfSponsorContribution13",
+  "description": "Escrita da 13ªcontribuição de risco - morte.",
+  "main_collection": "contribution_provisioning_temp",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpCalculateDeathSelfSponsorContribution13"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otpCalculateDeathSelfSponsorContribution13.person._id"
+          },
+          {
+            "person.participation._id": "$.$$.otpCalculateDeathSelfSponsorContribution13.person.participation._id"
+          },
+          {
+            "referenceDate": "$.$$.otp_calculateDeathSelfSponsoredContribuitionNew.referenceDate"
+          },
+          {
+            "directContributionCalculation": "$.$$.otpCalculateDeathSelfSponsorContribution13.directContributionCalculation"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

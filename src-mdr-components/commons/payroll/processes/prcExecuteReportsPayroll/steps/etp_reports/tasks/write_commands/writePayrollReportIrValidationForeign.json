@@ -1,0 +1,28 @@
+{
+  "_id": "642ac55efee9ea3d2b271bd7",
+  "type": {
+    "_id": "651d66ee9aac026d92b91538",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReportIrValidationForeign",
+  "description": "Componente de escrita relatório payroll_report_ir_validation_foreign",
+  "main_collection": "payroll_report_ir_validation_foreign",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_write_report_payroll_ir_exterior"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_trf_project_write_report_payroll_ir_exterior.participation._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_write_report_payroll_ir_exterior.payrollPlanning"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

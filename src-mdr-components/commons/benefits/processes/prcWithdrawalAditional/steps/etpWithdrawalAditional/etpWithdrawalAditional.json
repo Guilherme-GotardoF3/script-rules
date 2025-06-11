@@ -1,0 +1,23 @@
+{
+  "_id": "6787ce2dcd996a280e8f55f3",
+  "name": "etpWithdrawalAditional",
+  "description": "Etapa do saque adicional",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6787ce23112a13e0bd45277d",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6787e4dc8c4788c94cd3e180",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2025-01-15T15:03:09.874Z",
+  "updatedAt": "2025-01-15T16:40:42.493Z",
+  "__v": 0
+}

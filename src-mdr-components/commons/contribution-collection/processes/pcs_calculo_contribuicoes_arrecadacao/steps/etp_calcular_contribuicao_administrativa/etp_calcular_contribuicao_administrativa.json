@@ -1,0 +1,31 @@
+{
+  "_id": "6441954c9f6a42e4bfdb9e58",
+  "name": "etp_calcular_contribuicao_administrativa",
+  "description": "calcular a contribuicao administrativa",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6441952d930a55691bf72338",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64661f6aaa2065a5e05361d5",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    }
+  ],
+  "createdAt": "2023-04-20T19:41:00.747Z",
+  "updatedAt": "2023-10-04T18:27:33.544Z",
+  "__v": 0
+}

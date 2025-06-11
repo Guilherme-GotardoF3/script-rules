@@ -1,0 +1,10 @@
+{
+  "_id": "66ec78a3498488fff234d4e0",
+  "name": "occurrenceTransformApPm",
+  "description": "Ocorrencia de transformar aposentadoria em pensão por morte",
+  "data": {
+    "value": "66ec6b1a8120718f530c0983",
+    "type": "constant",
+    "isDefault": false
+  }
+}

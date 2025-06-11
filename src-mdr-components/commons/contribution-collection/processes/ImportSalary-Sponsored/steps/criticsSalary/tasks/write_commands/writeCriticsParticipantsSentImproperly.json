@@ -1,0 +1,31 @@
+{
+  "_id": "66bdfed27154894cbbe38d3e",
+  "type": {
+    "_id": "66bdfed2788759a94b9ca3b1",
+    "name": "write_commands"
+  },
+  "name": "writeCriticsParticipantsSentImproperly",
+  "description": "Tarefa que escreve a crítica do participante enviado indevidamente na collection critiques_of_processed_collections.",
+  "main_collection": "processed_collection_review",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_criticsParticipantsSentImproperly"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otp_criticsParticipantsSentImproperly.person._id"
+          },
+          {
+            "person.participation._id": "$.$$.otp_criticsParticipantsSentImproperly.person.participation._id"
+          },
+          {
+            "referenceDate": "$.$$.otp_criticsParticipantsSentImproperly.referenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

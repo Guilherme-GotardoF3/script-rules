@@ -1,0 +1,15 @@
+{
+  "_id": "66d8d6c21fdd1594b79f4663",
+  "type": {
+    "_id": "66d8d6c2cd57346efe43d8c4",
+    "name": "write_commands"
+  },
+  "name": "createAccountMovementCollective",
+  "description": "Cria movimentos para serem cotizados na conta coletiva",
+  "main_collection": "collective_account_movements",
+  "Command": {
+    "insertOne": {
+      "document": "$.$$.otp_getCollectionRecordsToBeQuotedCollective"
+    }
+  }
+}

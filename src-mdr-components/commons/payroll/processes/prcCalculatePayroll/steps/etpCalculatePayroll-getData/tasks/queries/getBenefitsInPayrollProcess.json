@@ -1,0 +1,70 @@
+{
+  "_id": "6648fbddc350c812fb20a5dd",
+  "type": {
+    "_id": "6648fbddd18caa2e4217f844",
+    "name": "queries"
+  },
+  "name": "getBenefitsInPayrollProcess",
+  "description": "Busca os beneficios para processamentos",
+  "main_collection": "benefits_in_payroll_process",
+  "output_name": "otp_getBenefitsInPayrollProcess",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefits",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payload.benefit.payrollPlannings._id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$addFields": {
+        "benefitsToProcess": "$.benefits"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefitsToProcess",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$cond": {
+            "if": {
+              "$ifNull": [
+                "$benefitsToProcess",
+                false
+              ]
+            },
+            "then": {
+              "$eq": [
+                "$benefitsToProcess",
+                "$payload.benefit._id"
+              ]
+            },
+            "else": {
+              "$eq": [
+                "$_id",
+                "$_id"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

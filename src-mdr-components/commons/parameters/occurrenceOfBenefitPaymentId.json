@@ -1,0 +1,10 @@
+{
+  "_id": "66a2a9b9474644b5cc9e0643",
+  "name": "occurrenceOfBenefitPaymentId",
+  "description": "id da ocorrência de pagamento de beneficio ",
+  "data": {
+    "value": "66a2a67bf9a4be9653b0340a",
+    "type": "constant",
+    "isDefault": false
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "_id": "678accab7d8a0dcee10f5160",
+  "name": "id_status_WithDrawal",
+  "description": "seleciona o id do status de Resgate",
+  "data": {
+    "value": "66bd4cd94eb4534a4f85396f",
+    "type": "constant",
+    "isDefault": false
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "_id": "63ebaf899db9eb4252c06e5a",
+  "name": "rubrica_ir_progressivo",
+  "description": "Parâmetro que define a rubrica do IR Progressivo.",
+  "data": {
+    "value": "674e6eb6519c6b3b81a2d330",
+    "type": "constant",
+    "isDefault": false
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "_id": "66e9a293541f2af88c7903ba",
+  "type": {
+    "_id": "66e9a293455c4c62c52a0492",
+    "name": "queries"
+  },
+  "name": "quotaCalculation",
+  "description": "Calcula a cota",
+  "main_collection": "quota_calculations",
+  "output_name": "otp_quotaCalculation",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "_id",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$._id"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$items"
+      }
+    },
+    {
+      "$addFields": {
+        "items": {
+          "quotaValue": {
+            "newQuotaValue": {
+              "$round": [
+                {
+                  "$divide": [
+                    "$items.activeValue",
+                    "$items.qtdQuotas"
+                  ]
+                },
+                8
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "items": {
+          "variation": {
+            "$round": [
+              {
+                "$divide": [
+                  {
+                    "$subtract": [
+                      "$items.quotaValue.newQuotaValue",
+                      "$items.quotaValue.lastQuotaValue"
+                    ]
+                  },
+                  "$items.quotaValue.lastQuotaValue"
+                ]
+              },
+              8
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

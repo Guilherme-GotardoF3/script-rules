@@ -1,0 +1,71 @@
+{
+  "_id": "642eece67d561b56b2e6934a",
+  "name": "pcs_calculo_contribuicoes_arrecadacao",
+  "description": "calcular as contribuições básica participante, básica patrocinador, contribuição de risco, contribuição administrativa e taxa de carregamento.  teste",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "collection",
+  "owners": [
+    {
+      "ref": "85cf58b9-4bdb-47ab-b030-a91889a73ace",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "642b10f096f7240bc0901a11",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "642eec17c87efb491aa74430",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "64301e7279f4f83c07f3cfe5",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "6435c432389e84ff79974a6d",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "644038a242b4252a66164a76",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "6441954c9f6a42e4bfdb9e58",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "64469bcbb221251bfebfddeb",
+      "order": 7,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "642b38adfdc49f777a25822e",
+      "order": 8,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2023-04-06T16:01:42.250Z",
+  "updatedAt": "2024-07-18T15:36:30.477Z",
+  "__v": 0,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false
+}

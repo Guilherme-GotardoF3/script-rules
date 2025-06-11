@@ -1,0 +1,47 @@
+{
+  "_id": "66bdfa4178d1f79becf45332",
+  "name": "criticsSalary",
+  "description": "Etapa para as críticas da importação do salário.",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "67d576d6ae2fb5ada3c659d6",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67deb0e7a29d1b5761dd1ef7",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "669019d0c318d5f8da80888e",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66bdfe277154894cbbe38d1b",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66901aadc318d5f8da8088af",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66bdfed27154894cbbe38d3e",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-08-15T12:53:21.654Z",
+  "updatedAt": "2025-04-11T13:10:55.896Z",
+  "__v": 0
+}

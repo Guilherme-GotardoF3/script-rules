@@ -1,0 +1,10 @@
+{
+  "_id": "63d7b7f3fc21e000082e027c",
+  "name": "rubrica_deducao_dependente",
+  "description": "Parâmetro que define a rubrica de dedução por dependentes.",
+  "data": {
+    "value": "674e6ede519c6b3b81a2d34b",
+    "type": "constant",
+    "isDefault": false
+  }
+}

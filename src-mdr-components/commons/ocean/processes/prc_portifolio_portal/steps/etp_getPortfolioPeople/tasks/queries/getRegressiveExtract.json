@@ -1,0 +1,356 @@
+{
+  "_id": "668700023b2026e33e0f7c6e",
+  "type": {
+    "_id": "66870002d66e0d8f15a23830",
+    "name": "queries"
+  },
+  "name": "getRegressiveExtract",
+  "description": "Pega o valor em da faixa do IR",
+  "main_collection": "benefits",
+  "output_name": "otp_getRegressiveExtract",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payroll_ir_regressive_controll_use_base",
+    "payrolls_RMDRC"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "$expr": {
+          "$in": [
+            "$_id",
+            "$.otp_getBenefit.._id"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "participation": 1,
+        "paymentMethods": 1,
+        "history": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payroll_ir_regressive_controll_use_base",
+        "localField": "_id",
+        "foreignField": "benefit",
+        "as": "regressiveUseBase"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$regressiveUseBase",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "time": {
+          "$round": [
+            {
+              "$divide": [
+                {
+                  "$subtract": [
+                    {
+                      "$toDate": "$.competenceDate"
+                    },
+                    {
+                      "$toDate": "$regressiveUseBase.competenceDate"
+                    }
+                  ]
+                },
+                {
+                  "$multiply": [
+                    365,
+                    24,
+                    60,
+                    60,
+                    1000
+                  ]
+                }
+              ]
+            },
+            4
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "benefit._id",
+        "as": "payroll",
+        "let": {
+          "competenceDate": "$regressiveUseBase.payrollPlanning.competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollPlanning.competenceDate",
+                  "$$competenceDate"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$payrollItems"
+            }
+          },
+          {
+            "$match": {
+              "payrollItems.quota": {
+                "$exists": true
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollItems.competenceDate",
+                  "$$competenceDate"
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "participation": 1,
+              "person": 1,
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "range": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$lte": [
+                    "$time",
+                    2
+                  ]
+                },
+                "then": "35%"
+              },
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$gt": [
+                        "$time",
+                        2
+                      ]
+                    },
+                    {
+                      "$lte": [
+                        "$time",
+                        4
+                      ]
+                    }
+                  ]
+                },
+                "then": "30%"
+              },
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$gt": [
+                        "$time",
+                        4
+                      ]
+                    },
+                    {
+                      "$lte": [
+                        "$time",
+                        6
+                      ]
+                    }
+                  ]
+                },
+                "then": "25%"
+              },
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$gt": [
+                        "$time",
+                        6
+                      ]
+                    },
+                    {
+                      "$lte": [
+                        "$time",
+                        8
+                      ]
+                    }
+                  ]
+                },
+                "then": "20%"
+              },
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$gt": [
+                        "$time",
+                        8
+                      ]
+                    },
+                    {
+                      "$lte": [
+                        "$time",
+                        10
+                      ]
+                    }
+                  ]
+                },
+                "then": "15%"
+              },
+              {
+                "case": {
+                  "$gt": [
+                    "$time",
+                    10
+                  ]
+                },
+                "then": "10%"
+              }
+            ],
+            "default": false
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "quotaInValue": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$payroll.payrollItems.exceptionAmount",
+                0
+              ]
+            },
+            "then": {
+              "$multiply": [
+                "$regressiveUseBase.unusedQuotas",
+                "$payroll.payrollItems.quota.value"
+              ]
+            },
+            "else": "Folha não encontrada"
+          }
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "benefit": "$_id",
+          "time": "$range"
+        },
+        "range": {
+          "$push": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "qtdQuotas": {
+          "$sum": [
+            "$range.regressiveUseBase.qtdQuotas"
+          ]
+        },
+        "unusedQuotas": {
+          "$sum": [
+            "$range.regressiveUseBase.unusedQuotas"
+          ]
+        },
+        "quotaInValue": {
+          "$sum": [
+            "$range.quotaInValue"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$range",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "benefit": "$_id.benefit",
+          "time": "$_id.time"
+        },
+        "root": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$_id.benefit",
+        "aliquot": "$root.range.range",
+        "competenceDate": "$root.range.regressiveUseBase.payrollPlanning.competenceDate",
+        "referenceDate": "$root.range.regressiveUseBase.referenceDate",
+        "qtdQuotas": "$root.qtdQuotas",
+        "unusedQuotas": "$root.unusedQuotas",
+        "amount": {
+          "$round": [
+            "$root.quotaInValue",
+            2
+          ]
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id",
+        "extract": {
+          "$push": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "benefit": "$_id",
+        "extract": "$extract"
+      }
+    }
+  ]
+}

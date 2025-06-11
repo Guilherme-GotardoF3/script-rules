@@ -1,0 +1,109 @@
+{
+  "_id": "64f37eb861f20eebc5504c76",
+  "type": {
+    "_id": "648b13f56f59935fabc02740",
+    "name": "queries"
+  },
+  "name": "payrollPlanningStatusCompleted",
+  "description": "atualiza o status do planejamento da folha",
+  "main_collection": "payroll_plannings",
+  "output_name": "otp_payrollPlanningStatusCompleted",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "executionId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC",
+    "processes_executions"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "errorVerification": "$.otp_trf_verificar_erro_folha"
+      }
+    },
+    {
+      "$match": {
+        "status": {
+          "$eq": "PROCESSED"
+        },
+        "_id": {
+          "$eq": "$.payrollPlanningId"
+        },
+        "errorVerification.status": {
+          "$ne": "ERROR"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "status": "FINISHED"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "payrollPlanning._id",
+        "as": "payroll",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "payrollPlanning": 1,
+              "status": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$match": {
+        "payroll.status": {
+          "$nin": [
+            "NO_CALCULATED"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "executionId": "$.executionId"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "processes_executions",
+        "localField": "executionId",
+        "foreignField": "executionId",
+        "as": "processExecution"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$processExecution",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "status": 1,
+        "finishProcess": {
+          "process": "$processExecution.process",
+          "processExecution": "$processExecution._id"
+        }
+      }
+    }
+  ]
+}

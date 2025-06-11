@@ -1,0 +1,25 @@
+{
+  "_id": "66e9c3b82e2320761f98e14f",
+  "type": {
+    "_id": "66e98cafac81cea140dc5ec7",
+    "name": "write_commands"
+  },
+  "name": "updateQuotaCalculationWithQuotaCalc",
+  "description": "Atualiza o passivo encotrado para o calculo da cota",
+  "main_collection": "quota_calculations",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.object"
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.id"
+          }
+        ]
+      },
+      "upsert": false
+    }
+  }
+}

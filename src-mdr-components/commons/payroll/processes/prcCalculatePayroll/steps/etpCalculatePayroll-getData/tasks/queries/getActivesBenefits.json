@@ -1,0 +1,104 @@
+{
+  "_id": "6376738b763fd50063d9ebd9",
+  "type": {
+    "_id": "637671f15ca21a006237982c",
+    "name": "queries"
+  },
+  "name": "getActivesBenefits",
+  "description": "Consulta os benefícios ativos com o status de ativo.",
+  "main_collection": "benefits_in_payroll_process",
+  "output_name": "opt_trf_buscar_beneficios_ativos",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefits",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payload.benefit.payrollPlannings._id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$addFields": {
+        "benefitId": "$.benefits"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefitId",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$cond": {
+            "if": {
+              "$ifNull": [
+                "$benefitId",
+                false
+              ]
+            },
+            "then": {
+              "$eq": [
+                "$benefitId",
+                "$payload.benefit._id"
+              ]
+            },
+            "else": {
+              "$eq": [
+                "$_id",
+                "$_id"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$payload.benefit._id",
+        "payrollType": "$payload.benefit.payrollPlannings.payrollType",
+        "participation": "$payload.benefit.participation",
+        "benefit": "$payload.benefit.type",
+        "IRDependents": "$payload.benefit.IRDependents",
+        "generatedBenefit": "$payload.benefit._id",
+        "payrollPlanning": "$payload.benefit.payrollPlannings._id",
+        "bankData": "$payload.person.bankAccounts",
+        "taxRegimeType": "$payload.person.participations.taxRegimeType._id",
+        "isTaxFreeAtSixtyFive": "$payload.benefit.isTaxFreeAtSixtyFive",
+        "judicialPension": "$payload.judicialPensions",
+        "planejamento_folha": {
+          "plan": "$payload.benefit.payrollPlannings.plan",
+          "listOfBenefits": "$payload.benefit.payrollPlannings.benefitTypes",
+          "payrollType": "$payload.benefit.payrollPlannings.payrollType",
+          "referenceDate": "$payload.benefit.payrollPlannings.competenceDate",
+          "status": "$payload.benefit.payrollPlannings.status",
+          "currency_units": "$payload.benefit.payrollPlannings.monetaryUnitValues",
+          "_id": "$payload.benefit.payrollPlannings._id"
+        },
+        "loans": 1,
+        "accountBalance": 1
+      }
+    },
+    {
+      "$addFields": {
+        "grossAmount": 0,
+        "netAmount": 0,
+        "actualParcel": 0,
+        "totalParcel": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,503 @@
+{
+  "_id": "667d9ec11a707d48163f2ff9",
+  "type": {
+    "_id": "667d9ec1430651d7a66ea456",
+    "name": "queries"
+  },
+  "name": "compareBalanceByCompetence",
+  "description": "Vai comparar o saldo do participante com as movimentacoes no periodo, pela data de competencia",
+  "main_collection": "account_movements",
+  "output_name": "otp_compareBalanceByCompetence",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participationIds",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "monetary_unit_values",
+    "account_balances_rmdrc"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "planId": {
+            "$ifNull": [
+              "$.planId",
+              1
+            ]
+          },
+          "participationIds": {
+            "$ifNull": [
+              "$.participationIds",
+              []
+            ]
+          },
+          "competenceDate": {
+            "$toDate": "$.$$.otp_getAllCompetencesInMovements.competenceDate"
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                {
+                  "$cond": {
+                    "if": {
+                      "$eq": [
+                        "$bundle.planId",
+                        1
+                      ]
+                    },
+                    "then": 1,
+                    "else": "$bundle.planId"
+                  }
+                },
+                {
+                  "$cond": {
+                    "if": {
+                      "$eq": [
+                        "$bundle.planId",
+                        1
+                      ]
+                    },
+                    "then": 1,
+                    "else": "$person.participation.participationClass.plan._id"
+                  }
+                }
+              ]
+            },
+            {
+              "$eq": [
+                "$bundle.competenceDate",
+                "$competenceDate"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$bundle.participationIds",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "bundle.participationId": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                {
+                  "$ifNull": [
+                    "$bundle.participationIds",
+                    1
+                  ]
+                },
+                1
+              ]
+            },
+            "then": 1,
+            "else": "$bundle.participationIds"
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$bundle.participationId",
+                    1
+                  ]
+                },
+                "then": 1,
+                "else": "$bundle.participationId"
+              }
+            },
+            {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$bundle.participationId",
+                    1
+                  ]
+                },
+                "then": 1,
+                "else": "$person.participation._id"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$sort": {
+        "occurrenceDate": 1
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "participation": "$person.participation._id",
+          "pensionAccount": "$pensionAccount._id"
+        },
+        "movements": {
+          "$addToSet": "$$ROOT"
+        },
+        "dateCompetence": {
+          "$first": "$bundle.competenceDate"
+        },
+        "operationDate": {
+          "$first": "$operationDate"
+        },
+        "person": {
+          "$first": "$person"
+        },
+        "pensionAccount": {
+          "$first": "$pensionAccount"
+        },
+        "monetaryUnitValue": {
+          "$first": "$monetaryUnitValue"
+        },
+        "monetaryUnitValueRef": {
+          "$first": "$monetaryUnitValue"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "monetary_unit_values",
+        "localField": "monetaryUnitValue._id",
+        "foreignField": "_id",
+        "as": "monetaryUnitValue",
+        "pipeline": [
+          {
+            "$project": {
+              "monetaryUnit": 1,
+              "value": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$monetaryUnitValue"
+      }
+    },
+    {
+      "$addFields": {
+        "valueAndQuota": {
+          "$function": {
+            "body": "function execute(list) { if (!list) return {}; let value = 0; let quotas = 0; for (const i of list) { value = value + i.value; quotas = quotas + i.amountQuotas; }; return { value, quotas }; }",
+            "args": [
+              "$movements"
+            ],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "newValue": {
+          "$round": [
+            {
+              "$multiply": [
+                "$valueAndQuota.value",
+                "$monetaryUnitValue.value"
+              ]
+            },
+            2
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "competenceDate": "$dateCompetence",
+        "date": "$dateCompetence",
+        "operationDate": "$operationDate",
+        "monetaryUnitValueRef": 1,
+        "pensionAccountList": {
+          "pensionAccount": "$pensionAccount",
+          "monetaryUnit": "$monetaryUnitValue.monetaryUnit",
+          "value": "$newValue",
+          "amountQuotas": "$valueAndQuota.quotas",
+          "movements": "$movements"
+        },
+        "person": "$person"
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "participation": "$person.participation._id"
+        },
+        "person": {
+          "$first": "$person"
+        },
+        "competenceDate": {
+          "$first": "$competenceDate"
+        },
+        "date": {
+          "$first": "$date"
+        },
+        "operationDate": {
+          "$first": "$operationDate"
+        },
+        "monetaryUnitValueMovment": {
+          "$first": "$monetaryUnitValueRef"
+        },
+        "pensionAccountList": {
+          "$addToSet": "$pensionAccountList"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "value": {
+          "$function": {
+            "body": "function execute(list) { if (!list) return {}; let value = 0; let amountQuotas = 0; for (const i of list) { value = value + i.value; amountQuotas = amountQuotas + i.amountQuotas }; return {amountQuotas, value}; }",
+            "args": [
+              "$pensionAccountList"
+            ],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "account_balances_rmdrc",
+        "localField": "_id.participation",
+        "foreignField": "person.participation._id",
+        "as": "account_balances",
+        "let": {
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$competenceDate",
+                  "$$competenceDate"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "value": 1,
+              "competenceDate": 1,
+              "pensionAccountList": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$account_balances",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$account_balances.pensionAccountList",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$pensionAccountList"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$pensionAccountList.pensionAccount._id",
+            "$account_balances.pensionAccountList.pensionAccount._id"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "accountBalanceValue": "$account_balances.pensionAccountList.totalValue"
+      }
+    },
+    {
+      "$project": {
+        "_id": 0
+      }
+    },
+    {
+      "$addFields": {
+        "equalValues": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                {
+                  "$round": [
+                    "$value.value",
+                    2
+                  ]
+                },
+                {
+                  "$round": [
+                    "$accountBalanceValue.value",
+                    2
+                  ]
+                }
+              ]
+            },
+            "then": "IGUAL",
+            "else": "DIVERGENTE"
+          }
+        },
+        "equalAmmountQuotas": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                {
+                  "$round": [
+                    "$value.amountQuotas",
+                    4
+                  ]
+                },
+                {
+                  "$round": [
+                    "$accountBalanceValue.amountQuotas",
+                    4
+                  ]
+                }
+              ]
+            },
+            "then": "IGUAL",
+            "else": "DIVERGENTE"
+          }
+        },
+        "diff": {
+          "value": {
+            "$subtract": [
+              {
+                "$round": [
+                  "$value.value",
+                  2
+                ]
+              },
+              {
+                "$round": [
+                  "$accountBalanceValue.value",
+                  2
+                ]
+              }
+            ]
+          },
+          "ammountQuotas": {
+            "$subtract": [
+              {
+                "$round": [
+                  "$value.amountQuotas",
+                  4
+                ]
+              },
+              {
+                "$round": [
+                  "$accountBalanceValue.amountQuotas",
+                  4
+                ]
+              }
+            ]
+          }
+        },
+        "values": {
+          "movements": {
+            "$round": [
+              "$value.value",
+              2
+            ]
+          },
+          "balance": {
+            "$round": [
+              "$accountBalanceValue.value",
+              2
+            ]
+          }
+        },
+        "ammountQuotas": {
+          "movements": {
+            "$round": [
+              "$value.amountQuotas",
+              4
+            ]
+          },
+          "balance": {
+            "$round": [
+              "$accountBalanceValue.amountQuotas",
+              4
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": 1,
+        "competenceDate": 1,
+        "operationDate": 1,
+        "date": 1,
+        "pensionAccount": "$pensionAccountList.pensionAccount.name",
+        "account_balances": 1,
+        "account_movements": "$pensionAccountList",
+        "valuation": {
+          "values": "$values",
+          "ammountQuotas": "$ammountQuotas",
+          "diff": "$diff",
+          "equalValues": "$equalValues",
+          "equalAmmountQuotas": "$equalAmmountQuotas"
+        }
+      }
+    },
+    {
+      "$sort": {
+        "person.name": 1,
+        "person.participation._id": 1,
+        "competenceDate": 1,
+        "date": 1
+      }
+    },
+    {
+      "$merge": {
+        "into": "temp_analise_account_movement",
+        "on": "_id",
+        "whenMatched": "fail",
+        "whenNotMatched": "insert"
+      }
+    }
+  ]
+}

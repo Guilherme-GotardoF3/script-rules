@@ -1,0 +1,565 @@
+{
+  "_id": "67d576eaae2fb5ada3c65a60",
+  "type": {
+    "_id": "67d576eaae2fb5ada3c65a5e",
+    "name": "queries"
+  },
+  "name": "criticsParticipantWithoutSalary",
+  "description": "Consulta de crítica listando participantes ativos na ficha de contribuição, porém que não constam  salário no arquivo de movimento, sem informação de afastamento ou desligamento no cadastro.",
+  "main_collection": "files_lines_contents",
+  "output_name": "otpCriticsParticipantWithoutSalary",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "telefonicaBdPlanId",
+      "type": "Parameter",
+      "description": "parâmetro que guarda o id do plano Telefônica BD",
+      "value": "665cd426d11b2a523e4708b5"
+    },
+    {
+      "name": "id_ImportFinancialStatementsFile",
+      "type": "Parameter",
+      "description": "Parâmetro para o id do tipo de importação do arquivo de movimento da. Usado para gerar críticas durante o processo de importação do arquivo de movimento no painel de terceiros.",
+      "value": "67d3218cd61a29ba7b25b441"
+    },
+    {
+      "name": "fileId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "startedAt",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "files",
+    "people",
+    "employment_history",
+    "review_collection",
+    "processed_collection_review"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "file": "$.fileId",
+        "status": "success",
+        "content.parsed.salario_de_participacao": {
+          "$ne": null
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "files",
+        "localField": "file",
+        "foreignField": "_id",
+        "as": "fileData"
+      }
+    },
+    {
+      "$unwind": "$fileData"
+    },
+    {
+      "$addFields": {
+        "data": {
+          "plan": {
+            "$toInt": "$content.parsed.plano_de_beneficio"
+          },
+          "competenceDate": {
+            "$toDate": {
+              "$concat": [
+                {
+                  "$substr": [
+                    "$content.parsed.data_da_competencia",
+                    2,
+                    4
+                  ]
+                },
+                "-",
+                {
+                  "$substr": [
+                    "$content.parsed.data_da_competencia",
+                    0,
+                    2
+                  ]
+                },
+                "-01"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "data": {
+          "person": {
+            "name": "$content.parsed.nome_do_participante",
+            "cpf": "$content.parsed.cpf",
+            "employmentHistory": {
+              "company": {
+                "$toInt": "$content.parsed.codigo_da_patrocinadora"
+              },
+              "registration": "$content.parsed.matricula_patrocinadora"
+            },
+            "birthDate": {
+              "$toDate": {
+                "$concat": [
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_nascimento",
+                      0,
+                      4
+                    ]
+                  },
+                  "-",
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_nascimento",
+                      4,
+                      2
+                    ]
+                  },
+                  "-",
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_nascimento",
+                      6,
+                      2
+                    ]
+                  }
+                ]
+              }
+            },
+            "accessionDate": {
+              "$toDate": {
+                "$concat": [
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_adesao",
+                      0,
+                      4
+                    ]
+                  },
+                  "-",
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_adesao",
+                      4,
+                      2
+                    ]
+                  },
+                  "-",
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_adesao",
+                      6,
+                      2
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "as": "person",
+        "let": {
+          "parameters": "$data.person"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$in": [
+                  "$$parameters.cpf",
+                  "$documents.document"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$documents"
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$participations"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$documents.type.name",
+                      "CPF"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$documents.document",
+                      "$$parameters.cpf"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$participations.participationClass.plan._id",
+                      "p:66e03abdd0e7f4f32d0bf537"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "birthDate": 1,
+              "documents": 1,
+              "addresses": 1,
+              "bankAccounts": 1,
+              "emails": 1,
+              "participations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "employment_history",
+        "localField": "person._id",
+        "foreignField": "person._id",
+        "as": "employmentHistory",
+        "let": {
+          "personId": "$person._id",
+          "competenceDate": "$data.competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$person._id",
+                      "$$personId"
+                    ]
+                  },
+                  {
+                    "$lt": [
+                      {
+                        "$dateToString": {
+                          "format": "%Y-%m-%d",
+                          "date": "$effectiveDate.endedAt"
+                        }
+                      },
+                      {
+                        "$dateToString": {
+                          "format": "%Y-%m-%d",
+                          "date": "$$competenceDate"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "effectiveDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "company": 1,
+              "registry": 1,
+              "employmentContractType": 1,
+              "job": 1,
+              "effectiveDate": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$employmentHistory"
+      }
+    },
+    {
+      "$addFields": {
+        "competenceDate": {
+          "$dateFromParts": {
+            "year": {
+              "$year": "$data.competenceDate"
+            },
+            "month": {
+              "$month": "$data.competenceDate"
+            },
+            "day": {
+              "$dayOfMonth": "$data.competenceDate"
+            },
+            "hour": 3,
+            "minute": 0,
+            "second": 0,
+            "millisecond": 0,
+            "timezone": "+00:00"
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            {
+              "$convert": {
+                "input": "$content.parsed.salario_de_participacao",
+                "to": "int",
+                "onError": 0,
+                "onNull": 0
+              }
+            },
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "review_collection",
+        "localField": "person.participations.participationClass.plan._id",
+        "foreignField": "plan._id",
+        "as": "reviewCollection",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$type._id",
+                  "p:67d42a8e98c3896283cd9c4b"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$critics"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$critics.description",
+                  "Participante sem salário"
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "critics": {
+                "$push": "$critics"
+              },
+              "type": {
+                "$first": "$type"
+              },
+              "plan": {
+                "$first": "$plan"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$reviewCollection",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "processed_collection_review",
+        "localField": "person._id",
+        "foreignField": "person._id",
+        "as": "previewProcessedCollectionReview",
+        "let": {
+          "participationId": "$person.participations._id",
+          "referenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$person.participation._id",
+                      "$$participationId"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$referenceDate",
+                      "$$referenceDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$reviewCollections",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$addFields": {
+              "critic": {
+                "$ifNull": [
+                  {
+                    "$arrayElemAt": [
+                      "$reviewCollections.reviewCollection.critics",
+                      0
+                    ]
+                  },
+                  null
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$cond": {
+                  "if": {
+                    "$eq": [
+                      "$reviewCollections.reviewCollection.type._id",
+                      "p:67d42a8e98c3896283cd9c4b"
+                    ]
+                  },
+                  "then": {
+                    "$ne": [
+                      "$critic.description",
+                      "Participante sem salário"
+                    ]
+                  },
+                  "else": {
+                    "$and": [
+                      {
+                        "$ne": [
+                          "$reviewCollections.reviewCollection.type._id",
+                          "p:67d42a8e98c3896283cd9c4b"
+                        ]
+                      },
+                      {
+                        "$ne": [
+                          "$critic.description",
+                          "Participante sem salário"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "reviewCollections": {
+                "$push": "$reviewCollections"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$previewProcessedCollectionReview",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": {
+          "_id": "$person._id",
+          "name": "$person.name",
+          "documents": "$person.documents",
+          "participation": "$person.participations"
+        },
+        "referenceDate": "$competenceDate",
+        "reviewCollections": {
+          "$concatArrays": [
+            {
+              "$ifNull": [
+                "$previewProcessedCollectionReview.reviewCollections",
+                []
+              ]
+            },
+            [
+              {
+                "origin": {
+                  "_id": "$_id",
+                  "name": "files_lines_contents"
+                },
+                "reviewCollection": "$reviewCollection",
+                "competenceDate": "$competenceDate",
+                "values": {
+                  "imported": {
+                    "$toInt": 0
+                  },
+                  "calculated": {
+                    "$toInt": 0
+                  },
+                  "diff": {
+                    "$toInt": 0
+                  }
+                },
+                "statusReason": "Participante sem informações de desligamento, com salário zerado",
+                "validation": {
+                  "description": "Participante sem salário",
+                  "responsible": "",
+                  "date": "$.startedAt"
+                },
+                "status": "SUCCESS"
+              }
+            ]
+          ]
+        },
+        "company": {
+          "_id": "$fileData.details.company.id",
+          "companyName": "$fileData.details.company.companyName"
+        }
+      }
+    }
+  ]
+}

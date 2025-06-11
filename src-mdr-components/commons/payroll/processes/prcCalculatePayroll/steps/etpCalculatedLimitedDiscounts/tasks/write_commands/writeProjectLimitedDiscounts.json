@@ -1,0 +1,27 @@
+{
+  "_id": "66bfafbc8864449efe2d4bbd",
+  "type": {
+    "_id": "66bfafbc039d4145c60f2352",
+    "name": "write_commands"
+  },
+  "name": "writeProjectLimitedDiscounts",
+  "description": "Escrita que limita os valores de desconto",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payrollItems": "$.$$.otpProjectLimitedDiscounts.0.payrollItems"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otpProjectLimitedDiscounts.0._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

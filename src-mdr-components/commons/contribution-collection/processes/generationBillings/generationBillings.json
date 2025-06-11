@@ -1,0 +1,25 @@
+{
+  "_id": "66c358cfa97375234e960e4d",
+  "name": "generationBillings",
+  "description": "Processo que gera cobrança",
+  "context": "collection",
+  "steps": [
+    {
+      "step": "66c358a96821b41c1abf7406",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-08-19T14:38:07.807Z",
+  "updatedAt": "2025-04-25T19:58:15.061Z",
+  "__v": 0,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "6e01a04b-85ba-4ef5-9438-66d21d07ff25",
+    "username": "ansilva@f3capital.com.br"
+  },
+  "isSync": false
+}

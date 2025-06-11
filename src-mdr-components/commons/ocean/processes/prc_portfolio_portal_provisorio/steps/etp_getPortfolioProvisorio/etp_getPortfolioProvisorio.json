@@ -1,0 +1,17 @@
+{
+  "_id": "66b6355f4f82b5a3b1d2d460",
+  "name": "etp_getPortfolioProvisorio",
+  "description": "Etapa provisória do portifolio do portal",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66b65f2fe9c0c08e8ffeb4e7",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-08-09T15:27:27.974Z",
+  "updatedAt": "2024-08-09T18:26:25.637Z",
+  "__v": 0
+}

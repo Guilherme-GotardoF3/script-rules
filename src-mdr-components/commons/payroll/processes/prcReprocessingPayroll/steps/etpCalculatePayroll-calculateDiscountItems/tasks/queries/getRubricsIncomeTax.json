@@ -1,0 +1,134 @@
+{
+  "_id": "66e48dbd9ce276e9defc3118",
+  "type": {
+    "_id": "66e48dbd5bc56715f34f7537",
+    "name": "queries"
+  },
+  "name": "getRubricsIncomeTax",
+  "description": "Busca as rubricas de imposto de renda",
+  "main_collection": "benefit_rubrics",
+  "output_name": "otpGetRubricsIncomeTax",
+  "fixed_value": false,
+  "input_parameters": [
+    {
+      "name": "rubrica_ir_progressivo",
+      "type": "Parameter",
+      "description": "Parâmetro que define a rubrica do IR Progressivo.",
+      "value": "674e6eb6519c6b3b81a2d330"
+    },
+    {
+      "name": "id_rubrica_ir_regressivo",
+      "type": "Parameter",
+      "description": "Id da rubrica de ir regressivo",
+      "value": "674e6d8e519c6b3b81a2d12d"
+    },
+    {
+      "name": "rubricGroupDiscountId",
+      "type": "Parameter",
+      "description": "id do grupo das rubricas de descontos (exceto pensão alimentícia)",
+      "value": "67d3247e09343c24f23846c7"
+    }
+  ],
+  "collections": [
+    "rubrics"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "benefitType._id": "$.$$.otp_getBenefitsInPayrollProcess.payload.benefit.type._id",
+        "plan._id": "$.$$.otp_getBenefitsInPayrollProcess.payload.person.participations.participationClass.plan._id"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubrics",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "rubrics._id": {
+          "$in": [
+            "p:64eba498f423017333463bb0",
+            "p:63ebaf899db9eb4252c06e5a"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubrics._id",
+        "foreignField": "_id",
+        "as": "definition_rubric",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$configurations.isDiscount",
+                      true
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$support.group._id",
+                      "p:6679dc812c592b5f1896b9a6"
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$rule.ref",
+                      null
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "configurations": 1,
+              "number": 1,
+              "name": 1,
+              "description": 1,
+              "support": {
+                "category": "$support.category._id",
+                "type": "$support.type._id"
+              },
+              "status": "$status._id",
+              "months": 1,
+              "order": 1,
+              "rubricNumberSource": 1,
+              "accountingTarget": 1,
+              "rule": {
+                "ref": "$rule.ref",
+                "name": "$rule.name",
+                "type": "$rule.type"
+              },
+              "costingPlans": 1,
+              "updatedAt": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$match": {
+        "definition_rubric.rule.ref": {
+          "$exists": true
+        }
+      }
+    },
+    {
+      "$project": {
+        "plan": "$plan",
+        "br_rubric": "$definition_rubric"
+      }
+    }
+  ]
+}

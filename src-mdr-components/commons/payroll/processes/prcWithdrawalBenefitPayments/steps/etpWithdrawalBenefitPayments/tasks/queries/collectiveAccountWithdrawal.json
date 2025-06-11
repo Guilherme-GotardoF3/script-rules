@@ -1,0 +1,430 @@
+{
+  "_id": "66d77596312088c419087ad9",
+  "type": {
+    "_id": "66d77596dfeb8a3635457998",
+    "name": "queries"
+  },
+  "name": "collectiveAccountWithdrawal",
+  "description": "Componente para baixa do pagamento de benefício em conta coletiva",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otpCollectiveAccountWithdrawal",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "definedBenefitId",
+      "type": "Parameter",
+      "description": "id do tipo do plano de beneficio definido ",
+      "value": "6732642511e1d84832e0acd6"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "accountTransactionTypeId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "plans",
+    "occurrences",
+    "pension_accounts",
+    "monetary_unit_values",
+    "people",
+    "employment_history"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "payrollPlanningId": "$.payrollPlanningId",
+          "accountTransactionTypeId": "$.accountTransactionTypeId"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$payrollPlanning._id",
+                "$bundle.payrollPlanningId"
+              ]
+            },
+            {
+              "$not": {
+                "$gt": [
+                  "$judicialPension",
+                  null
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "person": 1,
+        "grossAmount": 1,
+        "payrollPlanning": 1,
+        "bundle": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "plans",
+        "localField": "person.participation.participationClass.plan._id",
+        "foreignField": "_id",
+        "as": "plan",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$type._id",
+                  "p:66d77353228261df78a0cd64"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "name": 1,
+              "companies": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$plan",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "occurrences",
+        "localField": "person.participation.participationClass.plan._id",
+        "foreignField": "plan._id",
+        "as": "occurrence",
+        "let": {
+          "accountTransactionTypeId": "$bundle.accountTransactionTypeId"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$accountTransactionType._id",
+                  "$$accountTransactionTypeId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "name": 1,
+              "occurrenceRules": 1
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$occurrenceRules"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$occurrence"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "pension_accounts",
+        "localField": "occurrence.occurrenceRules.accounts.origin._id",
+        "foreignField": "_id",
+        "as": "pensionAccounts"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$pensionAccounts",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "monetary_unit_values",
+        "localField": "plan._id",
+        "foreignField": "monetaryUnit.plan._id",
+        "as": "monetaryUnitValues",
+        "let": {
+          "paymentDate": "$payrollPlanning.paymentDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$referenceDate",
+                  "$$paymentDate"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$monetaryUnitValues",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "getDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "person._id",
+        "foreignField": "_id",
+        "as": "retired",
+        "let": {
+          "participationId": "$person.participation._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$$participationId",
+                  "$participations._id"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "participationSource": "$participations.participationSource"
+            }
+          },
+          {
+            "$match": {
+              "participationSource": {
+                "$exists": true
+              }
+            }
+          },
+          {
+            "$lookup": {
+              "from": "people",
+              "localField": "participationSource._id",
+              "foreignField": "participations._id",
+              "as": "deathPension",
+              "pipeline": [
+                {
+                  "$project": {
+                    "_id": 1,
+                    "name": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$deathPension"
+            }
+          },
+          {
+            "$project": {
+              "_id": "$deathPension._id",
+              "name": "$deathPension.name"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$retired",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "employment_history",
+        "localField": "person._id",
+        "foreignField": "person._id",
+        "as": "employmentHistoryDirect",
+        "pipeline": [
+          {
+            "$addFields": {
+              "dateFilter": {
+                "$ifNull": [
+                  "$effectiveDate.endedAt",
+                  {
+                    "$function": {
+                      "body": "function () { return new Date() }",
+                      "args": [],
+                      "lang": "js"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "dateFilter": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "personIdForEmployment": {
+          "$cond": {
+            "if": {
+              "$gt": [
+                {
+                  "$size": "$employmentHistoryDirect"
+                },
+                0
+              ]
+            },
+            "then": "$person._id",
+            "else": "$retired._id"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "employment_history",
+        "localField": "personIdForEmployment",
+        "foreignField": "person._id",
+        "as": "company",
+        "let": {
+          "dateFilter": "$referenceDate"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "dateFilter": {
+                "$ifNull": [
+                  "$effectiveDate.endedAt",
+                  {
+                    "$function": {
+                      "body": "function () { return new Date() }",
+                      "args": [],
+                      "lang": "js"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "dateFilter": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$replaceRoot": {
+              "newRoot": "$company"
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "companyName": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$company",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "monetaryUnitValue": {
+          "_id": "$monetaryUnitValues._id",
+          "value": "$monetaryUnitValues.value",
+          "referenceDate": {
+            "$ifNull": [
+              "$monetaryUnitValues.referenceDate",
+              "$payrollPlanning.paymentDate"
+            ]
+          }
+        },
+        "competenceDate": "$payrollPlanning.competenceDate",
+        "occurrence": {
+          "_id": "$occurrence._id",
+          "name": "$occurrence.name"
+        },
+        "operationDate": "$getDate",
+        "occurrenceDate": "$payrollPlanning.paymentDate",
+        "origin": {
+          "_id": "$_id",
+          "name": "payrolls_RMDRC"
+        },
+        "pensionAccount": {
+          "_id": "$pensionAccounts._id",
+          "name": "$pensionAccounts.name",
+          "monetaryUnit": "$pensionAccounts.monetaryUnit"
+        },
+        "percentageMovement": {
+          "$toInt": 100
+        },
+        "value": {
+          "$multiply": [
+            "$grossAmount",
+            -1
+          ]
+        },
+        "plan": {
+          "_id": "$plan._id",
+          "name": "$plan.name"
+        },
+        "company": "$company",
+        "employmentHistory": "$employmentHistory"
+      }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "_id": "63bd9fa1a2be4f00080f8361",
+  "type": {
+    "_id": "650b4258ae0b2239db766c43",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReportProcessingExceptionValue",
+  "description": "Componente de escrita relatório de exceções",
+  "main_collection": "payroll_report_processing_exception_values",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_report_exceptionAmount"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_trf_project_report_exceptionAmount.participation._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_report_exceptionAmount.payrollPlanning"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "_id": "66c4df8f750044d136de8173",
+  "type": {
+    "_id": "66c4df8f6433cc2036361109",
+    "name": "write_commands"
+  },
+  "name": "createFinancialStatementData",
+  "description": "Tarefa que escreve os dados buscados na ficha financeira.",
+  "main_collection": "financial_statements",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_getFinancialStatementData"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otp_getFinancialStatementData.person._id"
+          },
+          {
+            "person.participations._id": "$.$$.otp_getFinancialStatementData.person.participations._id"
+          },
+          {
+            "competenceDate": "$.$$.otp_getFinancialStatementData.competenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

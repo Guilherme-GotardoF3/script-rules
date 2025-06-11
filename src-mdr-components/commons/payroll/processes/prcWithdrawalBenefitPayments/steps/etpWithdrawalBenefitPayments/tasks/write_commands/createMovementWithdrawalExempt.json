@@ -1,0 +1,31 @@
+{
+  "_id": "66e4512b8be6af7903960cbc",
+  "type": {
+    "_id": "66e4512b7ba8a5d0b86bebb5",
+    "name": "write_commands"
+  },
+  "name": "createMovementWithdrawalExempt",
+  "description": "baixa do saldo isento IN1343",
+  "main_collection": "exempt_movements",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpExemptWithdrawal"
+      },
+      "filter": {
+        "$and": [
+          {
+            "pensionAccount": "$.$$.otpExemptWithdrawal.pensionAccount._id"
+          },
+          {
+            "person": "$.$$.otpExemptWithdrawal.person._id"
+          },
+          {
+            "competenceDate": "$.$$.otpExemptWithdrawal.competenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

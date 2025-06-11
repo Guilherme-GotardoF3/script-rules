@@ -1,0 +1,113 @@
+{
+  "_id": "6749f9f070646f6fa05f3126",
+  "type": {
+    "_id": "6749f9f04d2cf2ddaca7caf0",
+    "name": "queries"
+  },
+  "name": "projectProgressiveIncomeTaxByCpf",
+  "description": "Projeta o valor da diferença do IR (uma nova rubrica) complementando o valor do imposto calculado considerando os demais benefícios que a pessoa pode receber",
+  "main_collection": "payroll_plannings",
+  "output_name": "otp_projectProgressiveIncomeTaxByCpf",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1
+      }
+    },
+    {
+      "$addFields": {
+        "otp_IR_por_CPF": "$.otp_calculateProgressiveIncomeTaxByCpf"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otp_IR_por_CPF"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otp_IR_por_CPF"
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payrollItems": "$otp_IR_por_CPF"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems"
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "rubricId": "$payrollItems.rubric._id",
+          "competenceDate": "$payrollItems.competenceDate",
+          "payroll": "$payrollItems.payroll"
+        },
+        "newPayrollItems": {
+          "$first": "$payrollItems"
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "payroll": "$newPayrollItems.payroll"
+        },
+        "newPayrollItems": {
+          "$push": "$newPayrollItems"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id.payroll",
+        "foreignField": "_id",
+        "as": "payroll"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "newPayrollItems": {
+          "$concatArrays": [
+            "$newPayrollItems",
+            "$payroll.payrollItems"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$_id.payroll",
+        "payrollItems": "$newPayrollItems"
+      }
+    }
+  ]
+}

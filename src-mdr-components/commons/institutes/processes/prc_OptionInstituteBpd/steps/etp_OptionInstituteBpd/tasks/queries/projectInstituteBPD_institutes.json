@@ -1,0 +1,257 @@
+{
+  "_id": "6769b325cd251e3a2dd63e96",
+  "type": {
+    "_id": "6769b32547a86f953643fd7d",
+    "name": "queries"
+  },
+  "name": "projectInstituteBPD_institutes",
+  "description": "Grava na collection institutes a opção pelo BPD do participante que estava em período de opção",
+  "main_collection": "people",
+  "output_name": "otp_projectInstituteBPD_institutes",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "instituteTypeId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "elegibilityReceiptDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "minimumBenefit",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "lastContributionDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "costingPlan",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "ruleDescription",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "instituteData",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "origin",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "requestDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "estruturaSaldo",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "institute_types",
+    "plans",
+    "employment_history"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "participationId": "$.participationId",
+          "instituteTypeId": "$.instituteTypeId",
+          "benefitValueEstimate": 1450000,
+          "elegibilityReceiptDate": {
+            "$toDate": "$.elegibilityReceiptDate"
+          },
+          "minimumBenefit": "$.minimumBenefit",
+          "lastContributionDate": {
+            "$toDate": "$.lastContributionDate"
+          },
+          "costingPlan": "$.costingPlan",
+          "ruleDescription": "$.ruleDescription",
+          "instituteData": "$.instituteData",
+          "origin": "$.origin",
+          "requestDate": {
+            "$toDate": "$.requestDate"
+          },
+          "estruturaSaldo": "$.estruturaSaldo"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$participations._id",
+            "$bundle.participationId"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "institute_types",
+        "localField": "bundle.instituteTypeId",
+        "foreignField": "_id",
+        "as": "instituteType"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$instituteType",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "plans",
+        "localField": "participations.participationClass.plan._id",
+        "foreignField": "_id",
+        "as": "plansCompany"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$plansCompany",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$plansCompany.companies",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "employment_history",
+        "localField": "_id",
+        "foreignField": "person._id",
+        "as": "empregos",
+        "let": {
+          "companyId": "$plansCompany.companies.company._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$company._id",
+                  "$$companyId"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$empregos",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "type": "$instituteType",
+        "data": {
+          "amount": {
+            "$toDouble": 0
+          },
+          "baseSalary": {
+            "$toDouble": 0
+          },
+          "benefitValueEstimate": {
+            "$toDouble": 0
+          },
+          "concessionDocuments": {
+            "$arrayElemAt": [
+              "$bundle.instituteData.concessionDocuments",
+              0
+            ]
+          },
+          "costingPlan": "$bundle.costingPlan",
+          "eligibilityReceiptDate": "$bundle.elegibilityReceiptDate",
+          "firstExpectedInstallmentValue": {
+            "$toDouble": "0"
+          },
+          "entity": null,
+          "firstExpectedPaymentDate": "$bundle.elegibilityReceiptDate",
+          "lastContributionDate": "$bundle.lastContributionDate",
+          "minimumBenefit": "$bundle.minimumBenefit",
+          "paymentDate": null,
+          "paymentMethod": null,
+          "payments": [],
+          "percentage": {
+            "$toDouble": "0"
+          },
+          "ruleDescription": "ruleDescription",
+          "selfSponsorshipStartDate": null,
+          "validationStatusType": "created",
+          "waitingPeriods": {
+            "$arrayElemAt": [
+              "$bundle.instituteData.waitingPeriods",
+              0
+            ]
+          }
+        },
+        "person": {
+          "_id": "$_id",
+          "name": "$name",
+          "documents": "$documents",
+          "admittedAt": "$empregos.effectiveDate.startedAt",
+          "resignedAt": "$empregos.effectiveDate.endedAt",
+          "participation": "$participations"
+        },
+        "estimatedBenefit": {
+          "value": {
+            "$toDouble": 0
+          },
+          "eligibilityDate": "$bundle.elegibilityReceiptDate",
+          "date": "$bundle.requestDate"
+        },
+        "institute": {
+          "type": "$institute.type",
+          "data": "$institute.data"
+        },
+        "benefit": null,
+        "entitlementBalance": null,
+        "optionDate": "$bundle.requestDate",
+        "status": {
+          "statusType": "CREATED",
+          "insertedAt": "$bundle.requestDate",
+          "responsible": {
+            "_id": "$_id",
+            "name": "$name"
+          }
+        }
+      }
+    }
+  ]
+}

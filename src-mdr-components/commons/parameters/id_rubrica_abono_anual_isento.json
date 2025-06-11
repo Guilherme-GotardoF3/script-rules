@@ -1,0 +1,10 @@
+{
+  "_id": "67b784ac8343e660a77de99d",
+  "name": "id_rubrica_abono_anual_isento",
+  "description": "Id da rubrica do Abono Anual Benefício Isento",
+  "data": {
+    "value": "674e6d8e519c6b3b81a2d12e",
+    "type": "constant",
+    "isDefault": false
+  }
+}

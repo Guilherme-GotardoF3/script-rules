@@ -1,0 +1,29 @@
+{
+  "_id": "6748828691f461f43ef329f8",
+  "name": "etp_calculate_retroactiveBenefit_incomeTax_RRA",
+  "description": "Etapa que puxa um cálculo de retroativo de benefício concedido e calculo do IR RRA",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6737a4e822e68b4ba5daeb39",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6749dbebf8a7a2638c3ab3b7",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "674881c3c7d151fc2f24c6a1",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-11-28T14:47:34.661Z",
+  "updatedAt": "2024-11-29T15:24:08.150Z",
+  "__v": 0
+}

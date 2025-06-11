@@ -1,0 +1,219 @@
+{
+  "_id": "63c1d2ef759713000855d85a",
+  "type": {
+    "_id": "63c1d27c8bf9d20008d13931",
+    "name": "queries"
+  },
+  "name": "projectWritePayrollIrSixtyFive",
+  "description": "Relatório da folha que mostra quem é isento 65 anos",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "opt_trf_project_write_payroll_ir_sixty_five",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "rubrica_deducao_65_anos",
+      "type": "Parameter",
+      "description": "Parâmetro que define a rubrica de dedução por 65 anos.",
+      "value": "674e6d67519c6b3b81a2d10c"
+    },
+    {
+      "name": "rubrica_ir_progressivo",
+      "type": "Parameter",
+      "description": "Parâmetro que define a rubrica do IR Progressivo.",
+      "value": "674e6eb6519c6b3b81a2d330"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "people",
+    "payroll_plannings"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId",
+        "judicialPension": {
+          "$exists": false
+        }
+      }
+    },
+    {
+      "$project": {
+        "participation": 1,
+        "payrollPlanning": 1,
+        "payrollItems": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "participation._id",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participationId": "$participation._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$isTaxFreeAtSixtyFive",
+                  true
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "participations": 1,
+              "birthDate": 1,
+              "name": 1,
+              "disablement": 1,
+              "documents.document": 1,
+              "documents.type": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payroll_plannings",
+        "localField": "payrollPlanning._id",
+        "foreignField": "_id",
+        "as": "payrollPlanning"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollPlanning",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "age": {
+          "$round": [
+            {
+              "$divide": [
+                {
+                  "$subtract": [
+                    {
+                      "$toDate": "$payrollPlanning.competenceDate"
+                    },
+                    {
+                      "$toDate": "$person.birthDate"
+                    }
+                  ]
+                },
+                {
+                  "$multiply": [
+                    365,
+                    24,
+                    60,
+                    60,
+                    1000
+                  ]
+                }
+              ]
+            },
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "age": {
+          "$gte": 65
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$payrollItems.rubric._id",
+            "p:63ebaf899db9eb4252c06e5a"
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$map": {
+            "input": "$payrollItems.payrollReferenceBases.rubricList",
+            "as": "item",
+            "in": {
+              "$eq": [
+                "$$item.rubric._id",
+                "p:63d7b78afc21e000082e0275"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "participation": "$participation",
+        "person": {
+          "_id": "$person._id",
+          "name": "$person.name",
+          "documents": "$person.documents",
+          "birthDate": "$person.birthDate"
+        },
+        "payrollPlanning": "$payrollPlanning._id",
+        "createdAt": "$getdate"
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "_id": "6737628cf7ed30c44f292063",
+  "name": "id_index_INPC",
+  "description": "Seleciona o id do índice INPC",
+  "data": {
+    "value": "677c22b7358db42652ea9d7b",
+    "type": "constant",
+    "isDefault": false
+  }
+}

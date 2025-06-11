@@ -1,0 +1,41 @@
+{
+  "_id": "6435c432389e84ff79974a6d",
+  "name": "etp_calcular_contribuicao_risco",
+  "description": "calcula os valores de contribuição de risco",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "64345e9268e6d9af59e6e650",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "6435c40948b53a9b9b05c768",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "6480a620c3c6cc4cfb8d9f59",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    }
+  ],
+  "createdAt": "2023-04-11T20:33:54.694Z",
+  "updatedAt": "2023-10-04T18:26:48.887Z",
+  "__v": 0
+}

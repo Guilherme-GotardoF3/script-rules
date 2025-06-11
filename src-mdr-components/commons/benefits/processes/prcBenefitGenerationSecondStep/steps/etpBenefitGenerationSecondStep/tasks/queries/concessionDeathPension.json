@@ -1,0 +1,141 @@
+{
+  "_id": "66031691db6266e84ce9dd86",
+  "type": {
+    "_id": "66030ca9cdb147cbf4ebfe0d",
+    "name": "queries"
+  },
+  "name": "concessionDeathPension",
+  "description": "Ao fim do processo de “Transformação do benefício“, deve ser acionado o segundo processo, onde o mesmo efetivará as alterações já iniciadas no primeiro processo.",
+  "main_collection": "benefits",
+  "output_name": "opt_trf_activeBenefitGranted",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "listBenefits",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "listBenefits": "$.listBenefits"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$listBenefits"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$_id",
+            "$listBenefits._id"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "lastHistory": "$history"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$lastHistory",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$sort": {
+        "lastHistory.effectiveDate": -1
+      }
+    },
+    {
+      "$addFields": {
+        "competenceDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        },
+        "newBenefitStartDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        },
+        "newPaymentStartDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        },
+        "lastHistory.expirationDate": {
+          "$toDate": "$listBenefits.paymentStartDate"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "newBenefits": {
+          "_id": "$_id",
+          "benefitStartDate": {
+            "$toDate": "$listBenefits.benefitStartDate"
+          },
+          "paymentStartDate": {
+            "$toDate": "$listBenefits.paymentStartDate"
+          },
+          "history": {
+            "$concatArrays": [
+              [
+                "$lastHistory"
+              ],
+              [
+                {
+                  "optingExemption": "$lastHistory.optingExemption",
+                  "immediatePercentage": "$lastHistory.immediatePercentage",
+                  "quotaImmediateParcelValue": "$lastHistory.quotaImmediateParcelValue",
+                  "cashImmediateParcelValue": "$lastHistory.cashImmediateParcelValue",
+                  "accountQuotaBalance": "$lastHistory.accountQuotaBalance",
+                  "accountCashBalance": "$lastHistory.accountCashBalance",
+                  "monthlyValueInCash": "$lastHistory.monthlyValueInCash",
+                  "monthlyValueInQuotas": "$lastHistory.monthlyValueInQuotas",
+                  "paymentMethods": "$lastHistory.paymentMethods",
+                  "status": "Ativo",
+                  "effectiveDate": {
+                    "$toDate": "$listBenefits.paymentStartDate"
+                  },
+                  "expirationDate": null,
+                  "updatedBy": null,
+                  "statusReason": "Ativação por concessão de benefício"
+                }
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "benefits": "$newBenefits"
+      }
+    },
+    {
+      "$project": {
+        "_id": "$benefits._id",
+        "benefitStartDate": "$benefits.benefitStartDate",
+        "paymentStartDate": "$benefits.paymentStartDate",
+        "history": "$benefits.history"
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "_id": "679924ebc9c660f1404ec300",
+  "name": "id_status_desligado",
+  "description": "Id do status da classe de participação desligado",
+  "data": {
+    "value": "66bd4cdd4eb4534a4f853c6b",
+    "type": "constant",
+    "isDefault": false
+  }
+}

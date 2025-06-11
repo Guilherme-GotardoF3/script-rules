@@ -1,0 +1,29 @@
+{
+  "_id": "664f4a0145a86ca75312a0cd",
+  "name": "etpPrePayroll-quotasRedistribution",
+  "description": "Etapa para fazer a redistribuição de cotas dos pensionistas falecidos.",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66560cfa1e489237f8b69d0d",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66560fcd0f1a1027a1f58c81",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6656111c0f1a1027a1f58cda",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-05-23T13:52:01.433Z",
+  "updatedAt": "2024-06-12T17:23:37.464Z",
+  "__v": 0
+}

@@ -1,0 +1,58 @@
+{
+  "_id": "6689a13b23567d9c515dc4c2",
+  "type": {
+    "_id": "6689a13bfb6e7325c554850c",
+    "name": "queries"
+  },
+  "name": "projectReportRubricControls",
+  "description": "projeta o relatorio de controle de rubricas ",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_project_report_rubric_controls",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId",
+        "judicialPension": {
+          "$exists": false
+        }
+      }
+    },
+    {
+      "$project": {
+        "participation": 1,
+        "payrollPlanning": 1,
+        "benefit": 1,
+        "person": 1,
+        "payrollItems": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "participation": 1,
+        "person": 1,
+        "payrollPlanning": "$payrollPlanning._id",
+        "rubric": "$payrollItems.rubric",
+        "calculatedAmountHeading": "$payrollItems.amount",
+        "exceptionAmount": "$payrollItems.exceptionAmount",
+        "finalAmountHeading": "$payrollItems.finalAmount"
+      }
+    }
+  ]
+}

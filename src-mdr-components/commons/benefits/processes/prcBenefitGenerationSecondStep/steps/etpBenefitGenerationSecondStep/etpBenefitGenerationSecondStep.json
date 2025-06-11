@@ -1,0 +1,35 @@
+{
+  "_id": "660312afeb5332f7a854c326",
+  "name": "etpBenefitGenerationSecondStep",
+  "description": "Etapa para ativação do benefício concedido",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66031691db6266e84ce9dd86",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "660316d2db6266e84ce9dd87",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66ec7da987657fe0c2d5ced1",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66ec7f9687657fe0c2d5cf17",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-03-26T18:23:43.882Z",
+  "updatedAt": "2024-09-19T20:47:43.776Z",
+  "__v": 0
+}

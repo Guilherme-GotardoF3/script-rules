@@ -1,0 +1,47 @@
+{
+  "_id": "6615a95db750a5b91760ba7e",
+  "name": "etpWithdrawalBenefitPayments",
+  "description": "Etapa de baixa dos saldo",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "661693a8d4bd77959eaa6c5a",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6616942dd4bd77959eaa6c5b",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66d77596312088c419087ad9",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66d77cb63e6e749e363d33d9",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66e451238be6af7903960c99",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66e4512b8be6af7903960cbc",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-04-09T20:47:25.026Z",
+  "updatedAt": "2024-09-13T15:18:29.414Z",
+  "__v": 0
+}

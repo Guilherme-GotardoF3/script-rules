@@ -1,0 +1,28 @@
+{
+  "_id": "67edb4a3436d0b0933008d85",
+  "type": {
+    "_id": "67edb4a3436d0b0933008d83",
+    "name": "write_commands"
+  },
+  "name": "writeUpdateEmploymentHistorySalary",
+  "description": "escrita da atualização de salario e data referencia no histórico de empregos",
+  "main_collection": "employment_history",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "salary": "$.$$.otpUpdateEmploymentHistorySalary.salary",
+          "salaryReferenceDate": "$.$$.otpUpdateEmploymentHistorySalary.salaryReferenceDate"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otpUpdateEmploymentHistorySalary._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

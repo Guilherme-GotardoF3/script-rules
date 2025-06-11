@@ -1,0 +1,245 @@
+{
+  "_id": "66a10f731a400398ace35b2d",
+  "type": {
+    "_id": "66a10f73431867115d245564",
+    "name": "queries"
+  },
+  "name": "importContributions",
+  "description": "Consulta da importação das contribuições.",
+  "main_collection": "financial_statements",
+  "output_name": "otp_trf_importContributions",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "contributionRecordProcessingId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "plan",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "costing_plans",
+    "contribution_record_processing"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "contributionRecordProcessingId": "$.contributionRecordProcessingId",
+          "plan": "$.plan",
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            {
+              "$dateToString": {
+                "format": "%Y-%m-%d",
+                "date": "$competenceDate"
+              }
+            },
+            {
+              "$dateToString": {
+                "format": "%Y-%m-%d",
+                "date": "$bundle.competenceDate"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payslip"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            {
+              "$dateToString": {
+                "format": "%Y-%m-%d",
+                "date": "$payslip.referenceDate"
+              }
+            },
+            {
+              "$dateToString": {
+                "format": "%Y-%m-%d",
+                "date": "$bundle.competenceDate"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person.participations"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$person.participations.participationClass.plan._id",
+            "$bundle.plan"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plans",
+        "localField": "payslip.rubric._id",
+        "foreignField": "rubric._id",
+        "as": "costing_plans",
+        "let": {
+          "plan": "$bundle.plan",
+          "participationClassId": "$person.participations.participationClass._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$plan",
+                  "$$plan"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "participationClasses": 1,
+              "pensionAccount": 1
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$participationClasses",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$$participationClassId",
+                      "$participationClasses._id"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$participationClasses.status.name",
+                      "Ativo"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$participationClasses.type.name",
+                      "Contribuinte"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$costing_plans"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "contribution_record_processing",
+        "localField": "bundle.contributionRecordProcessingId",
+        "foreignField": "_id",
+        "as": "contributionRecordProcessing",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "status": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$contributionRecordProcessing",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": {
+          "_id": "$person._id",
+          "name": "$person.name",
+          "documents": "$person.documents",
+          "participation": {
+            "_id": "$person.participations._id",
+            "number": "$person.participations.number",
+            "participationClass": "$person.participations.participationClass"
+          }
+        },
+        "rubrics": {
+          "rubric": "$payslip.rubric",
+          "competenceDate": "$bundle.competenceDate",
+          "origin": {
+            "_id": "$_id",
+            "name": "finalcial_statements",
+            "contributionRecordProcessing": "$contributionRecordProcessing"
+          },
+          "value": "$payslip.value"
+        },
+        "referenceDate": "$payslip.referenceDate",
+        "paymentDate": "$paymentDate"
+      }
+    },
+    {
+      "$group": {
+        "_id": "$person._id",
+        "person": {
+          "$first": "$person"
+        },
+        "rubrics": {
+          "$push": "$rubrics"
+        },
+        "referenceDate": {
+          "$first": "$referenceDate"
+        },
+        "paymentDate": {
+          "$first": "$paymentDate"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0
+      }
+    }
+  ]
+}

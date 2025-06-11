@@ -1,0 +1,189 @@
+{
+  "_id": "646517ae727f348e7f0d16ea",
+  "type": {
+    "_id": "646515f3fe4deefd32e70824",
+    "name": "queries"
+  },
+  "name": "projectCalculateExceptionValueFixedValue",
+  "description": "calcula os valores em excecao fixos",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_projectCalculateExceptionValueFixedValue",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefits",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payroll_item_exception_schedules"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId",
+        "judicialPension": {
+          "$exists": false
+        },
+        "benefit._id": {
+          "$in": "$.benefits"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "competenceDate": "$payrollPlanning.competenceDate",
+        "status": "CALCULATED",
+        "type": "EXCEPTION"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payroll_item_exception_schedules",
+        "localField": "benefit._id",
+        "foreignField": "benefit",
+        "as": "payrollItemExceptionSchedule"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItemExceptionSchedule",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "payrollItemExceptionSchedule.endDate": {
+          "$toDate": {
+            "$dateToString": {
+              "format": "%Y-%m",
+              "date": "$payrollItemExceptionSchedule.endDate",
+              "timezone": "GMT"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "payrollItemExceptionSchedule.amountType": "AMOUNT",
+        "$expr": {
+          "$and": [
+            {
+              "$gte": [
+                {
+                  "$add": [
+                    {
+                      "$multiply": [
+                        {
+                          "$year": "$competenceDate"
+                        },
+                        100
+                      ]
+                    },
+                    {
+                      "$month": "$competenceDate"
+                    }
+                  ]
+                },
+                {
+                  "$add": [
+                    {
+                      "$multiply": [
+                        {
+                          "$year": "$payrollItemExceptionSchedule.competenceDate"
+                        },
+                        100
+                      ]
+                    },
+                    {
+                      "$month": "$payrollItemExceptionSchedule.competenceDate"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$lte": [
+                {
+                  "$add": [
+                    {
+                      "$multiply": [
+                        {
+                          "$year": "$competenceDate"
+                        },
+                        100
+                      ]
+                    },
+                    {
+                      "$month": "$competenceDate"
+                    }
+                  ]
+                },
+                {
+                  "$add": [
+                    {
+                      "$multiply": [
+                        {
+                          "$year": "$payrollItemExceptionSchedule.endDate"
+                        },
+                        100
+                      ]
+                    },
+                    {
+                      "$month": "$payrollItemExceptionSchedule.endDate"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "finalAmount": {
+          "$toDouble": "$payrollItemExceptionSchedule.value"
+        },
+        "exceptionAmount": 0
+      }
+    },
+    {
+      "$project": {
+        "payrollItems": 1,
+        "item": [
+          {
+            "payroll": "$_id",
+            "rubric": "$payrollItemExceptionSchedule.rubric",
+            "finalAmount": "$finalAmount",
+            "amount": "$finalAmount",
+            "exceptionAmount": "$exceptionAmount",
+            "status": "$status",
+            "type": "$type",
+            "reason": "$payrollItemExceptionSchedule.reason",
+            "competenceDate": "$competenceDate"
+          }
+        ]
+      }
+    },
+    {
+      "$project": {
+        "_id": "$_id",
+        "payrollItems": {
+          "$concatArrays": [
+            "$payrollItems",
+            "$item"
+          ]
+        }
+      }
+    }
+  ]
+}

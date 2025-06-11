@@ -1,0 +1,25 @@
+{
+  "_id": "6621589798aa7f1ce49f12e8",
+  "type": {
+    "_id": "662155bdb556d8787bd1b286",
+    "name": "write_commands"
+  },
+  "name": "writeConcessionSicknessBenefit",
+  "description": "Projeta o valor do benefício da concessão do tipo auxílio doença",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_concessionSicknessBenefit"
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_trf_concessionSicknessBenefit._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "_id": "669687d01d32b4e3dc744e24",
+  "type": {
+    "_id": "669687d0f1dabe96229059e9",
+    "name": "write_commands"
+  },
+  "name": "writeProjectUpdatePayrollsManualChange",
+  "description": "writeProjectUpdatePayrollsManualChange",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "status": "$.$$.otp_projectUpdatePayrollsManualChange.status",
+          "payrollItems": "$.$$.otp_projectUpdatePayrollsManualChange.payrollItems"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_projectUpdatePayrollsManualChange._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

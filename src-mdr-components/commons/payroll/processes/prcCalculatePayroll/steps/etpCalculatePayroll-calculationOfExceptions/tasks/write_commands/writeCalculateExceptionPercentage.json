@@ -1,0 +1,27 @@
+{
+  "_id": "646642108484b5fb006db726",
+  "type": {
+    "_id": "64ebaa82af66fd38b22184e4",
+    "name": "write_commands"
+  },
+  "name": "writeCalculateExceptionPercentage",
+  "description": "writeCalculateExceptionPercentage",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payrollItems": "$.$$.otp_projectCalculateExceptionPercentage.payrollItems"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_projectCalculateExceptionPercentage._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "_id": "67e4567785cefbf0ed673539",
+  "name": "prc_UpdateFieldsConvertingRetirementToPension",
+  "description": "O processo é um gatilho que virá por meio do Oceano e vai atualizar a data de óbito do falecido, vai incluir uma nova classe de participação para o falecido, vai incluir os dados bancários, phone e email do beneficiário.",
+  "context": "benefit",
+  "steps": [
+    {
+      "step": "67e455a8e666586af2511a7e",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "9122ff06-ec30-4c99-b8ae-42671989a0b6",
+    "username": "dpitol@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "0cce8ea3-4059-496e-80ec-9ff04b516115",
+    "username": "dpitol@f3capital.com.br"
+  },
+  "isSync": false,
+  "createdAt": "2025-03-26T19:33:11.872Z",
+  "updatedAt": "2025-04-04T20:48:01.727Z",
+  "__v": 0
+}

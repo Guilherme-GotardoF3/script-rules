@@ -1,0 +1,24 @@
+{
+  "_id": "6447dbbdc636daadc5a47eca",
+  "type": {
+    "_id": "6447db64a5ac1111979a8645",
+    "name": "api_requests"
+  },
+  "name": "clean_rubrics_deduction",
+  "description": "Limpa as rubricas de dedução da folha",
+  "method": "post",
+  "headers": {
+    "tenant-id": "$.tenantId",
+    "authorization": "Bearer $.opt_trf_request_token.payload.accessToken"
+  },
+  "pathParameters": {},
+  "queryParameters": {},
+  "Url": "$.navegaApiUrl /payrolls/benefit-payroll/rubric-remove-batch/$.payrollPlanningId",
+  "Body": {
+    "type": "json",
+    "data": {
+      "benefits": "$.benefits",
+      "rubrics": "$.otp_trf_buscar_rubricas_deducao..br_rubric.._id"
+    }
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "_id": "667f2a81d31348ecb62dc617",
+  "name": "prcReprocessingPayroll",
+  "description": "Reprocessamento da folha pra quem não teve item calculado",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "benefit",
+  "owners": [
+    {
+      "ref": "6e01a04b-85ba-4ef5-9438-66d21d07ff25",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "65d8f1750ee692ef28d67174",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f1820ee692ef28d67188",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f18e0ee692ef28d6719c",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f19e0ee692ef28d671b0",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f1a90ee692ef28d671c4",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65fde04a660e0c5f9a403b01",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f1b50ee692ef28d671d8",
+      "order": 7,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f1c80ee692ef28d671ec",
+      "order": 8,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f1d30ee692ef28d67200",
+      "order": 9,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "65d8f1e00ee692ef28d67214",
+      "order": 10,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "667f2d0c84b02c06eedcc861",
+      "order": 11,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-06-28T21:26:25.719Z",
+  "updatedAt": "2024-07-18T15:36:30.477Z",
+  "__v": 0,
+  "dueDate": null,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false
+}

@@ -1,0 +1,35 @@
+{
+  "_id": "66d6141405e005441c56e873",
+  "name": "getContribuitionsToBeQuoted",
+  "description": "Etapa que vai buscar as contribuicoes a serem cotizadas no periodo",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66d6140644c48757e9811eb4",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66d6157344c48757e9811ed7",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66d8d64d1fdd1594b79f4640",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66d8d6c21fdd1594b79f4663",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-09-02T19:37:56.285Z",
+  "updatedAt": "2024-09-04T21:53:16.495Z",
+  "__v": 0
+}

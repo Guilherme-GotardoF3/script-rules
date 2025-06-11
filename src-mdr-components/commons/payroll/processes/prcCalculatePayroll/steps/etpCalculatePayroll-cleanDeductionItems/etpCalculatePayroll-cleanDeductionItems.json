@@ -1,0 +1,23 @@
+{
+  "_id": "65d8f1e00ee692ef28d67214",
+  "name": "etpCalculatePayroll-cleanDeductionItems",
+  "description": "Etapa que limpa as deduções calculadas para não poluir os itens calculados.",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6674a1d0ee09588fde97fd20",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6447dbbdc636daadc5a47eca",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:28:32.763Z",
+  "updatedAt": "2024-08-06T19:01:08.537Z",
+  "__v": 0
+}

@@ -1,0 +1,23 @@
+{
+  "_id": "65d8f18e0ee692ef28d6719c",
+  "name": "etpCalculatePayroll-createPayroll",
+  "description": "Etapa para criação da folha de pagamento",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "63b5b295c486af00085127bd",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "63aa0f285de5fe0071f5a30f",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:27:10.341Z",
+  "updatedAt": "2024-07-11T19:57:44.219Z",
+  "__v": 0
+}

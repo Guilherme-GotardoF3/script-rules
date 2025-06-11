@@ -1,0 +1,27 @@
+{
+  "_id": "674855398c4d6d801c98b005",
+  "type": {
+    "_id": "6748553989bc8cd3df065337",
+    "name": "write_commands"
+  },
+  "name": "writeCalculateProgressiveIncomeTaxByCpf",
+  "description": "Escreve o cálculo do IR por CPF na payrolls_RMDRC",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payrollItems": "$.$$.otp_projectProgressiveIncomeTaxByCpf.payrollItems"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_projectProgressiveIncomeTaxByCpf._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

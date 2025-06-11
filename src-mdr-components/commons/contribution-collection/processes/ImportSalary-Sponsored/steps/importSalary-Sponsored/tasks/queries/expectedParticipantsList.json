@@ -1,0 +1,68 @@
+{
+  "_id": "668d48650e37b2c7761410aa",
+  "type": {
+    "_id": "668d4865ca74df512bbe70a9",
+    "name": "queries"
+  },
+  "name": "expectedParticipantsList",
+  "description": "Lista de participantes esperados do grupo de participação Contribuinte/Ativo",
+  "main_collection": "people",
+  "output_name": "otp_expectedParticipantsList",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "plan",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "participations.participationClass.plan._id": "$.plan",
+        "participations.participationClass.status.name": {
+          "$regex": "ativ",
+          "$options": "i"
+        },
+        "participations.participationClass.type.name": {
+          "$regex": "contrib",
+          "$options": "i"
+        }
+      }
+    },
+    {
+      "$project": {
+        "name": 1,
+        "birthDate": 1,
+        "documents": 1,
+        "participations": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "participationClass": "$participations.participationClass"
+      }
+    },
+    {
+      "$match": {
+        "participations.participationClass.plan._id": "$.plan",
+        "participations.participationClass.status.name": {
+          "$regex": "ativ",
+          "$options": "i"
+        },
+        "participations.participationClass.type.name": {
+          "$regex": "contrib",
+          "$options": "i"
+        }
+      }
+    }
+  ]
+}

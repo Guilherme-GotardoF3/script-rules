@@ -1,0 +1,10 @@
+{
+  "_id": "63d7b78afc21e000082e0275",
+  "name": "rubrica_deducao_65_anos",
+  "description": "Parâmetro que define a rubrica de dedução por 65 anos.",
+  "data": {
+    "value": "674e6d67519c6b3b81a2d10c",
+    "type": "constant",
+    "isDefault": false
+  }
+}

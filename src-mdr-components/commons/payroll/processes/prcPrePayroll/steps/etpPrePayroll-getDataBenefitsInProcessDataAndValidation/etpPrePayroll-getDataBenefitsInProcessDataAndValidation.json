@@ -1,0 +1,65 @@
+{
+  "_id": "65d8f1300ee692ef28d67121",
+  "name": "etpPrePayroll-getDataBenefitsInProcessDataAndValidation",
+  "description": "Etapa para as tarefas que vão buscar e salvar os dados dos benefícios para processamento",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6376730ed1573700637b7129",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "65c3ba3f584207f3ef27e640",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66b5001249530462274b6494",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "666856ce510737c8d1b47012",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "65d512aa75ce2cf005e4ded7",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66b4d66b94ae22fadae7e0c5",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "65f891beb1a240741d5161db",
+      "type": "tasks",
+      "order": 7,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66b4d72b94ae22fadae7e0e8",
+      "type": "tasks",
+      "order": 8,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "65f892e9b1a240741d5161f7",
+      "type": "tasks",
+      "order": 9,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:25:36.474Z",
+  "updatedAt": "2024-08-08T17:29:11.831Z",
+  "__v": 0
+}

@@ -1,0 +1,31 @@
+{
+  "_id": "66d77cb63e6e749e363d33d9",
+  "type": {
+    "_id": "66d77cb6bb862e176ec2eba5",
+    "name": "write_commands"
+  },
+  "name": "createMovementCollectiveAccountWithdrawal",
+  "description": "Componente criar os registros na movimentação para baixa do pagamento de benefício",
+  "main_collection": "collective_account_movements",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpCollectiveAccountWithdrawal"
+      },
+      "filter": {
+        "$and": [
+          {
+            "pensionAccount": "$.$$.otpCollectiveAccountWithdrawal.pensionAccount._id"
+          },
+          {
+            "plan": "$.$$.otpCollectiveAccountWithdrawal.plan._id"
+          },
+          {
+            "competenceDate": "$.$$.otpCollectiveAccountWithdrawal.competenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

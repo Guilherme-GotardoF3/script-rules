@@ -1,0 +1,342 @@
+{
+  "_id": "64469ba95ee6041acde0b7e4",
+  "type": {
+    "_id": "64469b658c24eaf24f42a605",
+    "name": "queries"
+  },
+  "name": "calcular_taxa_carregamento",
+  "description": "Calcular taxa do carregamento",
+  "main_collection": "people",
+  "output_name": "otp_calcular_taxa_carregamento",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "referenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "costing_plans",
+    "costing_plan_configurations"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$project": {
+        "_id": 1,
+        "birthDate": 1,
+        "firstName": 1,
+        "lastName": 1
+      }
+    },
+    {
+      "$addFields": {
+        "dateFilter": {
+          "$toDate": "$.referenceDate"
+        },
+        "planIdFilter": "$.planId",
+        "rubricId": [
+          "p:6467c5e656d0d0d38a061550",
+          "p:6501f048d2b2a92fe2dc9691"
+        ],
+        "contribuitionParticipation": "$.otp_trf_calcular_contribuicao_participante",
+        "contribuitionSponsor": "$.otp_trf_calcular_contribuicao_patrocinador"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricId",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$contribuitionParticipation"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$contribuitionParticipation.personId",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$contribuitionSponsor"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$contribuitionSponsor.personId",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plans",
+        "localField": "planIdFilter",
+        "foreignField": "plan",
+        "as": "costingPlans",
+        "let": {
+          "rubricFilter": "$rubricId"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$rubric",
+                  "$$rubricFilter"
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$costingPlans",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plan_configurations",
+        "localField": "planIdFilter",
+        "foreignField": "plan._id",
+        "as": "costingPlanConfiguration",
+        "let": {
+          "dateFilter": "$dateFilter",
+          "rubricId": "$rubricId"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "effectiveDate.endedAt": {
+                "$ifNull": [
+                  "$effectiveDate.endedAt",
+                  ""
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "type": "CONTRIBUTION"
+                  },
+                  {
+                    "$gte": [
+                      "$$dateFilter",
+                      "$effectiveDate.startedAt"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          ""
+                        ]
+                      },
+                      {
+                        "$lte": [
+                          "$$dateFilter",
+                          "$effectiveDate.endedAt"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": "$rubrics"
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$rubrics.destiny._id",
+                  "$$rubricId"
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "rangeItems": {
+                "$first": "$rangeItems"
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$costingPlanConfiguration",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "loadingRateParticipation": {
+          "$round": [
+            {
+              "$function": {
+                "body": "function (rangeItems, balance) {if (!rangeItems) return 0;const item = rangeItems.find(  (item) =>    balance >= item.initialValue &&    balance <= item.finalValue);if (!item) return 0;if (item.type === \"VALUE\")  return item.value;else  return (    item.value * balance -    item.deductionValue  );}",
+                "args": [
+                  "$costingPlanConfiguration.rangeItems",
+                  "$contribuitionParticipation.contribuitionValue"
+                ],
+                "lang": "js"
+              }
+            },
+            2
+          ]
+        },
+        "loadingRateSponsor": {
+          "$round": [
+            {
+              "$function": {
+                "body": "function (rangeItems, balance) {if (!rangeItems) return 0;const item = rangeItems.find(  (item) =>    balance >= item.initialValue &&    balance <= item.finalValue);if (!item) return 0;if (item.type === \"VALUE\")  return item.value;else  return (    item.value * balance -    item.deductionValue  );}",
+                "args": [
+                  "$costingPlanConfiguration.rangeItems",
+                  "$contribuitionSponsor.contribuitionValue"
+                ],
+                "lang": "js"
+              }
+            },
+            2
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plan_configurations",
+        "localField": "planIdFilter",
+        "foreignField": "plan._id",
+        "as": "rubricResult",
+        "let": {
+          "rubricFilter": "$rubricId",
+          "dateFilter": "$dateFilter"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "effectiveDate.endedAt": {
+                "$ifNull": [
+                  "$effectiveDate.endedAt",
+                  ""
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$in": [
+                      "$$rubricFilter",
+                      "$rubrics.destiny._id"
+                    ]
+                  },
+                  {
+                    "$gte": [
+                      "$$dateFilter",
+                      "$effectiveDate.startedAt"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          ""
+                        ]
+                      },
+                      {
+                        "$lte": [
+                          "$$dateFilter",
+                          "$effectiveDate.endedAt"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$addFields": {
+              "rubric": {
+                "$first": {
+                  "$filter": {
+                    "input": "$rubrics",
+                    "cond": {
+                      "$eq": [
+                        "$$rubric.destiny._id",
+                        "$$rubricFilter"
+                      ]
+                    },
+                    "as": "rubric"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricResult",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "rubric": "$rubricResult.rubric.destiny",
+        "personId": "$_id",
+        "participation": "$contribuitionParticipation.participation",
+        "loadingRateParticipation": 1,
+        "loadingRateSponsor": 1,
+        "contribuitionParticipation": 1,
+        "contribuitionSponsor": 1,
+        "costingPlanConfiguration": 1
+      }
+    }
+  ]
+}

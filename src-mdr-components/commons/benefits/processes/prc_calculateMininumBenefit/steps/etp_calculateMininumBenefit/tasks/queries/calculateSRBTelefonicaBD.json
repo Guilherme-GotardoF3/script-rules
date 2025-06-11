@@ -1,0 +1,345 @@
+{
+  "_id": "6776b0ddf8dc043baf8fb8e3",
+  "type": {
+    "_id": "6776b0ddeb9da60d177793b3",
+    "name": "queries"
+  },
+  "name": "calculateSRBTelefonicaBD",
+  "description": "Cálculo do SRB apenas para o plano Telefônica BD",
+  "main_collection": "salary_imports",
+  "output_name": "otp_calculateSRBTelefonicaBD",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "requestDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "recovery_temporal_series",
+    "benefit_entitlements"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$person.participation._id",
+                "$.participationId"
+              ]
+            },
+            {
+              "$eq": [
+                "665cd426d11b2a523e4708b5",
+                "$person.participation.participationClass.plan._id"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "bundle": {
+          "participationId": "$.participationId",
+          "indexPlanId_1": "672676c6138721ae4dcd2d04",
+          "requestDate": {
+            "$toDate": "$.requestDate"
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$salaries",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$salaries.type",
+                "Salário de Participação"
+              ]
+            },
+            {
+              "$gt": [
+                "$bundle.requestDate",
+                "$competenceDate"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$sort": {
+        "competenceDate": -1
+      }
+    },
+    {
+      "$group": {
+        "_id": "$person.participation._id",
+        "indexPlanId_1": {
+          "$first": "$bundle.indexPlanId_1"
+        },
+        "salaries": {
+          "$push": {
+            "amount": "$salaries.amount",
+            "competenceDate": "$competenceDate"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "participation": "$_id",
+        "indexPlanId_1": 1,
+        "salaries": {
+          "$slice": [
+            "$salaries",
+            36
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "recovery_temporal_series",
+        "localField": "indexPlanId_1",
+        "foreignField": "index",
+        "as": "index",
+        "let": {
+          "competenceDate": "$salaries.competenceDate",
+          "startDateCorrection": {
+            "$dateTrunc": {
+              "date": {
+                "$last": "$salaries.competenceDate"
+              },
+              "unit": "day"
+            }
+          },
+          "endDateIndexPlanId_1": {
+            "$dateTrunc": {
+              "date": {
+                "$first": "$salaries.competenceDate"
+              },
+              "unit": "day"
+            }
+          }
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "dataIndex": {
+                "$dateTrunc": {
+                  "date": "$data",
+                  "unit": "day"
+                }
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$gte": [
+                      "$dataIndex",
+                      "$$startDateCorrection"
+                    ]
+                  },
+                  {
+                    "$lte": [
+                      "$dataIndex",
+                      "$$endDateIndexPlanId_1"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$in": [
+                  "$data",
+                  "$$competenceDate"
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "dataIndex": -1
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "data": 1,
+              "variation": {
+                "$cond": {
+                  "if": {
+                    "$eq": [
+                      "$variation",
+                      0
+                    ]
+                  },
+                  "then": 1,
+                  "else": "$variation"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "salaries": {
+          "$map": {
+            "input": "$salaries",
+            "as": "s",
+            "in": {
+              "$let": {
+                "vars": {
+                  "matchingIndex": {
+                    "$first": {
+                      "$filter": {
+                        "input": "$index",
+                        "as": "idx",
+                        "cond": {
+                          "$eq": [
+                            {
+                              "$dateTrunc": {
+                                "date": "$$s.competenceDate",
+                                "unit": "day"
+                              }
+                            },
+                            {
+                              "$dateTrunc": {
+                                "date": "$$idx.data",
+                                "unit": "day"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                },
+                "in": {
+                  "$multiply": [
+                    "$$s.amount",
+                    {
+                      "$ifNull": [
+                        "$$matchingIndex.variation",
+                        1
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefit_entitlements",
+        "localField": "person._id",
+        "foreignField": "person._id",
+        "as": "benefit_entitlements"
+      }
+    },
+    {
+      "$addFields": {
+        "isEntitlementsEmpty": {
+          "$eq": [
+            {
+              "$size": "$benefit_entitlements"
+            },
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefit_entitlements",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "avgAmount": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$isEntitlementsEmpty",
+                false
+              ]
+            },
+            "then": {
+              "$subtract": [
+                {
+                  "$multiply": [
+                    "$benefit_entitlements.entitlementBalance",
+                    10
+                  ]
+                },
+                0
+              ]
+            },
+            "else": {
+              "$round": [
+                {
+                  "$subtract": [
+                    {
+                      "$multiply": [
+                        {
+                          "$avg": "$salaries"
+                        },
+                        10
+                      ]
+                    },
+                    0
+                  ]
+                },
+                2
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "participation": 1,
+        "amount": {
+          "$toDouble": {
+            "$ifNull": [
+              "$avgAmount",
+              0
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

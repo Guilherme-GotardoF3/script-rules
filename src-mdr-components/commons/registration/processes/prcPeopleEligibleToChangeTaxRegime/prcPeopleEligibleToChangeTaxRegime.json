@@ -1,0 +1,41 @@
+{
+  "_id": "660db16e1d802a6451035ce2",
+  "name": "prcPeopleEligibleToChangeTaxRegime",
+  "description": "Pessoas aptas a troca de regime tributário",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "benefit",
+  "owners": [
+    {
+      "ref": "be713bcb-315d-47f6-ac7c-e933189010fb",
+      "type": "user"
+    },
+    {
+      "ref": "3e4a8b63-52f1-40b9-8f13-4e6752c1eaa2",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "660db13e5db7741033b8744f",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-04-03T19:43:42.366Z",
+  "updatedAt": "2024-07-18T15:36:30.477Z",
+  "__v": 0,
+  "dueDate": null,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false
+}

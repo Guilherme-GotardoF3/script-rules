@@ -1,0 +1,31 @@
+{
+  "_id": "66a10fcb1a400398ace35b4e",
+  "type": {
+    "_id": "66a10fcb3017e994cc39442c",
+    "name": "write_commands"
+  },
+  "name": "writeImportContributions",
+  "description": "Escrita para registrar as contribuições na costing_plans.",
+  "main_collection": "collection_records_temp",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_importContributions"
+      },
+      "filter": {
+        "$and": [
+          {
+            "paymentDate": "$.$$.otp_trf_importContributions.paymentDate"
+          },
+          {
+            "person.participation._id": "$.$$.otp_trf_importContributions.person.participation._id"
+          },
+          {
+            "referenceDate": "$.$$.otp_trf_importContributions.referenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

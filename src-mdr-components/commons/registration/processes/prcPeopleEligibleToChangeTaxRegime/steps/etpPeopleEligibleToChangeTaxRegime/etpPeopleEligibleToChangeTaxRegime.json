@@ -1,0 +1,21 @@
+{
+  "_id": "660db13e5db7741033b8744f",
+  "name": "etpPeopleEligibleToChangeTaxRegime",
+  "description": "processa listagem de pessoas aptas a troca de regime tributário",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "660eb362705ee1d4b4445ef7",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    }
+  ],
+  "createdAt": "2024-04-03T19:42:54.032Z",
+  "updatedAt": "2024-04-04T14:31:38.596Z",
+  "__v": 0
+}

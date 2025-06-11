@@ -1,0 +1,23 @@
+{
+  "_id": "67882cfe30794e78693972e1",
+  "name": "etp_institutesSimulation",
+  "description": "Apenas simula os valores de regras de movimentação",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "678e3f075b53a0ecc3d0c9e1",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "678e40c607edab502f4cb3f5",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2025-01-15T21:47:42.074Z",
+  "updatedAt": "2025-01-20T13:38:33.483Z",
+  "__v": 0
+}

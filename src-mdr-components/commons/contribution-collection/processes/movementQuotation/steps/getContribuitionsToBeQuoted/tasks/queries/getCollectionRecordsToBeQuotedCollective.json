@@ -1,0 +1,287 @@
+{
+  "_id": "66d8d64d1fdd1594b79f4640",
+  "type": {
+    "_id": "66d8d64dd991b5c76fe679b6",
+    "name": "queries"
+  },
+  "name": "getCollectionRecordsToBeQuotedCollective",
+  "description": "Busca as contribuicoes no periodo para serem cotizadas das contas coletivas",
+  "main_collection": "collection_records",
+  "output_name": "otp_getCollectionRecordsToBeQuotedCollective",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "collectionRecordProcessId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "costing_plans",
+    "collective_account_movements",
+    "employment_history",
+    "pension_accounts"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "plan": "$.planId",
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          },
+          "collectionRecordProcess": "$.collectionRecordProcessId"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$person.participation.participationClass.plan._id",
+                "$bundle.plan"
+              ]
+            },
+            {
+              "$eq": [
+                {
+                  "$dateToString": {
+                    "format": "%Y-%m",
+                    "date": "$bundle.competenceDate"
+                  }
+                },
+                {
+                  "$dateToString": {
+                    "format": "%Y-%m",
+                    "date": "$referenceDate"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubrics"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                {
+                  "$dateToString": {
+                    "format": "%Y-%m",
+                    "date": "$bundle.competenceDate"
+                  }
+                },
+                {
+                  "$dateToString": {
+                    "format": "%Y-%m",
+                    "date": "$rubrics.competenceDate"
+                  }
+                }
+              ]
+            },
+            {
+              "$eq": [
+                "$rubrics.movements",
+                []
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plans",
+        "localField": "rubrics.rubric._id",
+        "foreignField": "rubric._id",
+        "as": "costing_plans",
+        "let": {
+          "plan": "$person.participation.participationClass.plan._id",
+          "participationClassId": "$person.participation.participationClass._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participationClasses"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$plan",
+                      "$$plan"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$$participationClassId",
+                      "$participationClasses._id"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "pensionAccount": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$costing_plans"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "collective_account_movements",
+        "localField": "_id",
+        "foreignField": "origin._id",
+        "as": "collective_account_movements",
+        "pipeline": [
+          {
+            "$match": {
+              "origin.name": "collection_records"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$match": {
+        "collective_account_movements": {
+          "$size": 0
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "employment_history",
+        "localField": "person._id",
+        "foreignField": "person._id",
+        "as": "employmentHistory",
+        "let": {
+          "dateFilter": "$referenceDate"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "dateFilter": {
+                "$ifNull": [
+                  "$effectiveDate.endedAt",
+                  {
+                    "$function": {
+                      "body": "function () { return new Date() }",
+                      "args": [],
+                      "lang": "js"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "dateFilter": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$employmentHistory",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "pension_accounts",
+        "localField": "costing_plans.pensionAccount._id",
+        "foreignField": "_id",
+        "as": "pensionAccount"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$pensionAccount",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "percentageMovement": 100,
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": "$person",
+        "plan": "$person.participation.participationClass.plan",
+        "monetaryUnitValue": null,
+        "competenceDate": "$rubrics.competenceDate",
+        "occurrence": {
+          "_id": "66bfcf9c545123408c06882e",
+          "name": "Cotização de contribuições"
+        },
+        "operationDate": "$getdate",
+        "occurrenceDate": "$createdAt",
+        "origin": {
+          "_id": "$_id",
+          "name": "collection_records",
+          "collectionRecordProcess": "$bundle.collectionRecordProcess"
+        },
+        "pensionAccount": "$pensionAccount",
+        "percentageMovement": "$percentageMovement",
+        "amountQuotas": null,
+        "value": "$rubrics.value",
+        "receiptRecord": "",
+        "employmentHistory": "$employmentHistory",
+        "company": "$employmentHistory.company"
+      }
+    },
+    {
+      "$match": {
+        "pensionAccount.isCollectiveAccount": true
+      }
+    }
+  ]
+}

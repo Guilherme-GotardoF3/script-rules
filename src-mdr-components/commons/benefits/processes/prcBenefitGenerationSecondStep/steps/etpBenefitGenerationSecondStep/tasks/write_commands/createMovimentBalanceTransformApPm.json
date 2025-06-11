@@ -1,0 +1,31 @@
+{
+  "_id": "66ec7f9687657fe0c2d5cf17",
+  "type": {
+    "_id": "66ec7f96e43228d52dfeaee3",
+    "name": "write_commands"
+  },
+  "name": "createMovimentBalanceTransformApPm",
+  "description": "Escreve o saldo que veio do aposentado falecido para o beneficiário da pensão por morte",
+  "main_collection": "account_movements",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_movimentBalanceTransformApPm"
+      },
+      "filter": {
+        "$and": [
+          {
+            "pensionAccount": "$.$$.otp_movimentBalanceTransformApPm.pensionAccount._id"
+          },
+          {
+            "person": "$.$$.otp_movimentBalanceTransformApPm.person._id"
+          },
+          {
+            "competenceDate": "$.$$.otp_movimentBalanceTransformApPm.competenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "_id": "6749d5a80f47ed278c601664",
+  "type": {
+    "_id": "6749d5a8610166ee0deb83ca",
+    "name": "write_commands"
+  },
+  "name": "writeRedistributionBenefitEnd",
+  "description": "Escreve o novo valor do benefício após redistribuição.",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "history": "$.$$.otp_redistributionBenefitEnd.benefits.history",
+          "paymentMethods": "$.$$.otp_redistributionBenefitEnd.benefits.paymentMethods"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation": "$.$$.otp_redistributionBenefitEnd.benefits.participation"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

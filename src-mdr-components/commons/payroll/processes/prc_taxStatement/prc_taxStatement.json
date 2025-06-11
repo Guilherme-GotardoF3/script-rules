@@ -1,0 +1,25 @@
+{
+  "_id": "66feb0f2f2997956fafefc7e",
+  "name": "prc_taxStatement",
+  "description": "Monta um extrato de IR regressivo com as quantidades de cotas e os valores das contribuições ainda não consumidas, agrupada por alíquota",
+  "context": "payroll",
+  "steps": [
+    {
+      "step": "66feb08d23b03ed8177f826d",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "createdAt": "2024-10-03T14:57:54.966Z",
+  "updatedAt": "2024-11-14T22:43:48.345Z",
+  "__v": 0,
+  "isSync": true
+}

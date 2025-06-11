@@ -1,0 +1,309 @@
+{
+  "_id": "67e7177c24492fdc385027b0",
+  "type": {
+    "_id": "67e7177c06b55bd51f3ea024",
+    "name": "queries"
+  },
+  "name": "projectNewParticipationClassBenefitEndNavega",
+  "description": "Muda a classe de participação para \"Benefício Encerrado\" deixando como a mais atual e inclui no history da participation a classe de participação anterior - via Navega",
+  "main_collection": "benefits",
+  "output_name": "otp_projectNewParticipationClassBenefitEndNavega",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_classeStatusBenefitEnd",
+      "type": "Parameter",
+      "description": "Seleciona o id da classe/status de participação de \"Benefício Encerrado\"",
+      "value": "67e312544c11cc02349d1806"
+    },
+    {
+      "name": "id_processSecondStep",
+      "type": "Parameter",
+      "description": "Seleciona o id do processo prcBenefitGenerationSecondStep",
+      "value": "65de286a7097ae3312744359"
+    },
+    {
+      "name": "processId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "listBenefits[0].benefitStartDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "people",
+    "participation_classes"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "processId": "$.processId",
+          "benefitSourceId": "$.otp_endBenefitRetirementIntoPension[0]._id",
+          "requestDate": {
+            "$toDate": "$.listBenefits[0].benefitStartDate"
+          }
+        },
+        "newStatusBenefitEnd": "p:67e31653b0d15b20dda9179f"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$bundle.processId",
+            "p:67e71372ce2425787f723dd4"
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$bundle.benefitSourceId",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "participation",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participationId": "$participation",
+          "newStatusBenefitEnd": "$newStatusBenefitEnd"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$participations._id",
+                      "$$participationId"
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$participations.participationClass.status._id",
+                      "$$newStatusBenefitEnd"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "participations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "person.participations.history": {
+          "$ifNull": [
+            "$person.participations.history",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "oldHistory": "$person.participations.history"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "participation_classes",
+        "localField": "person.participations.participationClass.plan._id",
+        "foreignField": "plan._id",
+        "as": "classes",
+        "let": {
+          "typeClass": "$person.participations.participationClass.type._id",
+          "newStatusBenefitEnd": "$newStatusBenefitEnd"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$status._id",
+                      "$$newStatusBenefitEnd"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$type._id",
+                      "$$typeClass"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$classes",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "newHistory": [
+          {
+            "participationClass": {
+              "plan": "$person.participations.participationClass.plan",
+              "type": "$person.participations.participationClass.type",
+              "status": "$person.participations.participationClass.status"
+            },
+            "participationGroup": null,
+            "effectiveDate": {
+              "startedAt": "$person.participations.effectiveDate.startedAt",
+              "endedAt": {
+                "$dateSubtract": {
+                  "startDate": "$bundle.requestDate",
+                  "unit": "day",
+                  "amount": 1
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "processId": 1,
+        "personId": "$person._id",
+        "person": 1,
+        "newParticipation": {
+          "_id": "$person.participations._id",
+          "number": "$person.participations.number",
+          "participationClass": "$classes",
+          "participationGroup": "$person.participations.participationGroup",
+          "tags": "$person.participations.tags",
+          "taxRegimeType": "$person.participations.taxRegimeType",
+          "participationSource": "$person.participations.participationSource",
+          "customFields": "$person.participations.customFields",
+          "effectiveDate": {
+            "startedAt": "$bundle.requestDate",
+            "endedAt": null
+          },
+          "history": {
+            "$concatArrays": [
+              "$oldHistory",
+              "$newHistory"
+            ]
+          },
+          "createdAt": "$person.participations.createdAt",
+          "updatedAt": "$bundle.requestDate"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "person._id",
+        "foreignField": "_id",
+        "as": "person",
+        "let": {
+          "participationId": "$newParticipation._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$ne": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "participations": {
+                "$push": "$participations"
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "participations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "person.participations": {
+          "$ifNull": [
+            "$person.participations",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$personId",
+        "participations": {
+          "$concatArrays": [
+            [
+              "$newParticipation"
+            ],
+            "$person.participations"
+          ]
+        }
+      }
+    }
+  ]
+}

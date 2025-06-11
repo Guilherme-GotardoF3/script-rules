@@ -1,0 +1,31 @@
+{
+  "_id": "64301e7279f4f83c07f3cfe5",
+  "name": "etp_calcular_contribuicao_patrocinador",
+  "description": "calcula qual o valor da contribuição do patrocinador",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "64301dc704f37c9b3e85d48a",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "645d239e43df5a358273ff2e",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    }
+  ],
+  "createdAt": "2023-04-07T13:45:22.479Z",
+  "updatedAt": "2023-10-02T18:41:50.581Z",
+  "__v": 0
+}

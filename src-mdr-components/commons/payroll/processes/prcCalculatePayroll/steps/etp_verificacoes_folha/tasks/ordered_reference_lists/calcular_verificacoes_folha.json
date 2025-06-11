@@ -1,0 +1,12 @@
+{
+  "_id": "644c1afae6c589b47dde7eb3",
+  "type": {
+    "_id": "644c1bb0383d68d6c416f6dc",
+    "name": "ordered_reference_lists"
+  },
+  "name": "calcular_verificacoes_folha",
+  "description": "Componente para calcular as verificacoes da folha",
+  "outputName": "otp_trf_calcular_verificacoes_folha",
+  "rulePath": "$.rule",
+  "referenceListPath": "$.$$.otp_trf_buscar_verificacoes_folha.verifications"
+}

@@ -1,0 +1,24 @@
+{
+  "_id": "66e5d7bdbd14eb20e794e33d",
+  "type": {
+    "_id": "66e5d7bdf4daefa6c41c48ad",
+    "name": "write_commands"
+  },
+  "name": "updateBankingProcessingWithCnab",
+  "description": "Atualiza o registro de controle de integração bancária com o arquivo cnab recebido",
+  "main_collection": "payroll_banking_integrations",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "file": "$.otp_send_json_banking_integration.arquivo",
+          "status": "done"
+        }
+      },
+      "filter": {
+        "_id": "$.payrollBankingIntegrationId"
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,206 @@
+{
+  "_id": "668ec9c0cd71cde45b3cc74a",
+  "type": {
+    "_id": "668ec9c0eb822bb9c367582f",
+    "name": "queries"
+  },
+  "name": "portfolio",
+  "description": "Traz dados do portfolio do participante",
+  "main_collection": "people",
+  "output_name": "otp_portfolio",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "people",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.people"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1
+      }
+    },
+    {
+      "$addFields": {
+        "person": "$.otp_getPortfolioPeople"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "balance": "$.otp_getBalancePortfolio"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$balance",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "benefit": "$.otp_getBenefit"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefit",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "balance": {
+          "$ifNull": [
+            "$balance",
+            null
+          ]
+        },
+        "benefit": {
+          "$ifNull": [
+            "$benefit",
+            null
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$or": [
+            {
+              "$eq": [
+                "$balance",
+                null
+              ]
+            },
+            {
+              "$eq": [
+                "$benefit",
+                null
+              ]
+            },
+            {
+              "$eq": [
+                "$balance.participation._id",
+                "$benefit.participation"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "movements": "$.otp_getMovements"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$movements",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "movements": {
+          "$ifNull": [
+            "$movements",
+            null
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$or": [
+            {
+              "$eq": [
+                "$movements",
+                null
+              ]
+            },
+            {
+              "$eq": [
+                "$movements.participation._id",
+                "$benefit.participation"
+              ]
+            },
+            {
+              "$eq": [
+                "$movements.participation._id",
+                "$balance.participation._id"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "regressiveExtract": "$.otp_getRegressiveExtract"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$regressiveExtract",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "regressiveExtract": {
+          "$ifNull": [
+            "$regressiveExtract",
+            null
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$or": [
+            {
+              "$eq": [
+                "$regressiveExtract",
+                null
+              ]
+            },
+            {
+              "$eq": [
+                "$regressiveExtract.benefit",
+                "$benefit._id"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": "$person.person",
+        "balance": "$balance",
+        "benefit": "$benefit",
+        "movements": "$movements",
+        "regressiveExtract": "$regressiveExtract"
+      }
+    }
+  ]
+}

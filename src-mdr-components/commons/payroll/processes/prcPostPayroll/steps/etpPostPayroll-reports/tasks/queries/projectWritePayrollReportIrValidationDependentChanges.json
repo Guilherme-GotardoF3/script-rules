@@ -1,0 +1,454 @@
+{
+  "_id": "643434bb4bc1531a9fed6636",
+  "type": {
+    "_id": "662d2f3cbe50c3d767771dd9",
+    "name": "queries"
+  },
+  "name": "projectWritePayrollReportIrValidationDependentChanges",
+  "description": "project_write_report_payroll_ir_dependent_change",
+  "main_collection": "payroll_plannings",
+  "output_name": "otp_trf_project_write_ir_dependent_change",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "rubrica_deducao_dependente",
+      "type": "Parameter",
+      "description": "Parâmetro que define a rubrica de dedução por dependentes.",
+      "value": "674e6ede519c6b3b81a2d34b"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payroll_plannings",
+    "payrolls_RMDRC",
+    "discount_calculation_basis",
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "plan": 1,
+        "payrollType": 1,
+        "competenceDate": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payroll_plannings",
+        "localField": "plan",
+        "foreignField": "plan",
+        "as": "agoPayrollPlanning",
+        "let": {
+          "idAtual": "$_id",
+          "tipoFolha": "$payrollType",
+          "dataReferencia": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$$tipoFolha",
+                      "$payrollType"
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$$idAtual",
+                      "$_id"
+                    ]
+                  },
+                  {
+                    "$lt": [
+                      "$competenceDate",
+                      "$$dataReferencia"
+                    ]
+                  },
+                  {
+                    "$in": [
+                      "$status",
+                      [
+                        "PROCESSED",
+                        "FINISHED"
+                      ]
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "competenceDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "_id": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$agoPayrollPlanning",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "payrollPlanning._id",
+        "as": "payroll",
+        "let": {
+          "payrollPlanningId": "$_id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "judicialPension": {
+                "$exists": false
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollPlanning._id",
+                  "$$payrollPlanningId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "payrollPlanning": 1,
+              "participation": 1,
+              "benefit": 1,
+              "IRDependents": 1,
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "payrollItem": "$payroll.payrollItems"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "agoPayrollPlanning._id",
+        "foreignField": "payrollPlanning._id",
+        "as": "previousPayroll",
+        "let": {
+          "benefitId": "$payroll.benefit._id",
+          "participation": "$payroll.participation._id",
+          "irDependents": "$payroll.IRDependents"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "judicialPension": {
+                "$exists": false
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$benefit._id",
+                      "$$benefitId"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$participation._id",
+                      "$$participation"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "payrollPlanning": 1,
+              "participation": 1,
+              "payrollItems": 1,
+              "IRDependents": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$previousPayroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "previousPayrollItem": "$previousPayroll.payrollItems"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$previousPayrollItem",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "payroll": 1,
+        "previousPayroll": 1,
+        "payrollItem": 1,
+        "previousPayrollItem": 1
+      }
+    },
+    {
+      "$addFields": {
+        "rubricDeduction": "p:63d7b7f3fc21e000082e027c"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "discount_calculation_basis",
+        "localField": "payrollItem._id",
+        "foreignField": "payrollItem",
+        "as": "calculationBasis",
+        "pipeline": [
+          {
+            "$project": {
+              "rubric": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$calculationBasis",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "discount_calculation_basis",
+        "localField": "previousPayrollItem._id",
+        "foreignField": "payrollItem",
+        "as": "previousCalculationBasis",
+        "pipeline": [
+          {
+            "$project": {
+              "rubric": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$previousCalculationBasis",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$or": [
+            {
+              "$eq": [
+                "$calculationBasis.rubric",
+                "$rubricDeduction"
+              ]
+            },
+            {
+              "$eq": [
+                "$previousCalculationBasis.rubric",
+                "$rubricDeduction"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "calculationBasis": {
+          "$cond": {
+            "if": "$calculationBasis",
+            "then": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$rubricDeduction",
+                    "$calculationBasis.rubric"
+                  ]
+                },
+                "then": "$calculationBasis",
+                "else": null
+              }
+            },
+            "else": null
+          }
+        },
+        "previousCalculationBasis": {
+          "$cond": {
+            "if": "$previousCalculationBasis",
+            "then": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$rubricDeduction",
+                    "$previousCalculationBasis.rubric"
+                  ]
+                },
+                "then": "$previousCalculationBasis",
+                "else": null
+              }
+            },
+            "else": null
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "currentDependentDedution.calculationBasis": {
+          "$ifNull": [
+            "$calculationBasis.value",
+            {
+              "value": 0
+            }
+          ]
+        },
+        "agoDependentDedution.calculationBasis": {
+          "$ifNull": [
+            "$previousCalculationBasis.value",
+            {
+              "value": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "payroll.participation._id",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participationId": "$payroll.participation._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "documents.document": 1,
+              "documents.type": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "_id": "$payroll.benefit._id",
+          "participation": "$payroll.participation._id"
+        },
+        "root": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payrollPlanning": "$root._id",
+        "participation": "$root.payroll.participation",
+        "person": {
+          "_id": "$root.person._id",
+          "_name": "$root.person.name",
+          "documents": "$root.person.documents"
+        },
+        "numberOfDependentsPreviousMonth": {
+          "$toDouble": "$root.previousPayroll.IRDependents"
+        },
+        "numberOfDependents": {
+          "$toDouble": "$root.payroll.IRDependents"
+        },
+        "deductionDiff": {
+          "$round": [
+            {
+              "$subtract": [
+                "$root.currentDependentDedution.calculationBasis.value",
+                "$root.agoDependentDedution.calculationBasis.value"
+              ]
+            },
+            2
+          ]
+        }
+      }
+    }
+  ]
+}

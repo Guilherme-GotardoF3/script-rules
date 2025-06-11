@@ -1,0 +1,176 @@
+{
+  "_id": "648ca1833e6025e6e41617dd",
+  "type": {
+    "_id": "648ca0e84a7d0ec009eeb0c6",
+    "name": "queries"
+  },
+  "name": "projectWritePayrollReportResumePayments",
+  "description": "Projecao para as consultas que analisam o resumo da folha de pagamento",
+  "main_collection": "payroll_plannings",
+  "output_name": "otp_trf_project_payroll_resume_payments",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "benefits_in_payroll_process",
+    "payrolls_RMDRC",
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "paymentDate": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits_in_payroll_process",
+        "localField": "_id",
+        "foreignField": "payload.benefit.payrollPlannings._id",
+        "as": "benefitsInPayrollProcess"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "benefitsInPayrollProcess.payload.benefit._id",
+        "foreignField": "benefit._id",
+        "as": "payroll",
+        "let": {
+          "payrollPlanningId": "$_id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "judicialPension": {
+                "$exists": false
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollPlanning._id",
+                  "$$payrollPlanningId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "benefit": 1,
+              "grossAmount": 1,
+              "netAmount": 1,
+              "benefitType": 1,
+              "participation": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll.benefit.paymentMethods",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "payroll.participation._id",
+        "foreignField": "participations._id",
+        "as": "people",
+        "let": {
+          "participationId": "$payroll.participation._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "documents.document": 1,
+              "documents.type": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$people",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "participation": "$payroll.participation",
+        "person": {
+          "_id": "$people._id",
+          "name": "$people.name",
+          "documents": "$people.documents"
+        },
+        "payrollPlanning": "$_id",
+        "benefitType": "$payroll.benefit.type",
+        "paymentMethod": "$payroll.benefit.paymentMethods.method",
+        "paymentDate": {
+          "$toDate": "$paymentDate"
+        },
+        "grossAmount": {
+          "$toDouble": "$payroll.grossAmount"
+        },
+        "netAmount": {
+          "$toDouble": "$payroll.netAmount"
+        },
+        "createdAt": "$getdate"
+      }
+    }
+  ]
+}

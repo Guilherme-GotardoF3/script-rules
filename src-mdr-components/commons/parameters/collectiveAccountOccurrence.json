@@ -1,0 +1,10 @@
+{
+  "_id": "66d77770228261df78a0cd6b",
+  "name": "collectiveAccountOccurrence",
+  "description": "id da ocorrência da baixa de pagamento de beneficio em conta coletiva ",
+  "data": {
+    "value": "66d756406b292564b9b2a666",
+    "type": "constant",
+    "isDefault": false
+  }
+}

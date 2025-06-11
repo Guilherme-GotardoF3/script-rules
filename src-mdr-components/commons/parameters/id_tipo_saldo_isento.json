@@ -1,0 +1,10 @@
+{
+  "_id": "64540e2360620d6ec22fb89d",
+  "name": "id_tipo_saldo_isento",
+  "description": "Identificador do codigo do pension account referente ao saldo isento",
+  "data": {
+    "value": "645403722294a070e113f7e9",
+    "type": "constant",
+    "isDefault": false
+  }
+}

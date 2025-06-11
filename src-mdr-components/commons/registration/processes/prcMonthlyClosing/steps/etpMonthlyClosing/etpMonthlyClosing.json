@@ -1,0 +1,10 @@
+{
+  "_id": "662facb21dea28472864c686",
+  "name": "etpMonthlyClosing",
+  "description": "Etapa para fechamento mensal e suas devidas consistencias",
+  "isDefault": false,
+  "actions": [],
+  "createdAt": "2024-04-29T14:20:34.293Z",
+  "updatedAt": "2024-04-29T14:20:34.293Z",
+  "__v": 0
+}

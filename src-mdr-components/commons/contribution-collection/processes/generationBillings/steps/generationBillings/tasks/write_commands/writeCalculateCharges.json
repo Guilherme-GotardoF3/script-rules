@@ -1,0 +1,30 @@
+{
+  "_id": "67d57547ae2fb5ada3c65992",
+  "type": {
+    "_id": "67d57547ae2fb5ada3c65990",
+    "name": "write_commands"
+  },
+  "name": "writeCalculateCharges",
+  "description": "Escreve o calculo de Juros e Multa na collection",
+  "main_collection": "collection_contributions",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "contributionProvisioningsCharges": "$.$$.otpCalculateCharges.contributionProvisioningsCharges",
+          "amountCharges": "$.$$.otpCalculateCharges.amountCharges",
+          "amount": "$.$$.otpCalculateCharges.amount",
+          "contributionProvisionings": "$.$$.otpCalculateCharges.contributionProvisionings"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otpCalculateCharges._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

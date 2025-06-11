@@ -1,0 +1,10 @@
+{
+  "_id": "676d51083d2a2dff8fe47a32",
+  "name": "id_status_bpd",
+  "description": "seleciona o id do status de BPD",
+  "data": {
+    "value": "66bd4cd04eb4534a4f853380",
+    "type": "constant",
+    "isDefault": false
+  }
+}

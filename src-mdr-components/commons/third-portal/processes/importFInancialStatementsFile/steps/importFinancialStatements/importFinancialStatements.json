@@ -1,0 +1,47 @@
+{
+  "_id": "66c4de2cf4871338d3766c13",
+  "name": "importFinancialStatements",
+  "description": "Etapa para importação dos dados na ficha financeira.",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66c4df38750044d136de8150",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66c4df8f750044d136de8173",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67ed889e256f47eff2cf387d",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67ed889e256f47eff2cf3881",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "67ed889e256f47eff2cf3885",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66d4aa3ae27e2fbfdb9c3b9a",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-08-20T18:19:24.878Z",
+  "updatedAt": "2025-04-08T14:42:53.805Z",
+  "__v": 0
+}

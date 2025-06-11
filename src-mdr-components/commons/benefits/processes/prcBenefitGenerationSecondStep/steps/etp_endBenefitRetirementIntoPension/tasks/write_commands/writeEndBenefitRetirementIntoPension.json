@@ -1,0 +1,27 @@
+{
+  "_id": "66f2ce15a47b3c489c35b4a8",
+  "type": {
+    "_id": "66f2ce1590a8fad92563a85b",
+    "name": "write_commands"
+  },
+  "name": "writeEndBenefitRetirementIntoPension",
+  "description": "Escreve o encerramento do beneficio de aposentadoria do falecido, após a transformação do benefício de aposentadoria em pensão por morte",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "history": "$.$$.otp_endBenefitRetirementIntoPension.history"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_endBenefitRetirementIntoPension._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

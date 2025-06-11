@@ -1,0 +1,10 @@
+{
+  "_id": "64470df82c99c46919b86d4f",
+  "name": "id_rubrica_provento_antecipacao_quinzenal",
+  "description": "Codigo da verba  de provento de antecipacao quinzenal",
+  "data": {
+    "value": "6446ece318f9a759f0220a5b",
+    "type": "constant",
+    "isDefault": false
+  }
+}

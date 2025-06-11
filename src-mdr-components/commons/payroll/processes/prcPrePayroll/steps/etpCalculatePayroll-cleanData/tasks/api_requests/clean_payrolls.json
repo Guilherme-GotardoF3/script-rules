@@ -1,0 +1,23 @@
+{
+  "_id": "63bc4ec1edaf2600087f0d38",
+  "type": {
+    "_id": "63bc4afecf0b24000893e5f4",
+    "name": "api_requests"
+  },
+  "name": "clean_payrolls",
+  "description": "Limpa a folha de pagamento para os benefícios listados.",
+  "method": "post",
+  "headers": {
+    "tenant-id": "$.tenantId",
+    "authorization": "Bearer $.opt_trf_request_token.payload.accessToken"
+  },
+  "pathParameters": {},
+  "queryParameters": {},
+  "Url": "$.navegaApiUrl /payrolls/benefit-payroll/$.payrollPlanningId /remove-batch",
+  "Body": {
+    "type": "json",
+    "data": {
+      "benefits": "$.benefits"
+    }
+  }
+}

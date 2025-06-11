@@ -1,0 +1,10 @@
+{
+  "_id": "67102792fab8b864e6ac8630",
+  "name": "kinshipCollegeSon",
+  "description": "id referente ao parentesco \"filho universitário\" da collection kinships",
+  "data": {
+    "value": "672ecef3bf79df4f579c7903",
+    "type": "constant",
+    "isDefault": false
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "_id": "64eb4d1baf66fd38b22184b4",
+  "type": {
+    "_id": "64eb4d5eaf66fd38b22184b7",
+    "name": "api_requests"
+  },
+  "name": "executeAnaliticsReportsPayroll",
+  "description": "Executa os relatorios analiticos da folha",
+  "method": "post",
+  "headers": {},
+  "pathParameters": {},
+  "queryParameters": {},
+  "Url": "$.navegaApiUrl /workflows/processes-executions/64eb4ae38c8c834a049ceb81",
+  "Body": {}
+}

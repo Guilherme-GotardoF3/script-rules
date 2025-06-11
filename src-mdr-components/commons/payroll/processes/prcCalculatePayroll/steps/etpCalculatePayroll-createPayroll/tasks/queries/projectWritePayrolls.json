@@ -1,0 +1,182 @@
+{
+  "_id": "63b5b295c486af00085127bd",
+  "type": {
+    "_id": "63b5a6f26c5b00679dd8a8f8",
+    "name": "queries"
+  },
+  "name": "projectWritePayrolls",
+  "description": "Projeção para escrita da folha de pagamento",
+  "main_collection": "benefits_in_payroll_process",
+  "output_name": "opt_projectWritePayrolls",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefits",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payload.benefit.payrollPlannings._id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$addFields": {
+        "benefitId": "$.benefits"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefitId",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$cond": {
+            "if": {
+              "$ifNull": [
+                "$benefitId",
+                false
+              ]
+            },
+            "then": {
+              "$eq": [
+                "$benefitId",
+                "$payload.benefit._id"
+              ]
+            },
+            "else": {
+              "$eq": [
+                "$_id",
+                "$_id"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "payload.benefit.payrollPlannings._id",
+        "foreignField": "payrollPlanning._id",
+        "as": "payrollExceptions",
+        "let": {
+          "benefitId": "$payload.benefit._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$benefit._id",
+                  "$$benefitId"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollExceptions",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "payrollExceptions.payrollItems": {
+          "$ifNull": [
+            "$payrollExceptions.payrollItems",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "participation": {
+          "_id": "$payload.person.participations._id",
+          "number": "$payload.person.participations.number",
+          "participationClass": "$payload.person.participations.participationClass"
+        },
+        "person": {
+          "_id": "$payload.person._id",
+          "name": "$payload.person.name",
+          "participation": "$payload.person.participations",
+          "documents": "$payload.person.documents"
+        },
+        "IRDependents": "$payload.benefit.IRDependents",
+        "benefit": {
+          "_id": "$payload.benefit._id",
+          "type": "$payload.benefit.type",
+          "paymentMethods": "$payload.benefit.paymentMethods"
+        },
+        "payrollPlanning": {
+          "_id": "$payload.benefit.payrollPlannings._id",
+          "payrollType": "$payload.benefit.payrollPlannings.payrollType",
+          "competenceDate": "$payload.benefit.payrollPlannings.competenceDate",
+          "paymentDate": "$payload.benefit.payrollPlannings.paymentDate",
+          "status": "$payload.benefit.payrollPlannings.status"
+        },
+        "bankAccount": {
+          "$cond": {
+            "if": {
+              "$ne": [
+                {
+                  "$ifNull": [
+                    "$payload.person.bankAccounts",
+                    []
+                  ]
+                },
+                []
+              ]
+            },
+            "then": {
+              "type": "$payload.person.bankAccounts.type",
+              "bank": "$payload.person.bankAccounts.bank",
+              "agency": "$payload.person.bankAccounts.agency",
+              "account": "$payload.person.bankAccounts.account",
+              "digit": "$payload.person.bankAccounts.digit",
+              "paymentType": "TED"
+            },
+            "else": "$$REMOVE"
+          }
+        },
+        "payrollItems": "$payrollExceptions.payrollItems"
+      }
+    },
+    {
+      "$addFields": {
+        "grossAmount": {
+          "$toInt": 0
+        },
+        "netAmount": {
+          "$toInt": 0
+        },
+        "status": "NO_CALCULATED",
+        "actualParcel": {
+          "$toInt": 0
+        },
+        "totalParcel": {
+          "$toInt": 0
+        }
+      }
+    }
+  ]
+}

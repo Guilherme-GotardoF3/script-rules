@@ -1,0 +1,10 @@
+{
+  "_id": "678acdd07d8a0dcee10f5163",
+  "name": "id_type_WithDrawal",
+  "description": "seleciona o tipo de participação Resgate",
+  "data": {
+    "value": "66bd4ca74eb4534a4f8518fa",
+    "type": "constant",
+    "isDefault": false
+  }
+}

@@ -1,0 +1,682 @@
+{
+  "_id": "66feb04b8acc638be590914e",
+  "type": {
+    "_id": "66feb04b5f92ce7a6b546c37",
+    "name": "queries"
+  },
+  "name": "taxStatement",
+  "description": "Monta uma visualização de dados, extrato, para o IR regressivo, agrupando por aliquota e qtde de cotas/valor ainda não utilizado.",
+  "main_collection": "people",
+  "output_name": "taxStatement",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "monetaryUnitTaxStatement",
+      "type": "Parameter",
+      "description": "testCley",
+      "value": "66bd4ceb4eb4534a4f854551"
+    },
+    {
+      "name": "peopleId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "benefits",
+    "monetary_unit_values",
+    "collection_records_RMDRC",
+    "payroll_ir_regressive_controll_use_base",
+    "payrolls_RMDRC"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.peopleId"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "participations._id": "$.participationId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "name": 1,
+        "participations": 1
+      }
+    },
+    {
+      "$addFields": {
+        "competenceDate": {
+          "$toDate": "$.competenceDate"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "participations._id",
+        "foreignField": "participation",
+        "as": "benefit"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefit",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "monetary_unit_values",
+        "localField": "participations.participationClass.plan._id",
+        "foreignField": "monetaryUnit.plan._id",
+        "as": "cota",
+        "let": {
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$referenceDate",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$monetaryUnit._id",
+                      "p:6737a5da0cd3a5be1abdd259"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "referenceDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$cota",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "collection_records_RMDRC",
+        "localField": "participations._id",
+        "foreignField": "person.participation._id",
+        "as": "listaContribuicao",
+        "let": {
+          "cota": "$cota.value",
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$rubrics",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$rubrics.movements",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$match": {
+              "rubrics.movements.occurrence._id": {
+                "$nin": [
+                  "66bfcf9c545123408c068833",
+                  "66bfcf9d545123408c068837",
+                  "66bfcf9d545123408c068839"
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "time": {
+                "$round": [
+                  {
+                    "$divide": [
+                      {
+                        "$subtract": [
+                          {
+                            "$toDate": "$$competenceDate"
+                          },
+                          {
+                            "$toDate": "$paymentDate"
+                          }
+                        ]
+                      },
+                      {
+                        "$multiply": [
+                          365,
+                          24,
+                          60,
+                          60,
+                          1000
+                        ]
+                      }
+                    ]
+                  },
+                  4
+                ]
+              },
+              "value": {
+                "$round": [
+                  {
+                    "$multiply": [
+                      "$rubrics.value",
+                      "$$cota"
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "aliquot": {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$lte": [
+                          "$time",
+                          2
+                        ]
+                      },
+                      "then": 35
+                    },
+                    {
+                      "case": {
+                        "$and": [
+                          {
+                            "$gt": [
+                              "$time",
+                              2
+                            ]
+                          },
+                          {
+                            "$lte": [
+                              "$time",
+                              4
+                            ]
+                          }
+                        ]
+                      },
+                      "then": 30
+                    },
+                    {
+                      "case": {
+                        "$and": [
+                          {
+                            "$gt": [
+                              "$time",
+                              4
+                            ]
+                          },
+                          {
+                            "$lte": [
+                              "$time",
+                              6
+                            ]
+                          }
+                        ]
+                      },
+                      "then": 25
+                    },
+                    {
+                      "case": {
+                        "$and": [
+                          {
+                            "$gt": [
+                              "$time",
+                              6
+                            ]
+                          },
+                          {
+                            "$lte": [
+                              "$time",
+                              8
+                            ]
+                          }
+                        ]
+                      },
+                      "then": 20
+                    },
+                    {
+                      "case": {
+                        "$and": [
+                          {
+                            "$gt": [
+                              "$time",
+                              8
+                            ]
+                          },
+                          {
+                            "$lte": [
+                              "$time",
+                              10
+                            ]
+                          }
+                        ]
+                      },
+                      "then": 15
+                    },
+                    {
+                      "case": {
+                        "$gt": [
+                          "$time",
+                          10
+                        ]
+                      },
+                      "then": 10
+                    }
+                  ],
+                  "default": false
+                }
+              }
+            }
+          },
+          {
+            "$sort": {
+              "paymentDate": 1
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "paymentDate": 1,
+              "value": 1,
+              "amountQuotas": "$rubrics.movements.amountQuotas",
+              "time": 1,
+              "aliquot": 1
+            }
+          },
+          {
+            "$group": {
+              "_id": "$aliquot",
+              "collectionRecord": {
+                "$push": "$_id"
+              },
+              "paymentDate": {
+                "$first": "$paymentDate"
+              },
+              "value": {
+                "$sum": "$value"
+              },
+              "amountQuotas": {
+                "$sum": "$amountQuotas"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$listaContribuicao",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payroll_ir_regressive_controll_use_base",
+        "localField": "benefit._id",
+        "foreignField": "benefit",
+        "as": "useBase",
+        "let": {
+          "collectionRecordId": "$listaContribuicao.collectionRecord",
+          "cota": "$cota.value",
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$in": [
+                  "$collectionRecord",
+                  "$$collectionRecordId"
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "time": {
+                "$round": [
+                  {
+                    "$divide": [
+                      {
+                        "$subtract": [
+                          {
+                            "$toDate": "$$competenceDate"
+                          },
+                          {
+                            "$toDate": "$competenceDate"
+                          }
+                        ]
+                      },
+                      {
+                        "$multiply": [
+                          365,
+                          24,
+                          60,
+                          60,
+                          1000
+                        ]
+                      }
+                    ]
+                  },
+                  4
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "aliquot": {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$lte": [
+                          "$time",
+                          2
+                        ]
+                      },
+                      "then": 35
+                    },
+                    {
+                      "case": {
+                        "$and": [
+                          {
+                            "$gt": [
+                              "$time",
+                              2
+                            ]
+                          },
+                          {
+                            "$lte": [
+                              "$time",
+                              4
+                            ]
+                          }
+                        ]
+                      },
+                      "then": 30
+                    },
+                    {
+                      "case": {
+                        "$and": [
+                          {
+                            "$gt": [
+                              "$time",
+                              4
+                            ]
+                          },
+                          {
+                            "$lte": [
+                              "$time",
+                              6
+                            ]
+                          }
+                        ]
+                      },
+                      "then": 25
+                    },
+                    {
+                      "case": {
+                        "$and": [
+                          {
+                            "$gt": [
+                              "$time",
+                              6
+                            ]
+                          },
+                          {
+                            "$lte": [
+                              "$time",
+                              8
+                            ]
+                          }
+                        ]
+                      },
+                      "then": 20
+                    },
+                    {
+                      "case": {
+                        "$and": [
+                          {
+                            "$gt": [
+                              "$time",
+                              8
+                            ]
+                          },
+                          {
+                            "$lte": [
+                              "$time",
+                              10
+                            ]
+                          }
+                        ]
+                      },
+                      "then": 15
+                    },
+                    {
+                      "case": {
+                        "$gt": [
+                          "$time",
+                          10
+                        ]
+                      },
+                      "then": 10
+                    }
+                  ],
+                  "default": false
+                }
+              },
+              "value": {
+                "$round": [
+                  {
+                    "$multiply": [
+                      "$usedQuotas",
+                      "$$cota"
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "$lookup": {
+              "from": "payrolls_RMDRC",
+              "localField": "benefit",
+              "foreignField": "benefit._id",
+              "as": "payroll",
+              "let": {
+                "referenceDate": "$payrollPlanning.referenceDate"
+              },
+              "pipeline": [
+                {
+                  "$match": {
+                    "$expr": {
+                      "$eq": [
+                        "$payrollPlanning.competenceDate",
+                        "$$referenceDate"
+                      ]
+                    }
+                  }
+                },
+                {
+                  "$unwind": {
+                    "path": "$payrollItems"
+                  }
+                },
+                {
+                  "$match": {
+                    "payrollItems.quota": {
+                      "$exists": true
+                    }
+                  }
+                },
+                {
+                  "$match": {
+                    "$expr": {
+                      "$eq": [
+                        "$payrollItems.competenceDate",
+                        "$$referenceDate"
+                      ]
+                    }
+                  }
+                },
+                {
+                  "$limit": 1
+                },
+                {
+                  "$project": {
+                    "_id": 1,
+                    "participation": 1,
+                    "person": 1,
+                    "payrollItems": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$payroll",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "benefit": 1,
+              "collectionRecord": 1,
+              "taxStatement": {
+                "_id": "$_benefit",
+                "aliquot": "$aliquot",
+                "competenceDate": "$payrollPlanning.referenceDate",
+                "referenceDate": "$payrollPlanning.referenceDate",
+                "qtdQuotas": "$qtdQuotas",
+                "usedQuotas": "$usedQuotas",
+                "value": "$value",
+                "unusedQuotas": "$unusedQuotas",
+                "amount": {
+                  "$multiply": [
+                    "$unusedQuotas",
+                    "$payroll.payrollItems.quota.value"
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": {
+                "benefit": "$benefit"
+              },
+              "taxStatement": {
+                "$push": "$taxStatement"
+              },
+              "aliquot": {
+                "$first": "$taxStatement.aliquot"
+              },
+              "usedQuotas": {
+                "$sum": "$taxStatement.usedQuotas"
+              },
+              "value": {
+                "$sum": "$taxStatement.value"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$useBase",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "useBase.value": {
+          "$ifNull": [
+            "$useBase.value",
+            0
+          ]
+        },
+        "useBase.usedQuotas": {
+          "$ifNull": [
+            "$useBase.usedQuotas",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "peopleId": "$_id",
+        "competenceDate": "$competenceDate",
+        "participation": "$participations._id",
+        "aliquot": "$listaContribuicao._id",
+        "totalValues": {
+          "value": {
+            "$subtract": [
+              "$listaContribuicao.value",
+              "$useBase.value"
+            ]
+          },
+          "amountQuotas": {
+            "$subtract": [
+              "$listaContribuicao.amountQuotas",
+              "$useBase.usedQuotas"
+            ]
+          }
+        },
+        "movements": []
+      }
+    }
+  ]
+}

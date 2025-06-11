@@ -1,0 +1,243 @@
+{
+  "_id": "66044829839833eb2dd8f7c3",
+  "type": {
+    "_id": "660447d4be6d9aeb9a987ba6",
+    "name": "queries"
+  },
+  "name": "getTheBalancePerBeneficiary",
+  "description": "Busca o saldo por beneficiario para concessao de beneficio",
+  "main_collection": "people",
+  "output_name": "otp_trf_getTheBalancePerBeneficiary",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "startedAt",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "beneficiaries",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "account_balances_rmdrc",
+    "benefits"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.$$.otp_trf_projectANewParticipationForBeneficiary.otp_trf_projectDataForNewGrantingBenefits.familyGroups.dependents.person._id"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "participations.participationSource._id": "$.participationId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "participationId": "$participations"
+      }
+    },
+    {
+      "$addFields": {
+        "startedAt": {
+          "$toDate": "$.startedAt"
+        },
+        "otp_trf_projectDataForNewGrantingBenefits": "$.$$.otp_trf_projectANewParticipationForBeneficiary.otp_trf_projectDataForNewGrantingBenefits",
+        "beneficiaryList": "$.beneficiaries"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otp_trf_projectDataForNewGrantingBenefits",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$beneficiaryList"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$_id",
+            {
+              "$toObjectId": "$beneficiaryList._id"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "account_balances_rmdrc",
+        "localField": "participationId.participationSource._id",
+        "foreignField": "person.participation._id",
+        "as": "saldo",
+        "let": {
+          "processDate": {
+            "$toDate": "$startedAt"
+          }
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lt": [
+                      "$date",
+                      "$$processDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "date": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$saldo",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$saldo.pensionAccountList",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "accountBalance": {
+          "$ifNull": [
+            "$saldo.value",
+            0
+          ]
+        },
+        "monetaryUnitValue": {
+          "$ifNull": [
+            "$saldo.pensionAccountList.monetaryUnitValue.value",
+            1
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "accountCashBalance": {
+          "$round": [
+            {
+              "$multiply": [
+                {
+                  "$divide": [
+                    "$otp_trf_projectDataForNewGrantingBenefits.familyGroups.dependents.beneficiaries.divisionPercentage",
+                    100
+                  ]
+                },
+                "$accountBalance"
+              ]
+            },
+            2
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "participationId.participationSource._id",
+        "foreignField": "participation",
+        "as": "benefit",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 0,
+              "paymentMethods": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefit",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefit.paymentMethods",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "monthlyValueInCash": {
+          "$round": [
+            {
+              "$multiply": [
+                {
+                  "$divide": [
+                    "$otp_trf_projectDataForNewGrantingBenefits.familyGroups.dependents.beneficiaries.divisionPercentage",
+                    100
+                  ]
+                },
+                "$benefit.paymentMethods.value"
+              ]
+            },
+            2
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "dependents": "$otp_trf_projectDataForNewGrantingBenefits.familyGroups.dependents",
+        "accountQuotaBalance": {
+          "$divide": [
+            "$accountCashBalance",
+            "$monetaryUnitValue"
+          ]
+        },
+        "accountCashBalance": 1,
+        "monthlyValueInCash": 1,
+        "monthlyValueInQuotas": {
+          "$divide": [
+            "$monthlyValueInCash",
+            "$monetaryUnitValue"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "_id": "66feefcf3a27cebc4c998760",
+  "name": "rubricResidualBalance",
+  "description": "id da rubrica de resíduo - quando acontece o pagamento residual do saldo de conta",
+  "data": {
+    "value": "674e6e9f519c6b3b81a2d31e",
+    "type": "constant",
+    "isDefault": false
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "_id": "66d4aa3ae27e2fbfdb9c3b9a",
+  "type": {
+    "_id": "66d4aa39620d36a1680ede89",
+    "name": "write_commands"
+  },
+  "name": "updateFileToProcessed",
+  "description": "Atualiza status do processo de importacao do arquivo da folha da patrocinadora",
+  "main_collection": "files",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "status": "$.$$.otpVerifyFilesWithCritic.status"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.fileId"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "_id": "66e08c7a2cea870a922172cf",
+  "name": "simplifiedDeductionRubricId",
+  "description": "parâmetro que guarda o id da rubrica de dedução simplificada ",
+  "data": {
+    "value": "674e6d8e519c6b3b81a2d152",
+    "type": "constant",
+    "isDefault": false
+  }
+}

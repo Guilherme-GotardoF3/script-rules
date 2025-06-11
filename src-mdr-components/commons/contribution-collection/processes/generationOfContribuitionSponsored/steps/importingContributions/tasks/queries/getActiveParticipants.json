@@ -1,0 +1,36 @@
+{
+  "_id": "66a110b91a400398ace35b6f",
+  "type": {
+    "_id": "66a110b9431867115d24556b",
+    "name": "queries"
+  },
+  "name": "getActiveParticipants",
+  "description": "Listagem de todos os participantes ativos para provisionamento.",
+  "main_collection": "people",
+  "output_name": "otp_trf_getActiveParticipants",
+  "fixed_value": false,
+  "input_parameters": [],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$project": {
+        "name": 1,
+        "birthDate": 1,
+        "documents": 1,
+        "participations": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "participations.participationClass.status.name": "Ativo"
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "_id": "67770151ab1ecac41dca95ac",
+  "name": "prc_calculateMininumBenefit",
+  "description": "Apura o valor do benefício mínimo de acordo com os tipos de benefício e plano, se for o caso",
+  "context": "benefit",
+  "steps": [
+    {
+      "step": "677700cf3bbd5214870568e8",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "fe66bca9-90de-4909-8c1a-966f21a824bc",
+    "username": "dpitol@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "fe66bca9-90de-4909-8c1a-966f21a824bc",
+    "username": "dpitol@f3capital.com.br"
+  },
+  "isSync": true,
+  "createdAt": "2025-01-02T21:12:49.371Z",
+  "updatedAt": "2025-01-02T21:14:21.565Z",
+  "__v": 0
+}

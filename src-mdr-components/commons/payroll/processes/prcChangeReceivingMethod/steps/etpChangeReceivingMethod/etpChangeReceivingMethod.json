@@ -1,0 +1,23 @@
+{
+  "_id": "6751d7aa5add2144b22573f8",
+  "name": "etpChangeReceivingMethod",
+  "description": "Etapa que grava/altera a forma de recebimento e a forma de pagamento",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6751d658e2419bdd96cafa50",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6751d6e978ea40cf7b4f86ad",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-12-05T16:41:14.547Z",
+  "updatedAt": "2024-12-05T16:41:14.547Z",
+  "__v": 0
+}

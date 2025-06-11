@@ -1,0 +1,108 @@
+{
+  "_id": "6749dbebf8a7a2638c3ab3b7",
+  "type": {
+    "_id": "6749dbeb9427594d740a5316",
+    "name": "queries"
+  },
+  "name": "projectRRA_ItemsToWrite",
+  "description": "Utilizado o output do cálculo dos retroativos e do IR RRA para concatenar com o array já existente na payrolls_RMDRC para fornecer o dado correto para a escrita",
+  "main_collection": "payroll_plannings",
+  "output_name": "otp_projectRRA_ItemsToWrite",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1
+      }
+    },
+    {
+      "$addFields": {
+        "otp_retroativo_e_IR_RRA": "$.otp_calculate_retroactiveBenefit_incomeTax_RRA"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otp_retroativo_e_IR_RRA"
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payrollItems": "$otp_retroativo_e_IR_RRA"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems"
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "rubricId": "$payrollItems.rubric._id",
+          "competenceDate": "$payrollItems.competenceDate",
+          "payroll": "$payrollItems.payroll"
+        },
+        "newPayrollItems": {
+          "$first": "$payrollItems"
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "payroll": "$newPayrollItems.payroll"
+        },
+        "newPayrollItems": {
+          "$push": "$newPayrollItems"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id.payroll",
+        "foreignField": "_id",
+        "as": "payroll"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "newPayrollItems": {
+          "$concatArrays": [
+            "$newPayrollItems",
+            "$payroll.payrollItems"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$_id.payroll",
+        "payrollItems": "$newPayrollItems"
+      }
+    }
+  ]
+}

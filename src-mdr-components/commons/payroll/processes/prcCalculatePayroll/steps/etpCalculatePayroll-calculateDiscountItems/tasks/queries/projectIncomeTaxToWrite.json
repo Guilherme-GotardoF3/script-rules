@@ -1,0 +1,112 @@
+{
+  "_id": "66e499799ce276e9defc31fd",
+  "type": {
+    "_id": "66e499795bc56715f34f753e",
+    "name": "queries"
+  },
+  "name": "projectIncomeTaxToWrite",
+  "description": "projeta os payrollItems de imposto de renda",
+  "main_collection": "payroll_plannings",
+  "output_name": "otpProjectIncomeTaxToWrite",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1
+      }
+    },
+    {
+      "$addFields": {
+        "otpCalculateIncomeTax": "$.otpCalculateIncomeTax"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otpCalculateIncomeTax"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$otpCalculateIncomeTax"
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payrollItems": "$otpCalculateIncomeTax.result"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems"
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "rubricId": "$payrollItems.rubric._id",
+          "payroll": "$payrollItems.payroll"
+        },
+        "newPayrollItems": {
+          "$first": "$payrollItems"
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "payroll": "$newPayrollItems.payroll"
+        },
+        "newPayrollItems": {
+          "$push": "$newPayrollItems"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id.payroll",
+        "foreignField": "_id",
+        "as": "payroll"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "newPayrollItems": {
+          "$concatArrays": [
+            "$newPayrollItems",
+            "$payroll.payrollItems"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$_id.payroll",
+        "payrollItems": "$newPayrollItems"
+      }
+    }
+  ]
+}

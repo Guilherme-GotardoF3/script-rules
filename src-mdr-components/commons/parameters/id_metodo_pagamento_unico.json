@@ -1,0 +1,10 @@
+{
+  "_id": "64f47ff4a26207cba01ba76c",
+  "name": "id_metodo_pagamento_unico",
+  "description": "Identificador para ométodo de pagamento único",
+  "data": {
+    "value": "6732645f11e1d84832e0ad1c",
+    "type": "constant",
+    "isDefault": false
+  }
+}

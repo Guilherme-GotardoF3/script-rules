@@ -1,0 +1,406 @@
+{
+  "_id": "670ed6bb068142be279aa2ab",
+  "type": {
+    "_id": "670ed6bb6755d8ce5cd65aad",
+    "name": "queries"
+  },
+  "name": "irDependentEnd",
+  "description": "Tarefa que verifica qual dependente não está apto a continuar como dependente IR",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otpIrDependentEnd",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "kinshipMother",
+      "type": "Parameter",
+      "description": "id do parentesco \"mâe\" da collection kinships",
+      "value": "65f0a9570b8bfc37fa207720"
+    },
+    {
+      "name": "kinshipSpouse",
+      "type": "Parameter",
+      "description": "id referente ao parentesco \"cônjuge\" da collection kinships",
+      "value": "672ecf1abf79df4f579c7934"
+    },
+    {
+      "name": "kinshipFather",
+      "type": "Parameter",
+      "description": "id referente ao parentesco \"pai\" da collection kinships",
+      "value": "642225ab268565dc88761f21"
+    },
+    {
+      "name": "kinshipPartner",
+      "type": "Parameter",
+      "description": "id referente ao parentesco \"companheiro(a)\" da collection kinships",
+      "value": "65f0a9570b8bfc37fa20771f"
+    },
+    {
+      "name": "kinshipCollegeSon",
+      "type": "Parameter",
+      "description": "id referente ao parentesco \"filho universitário\" da collection kinships",
+      "value": "672ecef3bf79df4f579c7903"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "family_groups",
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "person": 1,
+        "payrollPlanning": 1,
+        "competenceDate": "$payrollPlanning.competenceDate"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "family_groups",
+        "localField": "person._id",
+        "foreignField": "person",
+        "as": "base.familyGroup",
+        "let": {
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$dependents"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$dependents.effectiveDate.startedAt",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$dependents.effectiveDate.endedAt",
+                          null
+                        ]
+                      },
+                      {
+                        "$gte": [
+                          "$dependents.effectiveDate.endedAt",
+                          "$$competenceDate"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "dependents.isTaxIncomeDependent": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$base.familyGroup",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "base.familyGroup.dependents.person._id",
+        "foreignField": "_id",
+        "as": "base.person",
+        "let": {
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "age": {
+                "$round": [
+                  {
+                    "$divide": [
+                      {
+                        "$subtract": [
+                          {
+                            "$toDate": "$$competenceDate"
+                          },
+                          {
+                            "$toDate": "$birthDate"
+                          }
+                        ]
+                      },
+                      {
+                        "$multiply": [
+                          365,
+                          24,
+                          60,
+                          60,
+                          1000
+                        ]
+                      }
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "age": {
+                "$gt": 21
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "disablement": {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$eq": [
+                          "$disablement",
+                          null
+                        ]
+                      },
+                      "then": false
+                    },
+                    {
+                      "case": {
+                        "$or": [
+                          {
+                            "$lte": [
+                              "$disablement.effectiveDate.endAt",
+                              "$$competenceDate"
+                            ]
+                          },
+                          {
+                            "$eq": [
+                              "$disablement.effectiveDate.endAt",
+                              null
+                            ]
+                          }
+                        ]
+                      },
+                      "then": true
+                    },
+                    {
+                      "case": {
+                        "$gt": [
+                          "$disablement.effectiveDate.endAt",
+                          "$$competenceDate"
+                        ]
+                      },
+                      "then": false
+                    }
+                  ],
+                  "default": false
+                }
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "age": 1,
+              "deathDate": 1,
+              "educationLevel": 1,
+              "disablement": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$base.person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$or": [
+            {
+              "$and": [
+                {
+                  "$ne": [
+                    "$base.familyGroup.dependents.kinship._id",
+                    "p:67101d1c14c324ef916f14f4"
+                  ]
+                },
+                {
+                  "$ne": [
+                    "$base.familyGroup.dependents.kinship._id",
+                    "p:67101e8f1ce917e6a4e0e3e9"
+                  ]
+                },
+                {
+                  "$ne": [
+                    "$base.familyGroup.dependents.kinship._id",
+                    "p:6710207efa968868ce59709b"
+                  ]
+                },
+                {
+                  "$ne": [
+                    "$base.familyGroup.dependents.kinship._id",
+                    "p:671024fa5756605daf6c73ce"
+                  ]
+                },
+                {
+                  "$ne": [
+                    "$base.person.disablement",
+                    true
+                  ]
+                },
+                {
+                  "$eq": [
+                    "$base.person.deathDate",
+                    null
+                  ]
+                }
+              ]
+            },
+            {
+              "$and": [
+                {
+                  "$lte": [
+                    "$base.person.age",
+                    24
+                  ]
+                },
+                {
+                  "$ne": [
+                    "$base.familyGroup.dependents.kinship._id",
+                    "p:67102792fab8b864e6ac8630"
+                  ]
+                },
+                {
+                  "$ne": [
+                    "$base.person.disablement",
+                    true
+                  ]
+                },
+                {
+                  "$eq": [
+                    "$base.person.deathDate",
+                    null
+                  ]
+                }
+              ]
+            },
+            {
+              "$and": [
+                {
+                  "$ne": [
+                    "$base.person.disablement",
+                    true
+                  ]
+                },
+                {
+                  "$ne": [
+                    "$base.person.deathDate",
+                    null
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "family_groups",
+        "localField": "person._id",
+        "foreignField": "person",
+        "as": "base.otherDependents",
+        "let": {
+          "dependentEnd": "$base.familyGroup.dependents._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$dependents"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$ne": [
+                  "$dependents._id",
+                  "$$dependentEnd"
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$person",
+              "dependents": {
+                "$push": "$dependents"
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "dependents": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$base.otherDependents",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "base.familyGroup.dependents.effectiveDate.endedAt": "$payrollPlanning.paymentDate",
+        "base.otherDependents.dependents": {
+          "$ifNull": [
+            "$base.otherDependents.dependents",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$base.familyGroup._id",
+        "person": "$base.familyGroup.person",
+        "represented": "$base.familyGroup.represented",
+        "dependents": {
+          "$concatArrays": [
+            [
+              "$base.familyGroup.dependents"
+            ],
+            "$base.otherDependents.dependents"
+          ]
+        }
+      }
+    }
+  ]
+}

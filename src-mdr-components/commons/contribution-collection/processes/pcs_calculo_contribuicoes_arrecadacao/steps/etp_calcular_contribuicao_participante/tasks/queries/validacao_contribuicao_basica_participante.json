@@ -1,0 +1,736 @@
+{
+  "_id": "645bf086c45d845b1658a9ca",
+  "type": {
+    "_id": "645bf032a744cdc64b4e1d4f",
+    "name": "queries"
+  },
+  "name": "validacao_contribuicao_basica_participante",
+  "description": "validar contribuicao basica do participante",
+  "main_collection": "participations",
+  "output_name": "otp_validacao_contribuicao_basica_participante",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "referenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "acceptedDifferenceMargin",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "collectionRecordProcessId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "costing_plans",
+    "financial_statements",
+    "contribuition_ranges",
+    "costing_plan_configurations",
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "dateFilter": {
+          "$toDate": "$.referenceDate"
+        },
+        "planIdFilter": "$.planId",
+        "contribuitionCalculated": "$.otp_trf_calcular_contribuicao_participante",
+        "acceptedDifferenceMargin": {
+          "$toInt": "$.acceptedDifferenceMargin"
+        },
+        "personWithParticipationActived": "$.otp_trf_buscar_participacoes_ativas"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "person": 1,
+        "dateFilter": 1,
+        "planIdFilter": 1,
+        "contribuitionCalculated": 1,
+        "acceptedDifferenceMargin": 1,
+        "personWithParticipationActived": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$contribuitionCalculated"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$contribuitionCalculated.personId",
+            "$person"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$personWithParticipationActived",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$personWithParticipationActived.participation._id",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plans",
+        "localField": "planIdFilter",
+        "foreignField": "plan",
+        "as": "costingPlans"
+      }
+    },
+    {
+      "$addFields": {
+        "rubricsId": {
+          "$map": {
+            "input": "$costingPlans",
+            "as": "costingPlan",
+            "in": "$$costingPlan.rubric"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "financial_statements",
+        "localField": "person",
+        "foreignField": "person",
+        "as": "financialStatement",
+        "let": {
+          "dateFilter": "$dateFilter",
+          "rubricsId": "$rubricsId",
+          "rubricFilter": "$contribuitionCalculated.rubric"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      {
+                        "$toInt": {
+                          "$dateToString": {
+                            "format": "%m",
+                            "date": "$$dateFilter"
+                          }
+                        }
+                      },
+                      "$referencyMonth"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      {
+                        "$toInt": {
+                          "$dateToString": {
+                            "format": "%Y",
+                            "date": "$$dateFilter"
+                          }
+                        }
+                      },
+                      "$referencyYear"
+                    ]
+                  },
+                  {
+                    "$in": [
+                      "$rubric",
+                      "$$rubricsId"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$$rubricFilter",
+                      "$rubric"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$financialStatement",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "diff": {
+          "$abs": {
+            "$subtract": [
+              "$financialStatement.value",
+              "$contribuitionCalculated.contribuitionValue"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "contribuition_ranges",
+        "localField": "planIdFilter",
+        "foreignField": "plan",
+        "let": {
+          "rubricFilter": "$contribuitionCalculated.rubric",
+          "dateFilter": "$dateFilter"
+        },
+        "as": "contribuitionRange",
+        "pipeline": [
+          {
+            "$addFields": {
+              "finalDate": {
+                "$ifNull": [
+                  "$finalDate",
+                  ""
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$in": [
+                      "$$rubricFilter",
+                      "$rubrics"
+                    ]
+                  },
+                  {
+                    "$gte": [
+                      "$$dateFilter",
+                      "$initialDate"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$finalDate",
+                          ""
+                        ]
+                      },
+                      {
+                        "$lte": [
+                          "$$dateFilter",
+                          "$finalDate"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$contribuitionRange",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "taxRange": {
+          "$function": {
+            "body": "function(contribuitionRange,  salarybase) {  const formatResponse = (minTax,maxTax  ) => ({minTax,maxTax,  });  if (!contribuitionRange || !salarybase || !contribuitionRange.contributionRangeItems || !Array.isArray(contribuitionRange.contributionRangeItems)) return formatResponse(0, 0);  const indexTax = contribuitionRange.contributionRangeItems.findIndex((item) => item.initialValue <= salarybase && item.finalValue >= salarybase);  if (indexTax === -1) return formatResponse(0, 0);  if (indexTax === 0) return formatResponse(0, contribuitionRange.contributionRangeItems[indexTax].percentage); return formatResponse(contribuitionRange.contributionRangeItems[indexTax - 1].percentage + 0.01, contribuitionRange.contributionRangeItems[indexTax].percentage );}",
+            "args": [
+              "$contribuitionRange",
+              "$contribuitionCalculated.salarybase"
+            ],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "taxRange.minTax": {
+          "$round": [
+            {
+              "$divide": [
+                "$taxRange.minTax",
+                100
+              ]
+            },
+            3
+          ]
+        },
+        "taxRange.maxTax": {
+          "$round": [
+            {
+              "$divide": [
+                "$taxRange.maxTax",
+                100
+              ]
+            },
+            3
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "item.contribuitionCalculated": "$contribuitionCalculated"
+      }
+    },
+    {
+      "$addFields": {
+        "validationErrors": {
+          "$concatArrays": [
+            {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    {
+                      "$ifNull": [
+                        "$financialStatement",
+                        ""
+                      ]
+                    },
+                    ""
+                  ]
+                },
+                "then": [
+                  {
+                    "validationStatus": "ERROR",
+                    "errorType": "FINANCIAL_STATEMENT_NOT_FOUND"
+                  }
+                ],
+                "else": []
+              }
+            },
+            {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    {
+                      "$ifNull": [
+                        "$item",
+                        ""
+                      ]
+                    },
+                    ""
+                  ]
+                },
+                "then": [
+                  {
+                    "validationStatus": "ERROR",
+                    "errorType": "PARTICIPANT_CONTRIBUTION_NOT_FOUND_ERROR"
+                  }
+                ],
+                "else": []
+              }
+            },
+            {
+              "$cond": {
+                "if": {
+                  "$lte": [
+                    "$item.contribuitionCalculated.salarybase",
+                    0
+                  ]
+                },
+                "then": [
+                  {
+                    "validationStatus": "ERROR",
+                    "errorType": "SALARY_NOT_FOUND_ERROR"
+                  }
+                ],
+                "else": []
+              }
+            },
+            {
+              "$cond": {
+                "if": {
+                  "$lte": [
+                    "$item.contribuitionCalculated.salarybase",
+                    0
+                  ]
+                },
+                "then": [
+                  {
+                    "validationStatus": "ERROR",
+                    "errorType": "PERCENTAGE_NOT_FOUND_ERROR"
+                  }
+                ],
+                "else": []
+              }
+            },
+            {
+              "$cond": {
+                "if": {
+                  "$gt": [
+                    "$diff",
+                    "$acceptedDifferenceMargin"
+                  ]
+                },
+                "then": [
+                  {
+                    "validationStatus": "ERROR",
+                    "errorType": "DIFFERENCE_GREATER_THAN_ACCEPTED_ERROR"
+                  }
+                ],
+                "else": []
+              }
+            },
+            {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    {
+                      "$ifNull": [
+                        "$diff",
+                        ""
+                      ]
+                    },
+                    ""
+                  ]
+                },
+                "then": [
+                  {
+                    "validationStatus": "ERROR",
+                    "errorType": "DIFFERENCE_CALCULATION_ERROR"
+                  }
+                ],
+                "else": []
+              }
+            },
+            {
+              "$cond": {
+                "if": {
+                  "$and": [
+                    {
+                      "$eq": [
+                        "$taxRange.minTax",
+                        0
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        "$taxRange.maxTax",
+                        0
+                      ]
+                    }
+                  ]
+                },
+                "then": [
+                  {
+                    "validationStatus": "ERROR",
+                    "errorType": "TAX_RANGE_NOT_FOUND"
+                  }
+                ],
+                "else": []
+              }
+            },
+            {
+              "$cond": {
+                "if": {
+                  "$and": [
+                    {
+                      "$ne": [
+                        "$taxRange.maxTax",
+                        0
+                      ]
+                    },
+                    {
+                      "$lt": [
+                        "$contribuitionCalculated.percentageSelected",
+                        "$taxRange.minTax"
+                      ]
+                    }
+                  ]
+                },
+                "then": [
+                  {
+                    "validationStatus": "ERROR",
+                    "errorType": "RATE_LESS_THAN_MINIMUM_ERROR"
+                  }
+                ],
+                "else": []
+              }
+            },
+            {
+              "$cond": {
+                "if": {
+                  "$and": [
+                    {
+                      "$ne": [
+                        "$taxRange.maxTax",
+                        0
+                      ]
+                    },
+                    {
+                      "$gt": [
+                        "$contribuitionCalculated.percentageSelected",
+                        "$taxRange.maxTax"
+                      ]
+                    }
+                  ]
+                },
+                "then": [
+                  {
+                    "validationStatus": "ERROR",
+                    "errorType": "RATE_GREATER_THAN_MINIMUM_ERROR"
+                  }
+                ],
+                "else": []
+              }
+            },
+            {
+              "$cond": {
+                "if": {
+                  "$and": [
+                    {
+                      "$gt": [
+                        "$diff",
+                        0.01
+                      ]
+                    },
+                    {
+                      "$lte": [
+                        "$diff",
+                        "$acceptedDifferenceMargin"
+                      ]
+                    }
+                  ]
+                },
+                "then": [
+                  {
+                    "validationStatus": "WARNING",
+                    "errorType": "DIFFERENCE_GREATER_THAN_ACCEPTED_ERROR"
+                  }
+                ],
+                "else": []
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "validationErrors.validationStatus": {
+          "$exists": true
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$validationErrors",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plan_configurations",
+        "localField": "planIdFilter",
+        "foreignField": "plan._id",
+        "as": "costingPlanConfiguration",
+        "let": {
+          "rubricFilter": "$contribuitionCalculated.rubric",
+          "dateFilter": "$dateFilter"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "effectiveDate.endedAt": {
+                "$ifNull": [
+                  "$effectiveDate.endedAt",
+                  ""
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$in": [
+                      "$$rubricFilter",
+                      "$rubrics.origin._id"
+                    ]
+                  },
+                  {
+                    "$gte": [
+                      "$$dateFilter",
+                      "$effectiveDate.startedAt"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          ""
+                        ]
+                      },
+                      {
+                        "$lte": [
+                          "$$dateFilter",
+                          "$effectiveDate.endedAt"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$addFields": {
+              "rubric": {
+                "$first": {
+                  "$filter": {
+                    "input": "$rubrics",
+                    "cond": {
+                      "$eq": [
+                        "$$rubric.origin._id",
+                        "$$rubricFilter"
+                      ]
+                    },
+                    "as": "rubric"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$costingPlanConfiguration",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "person",
+        "foreignField": "_id",
+        "as": "people"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$people",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "financialStatement": "$financialStatement._id",
+        "status": "in_review",
+        "rubric": {
+          "_id": "$costingPlanConfiguration.rubric.origin._id",
+          "name": "$costingPlanConfiguration.rubric.origin.name"
+        },
+        "competencyMonth": "$financialStatement.competencyMonth",
+        "competencyYear": "$financialStatement.competencyYear",
+        "referencyMonth": {
+          "$ifNull": [
+            "$validationContribuitionCalculated.financialStatement.referencyMonth",
+            {
+              "$toInt": {
+                "$dateToString": {
+                  "format": "%m",
+                  "date": "$dateFilter"
+                }
+              }
+            }
+          ]
+        },
+        "referencyYear": {
+          "$ifNull": [
+            "$financialStatement.referencyYear",
+            {
+              "$toInt": {
+                "$dateToString": {
+                  "format": "%Y",
+                  "date": "$dateFilter"
+                }
+              }
+            }
+          ]
+        },
+        "collectionRecordProcess": "$.collectionRecordProcessId",
+        "participation": "$_id",
+        "amount": "$financialStatement.value",
+        "amountCalculated": {
+          "$round": [
+            "$contribuitionCalculated.contribuitionValue",
+            2
+          ]
+        },
+        "amountDiff": {
+          "$round": [
+            "$diff",
+            2
+          ]
+        },
+        "acceptedDifferenceMargin": "$acceptedDifferenceMargin",
+        "person": {
+          "_id": "$person",
+          "firstName": "$people.firstName",
+          "lastName": "$people.lastName"
+        },
+        "errorType": "$validationErrors.errorType",
+        "validationStatus": "$validationErrors.validationStatus",
+        "createdAt": "$getdate",
+        "updatedAt": "$getdate"
+      }
+    }
+  ]
+}

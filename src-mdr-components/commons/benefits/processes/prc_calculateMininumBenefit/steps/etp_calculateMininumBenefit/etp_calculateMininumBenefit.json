@@ -1,0 +1,23 @@
+{
+  "_id": "677700cf3bbd5214870568e8",
+  "name": "etp_calculateMininumBenefit",
+  "description": "Apura o valor de benefício mínimo para os tipos de benefício e plano, se for o caso",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6776b0ddf8dc043baf8fb8e3",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6776fba43677c91893ba697f",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2025-01-02T21:10:39.527Z",
+  "updatedAt": "2025-01-02T21:10:39.527Z",
+  "__v": 0
+}

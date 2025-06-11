@@ -1,0 +1,10 @@
+{
+  "_id": "67b735382715187d79fee53d",
+  "name": "id_rubrica_abono_anual",
+  "description": "Id da rubrica do Abono Anual Benefício Tributável",
+  "data": {
+    "value": "665ce4ffd11b2a523e4712b8",
+    "type": "constant",
+    "isDefault": false
+  }
+}

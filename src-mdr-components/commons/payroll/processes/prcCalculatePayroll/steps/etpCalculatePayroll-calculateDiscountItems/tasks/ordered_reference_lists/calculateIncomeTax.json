@@ -1,0 +1,12 @@
+{
+  "_id": "66e496f39ce276e9defc31b7",
+  "type": {
+    "_id": "66e496f37437809c848851b9",
+    "name": "ordered_reference_lists"
+  },
+  "name": "calculateIncomeTax",
+  "description": "Inicia os cálculos de imposto de renda",
+  "outputName": "otpCalculateIncomeTax",
+  "rulePath": "$.rule",
+  "referenceListPath": "$.$$.otpGetRubricsIncomeTax..br_rubric[0]"
+}

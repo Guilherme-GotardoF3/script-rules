@@ -1,0 +1,23 @@
+{
+  "_id": "66e496f59ce276e9defc31da",
+  "type": {
+    "_id": "66e496f574ad5606b2d8a5ef",
+    "name": "api_requests"
+  },
+  "name": "sendJsonBankingIntegration",
+  "description": "Envia o json para a integração bancária",
+  "method": "post",
+  "headers": {
+    "authorization": "Bearer $.otp_request_token_protheus.access_token",
+    "tenant-id": "02,010101"
+  },
+  "pathParameters": {},
+  "queryParameters": {},
+  "Url": "https://f3gestao148774.protheus.cloudtotvs.com.br:2206/rest/f3wsbpo/v1/folhabeneficio",
+  "Body": {
+    "type": "json",
+    "data": {
+      "dadosbancarios": "$.otp_generatesBankingIntegration"
+    }
+  }
+}

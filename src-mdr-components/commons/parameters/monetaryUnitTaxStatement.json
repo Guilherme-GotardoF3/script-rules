@@ -1,0 +1,10 @@
+{
+  "_id": "6737a5da0cd3a5be1abdd259",
+  "name": "monetaryUnitTaxStatement",
+  "description": "testCley",
+  "data": {
+    "value": "66bd4ceb4eb4534a4f854551",
+    "type": "constant",
+    "isDefault": false
+  }
+}

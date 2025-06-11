@@ -1,0 +1,93 @@
+{
+  "_id": "669ebc59a1961cade3fcb1a1",
+  "type": {
+    "_id": "669ebc587f10d9f5846bf1b2",
+    "name": "queries"
+  },
+  "name": "getActiveCostingPlansByPlan",
+  "description": "Regra de crítica para apontar se o valor do salário foi diferente de acordo com a data de competência. ",
+  "main_collection": "costing_plans",
+  "output_name": "otp_getActiveCostingPlansByPlan",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "plan",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "input": {
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          },
+          "plan": "$.plan"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$plan",
+                "$input.plan"
+              ]
+            },
+            {
+              "$eq": [
+                "$costingPlanType",
+                "standard"
+              ]
+            },
+            {
+              "$lte": [
+                "$effectiveDate.startedAt",
+                "$input.competenceDate"
+              ]
+            },
+            {
+              "$or": [
+                {
+                  "$gte": [
+                    "$effectiveDate.endedAt",
+                    "$input.competenceDate"
+                  ]
+                },
+                {
+                  "$lte": [
+                    "$effectiveDate.endedAt",
+                    null
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "rubric": {
+          "_id": "$rubric._id",
+          "name": "$rubric.name",
+          "number": "$rubric.number"
+        },
+        "rule": {
+          "rule": "$rule"
+        }
+      }
+    }
+  ]
+}

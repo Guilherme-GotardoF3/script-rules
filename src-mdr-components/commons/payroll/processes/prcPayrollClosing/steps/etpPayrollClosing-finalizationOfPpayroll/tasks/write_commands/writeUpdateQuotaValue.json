@@ -1,0 +1,27 @@
+{
+  "_id": "671babaad2b50f533cd2f3a5",
+  "type": {
+    "_id": "671babaa66d20ffe7fa10042",
+    "name": "write_commands"
+  },
+  "name": "writeUpdateQuotaValue",
+  "description": "Escrita da atualização do valor da cota",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payrollItems": "$.$$.otpUpdateQuotaValue.payrollItems"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otpUpdateQuotaValue._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

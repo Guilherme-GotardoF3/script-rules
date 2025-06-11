@@ -1,0 +1,623 @@
+{
+  "_id": "678ac57333b51b289e23d165",
+  "type": {
+    "_id": "678ac57316db534a07771842",
+    "name": "queries"
+  },
+  "name": "projectInstituteWithDrawal_benefits",
+  "description": "Prepara os dados num project para depois escrever os dados da concessão do resgate na benefits",
+  "main_collection": "benefit_types",
+  "output_name": "otp_projectInstituteWithDrawal_benefits",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "instituteTypeId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "amount",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "firstExpectedInstallmentValue",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "firstExpectedPaymentDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "estimatedBalance",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "receivingMethods",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "payments",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "instituteData",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "requestDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payment_receivings",
+    "payment_methods",
+    "people",
+    "tax_regime_types",
+    "institute_types"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "participationId": "$.participationId",
+          "instituteTypeId": "$.instituteTypeId",
+          "amount": "$.amount",
+          "firstExpectedInstallmentValue": "$.firstExpectedInstallmentValue",
+          "firstExpectedPaymentDate": {
+            "$toDate": "$.firstExpectedPaymentDate"
+          },
+          "estimatedBalance": "$.estimatedBalance",
+          "receivingMethods": "$.receivingMethods",
+          "payments": "$.payments",
+          "instituteData": "$.instituteData",
+          "origin": "simulacao",
+          "requestDate": {
+            "$toDate": "$.requestDate"
+          }
+        },
+        "benefitTypeId": "66bd4fef4eb4534a4f855041"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$_id",
+                "$benefitTypeId"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payment_receivings",
+        "localField": "bundle.receivingMethods.paymentReceiving._id",
+        "foreignField": "_id",
+        "as": "receivingMethods",
+        "pipeline": [
+          {
+            "$project": {
+              "name": 1,
+              "type": 1,
+              "paymentMethod": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$receivingMethods",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payment_methods",
+        "localField": "receivingMethods.paymentMethod._id",
+        "foreignField": "_id",
+        "as": "paymentMethods",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "bundle.participationId",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participationId": "$bundle.participationId"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "tax_regime_types",
+        "localField": "person.participations.taxRegimeType._id",
+        "foreignField": "_id",
+        "as": "bundle.taxRegimeTypes",
+        "let": {
+          "percentage": "$bundle.benefitData.taxRegimeTypes.percentage"
+        },
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 0,
+              "type": {
+                "_id": "$_id",
+                "name": "$name"
+              },
+              "percentage": {
+                "$arrayElemAt": [
+                  "$$percentage",
+                  0
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "initialMonthlyValue": {
+          "$round": [
+            {
+              "$arrayElemAt": [
+                {
+                  "$map": {
+                    "input": "$root.bundle.receivingMethods",
+                    "as": "method",
+                    "in": {
+                      "$switch": {
+                        "branches": [
+                          {
+                            "case": {
+                              "$ne": [
+                                "$$method.percentage",
+                                0
+                              ]
+                            },
+                            "then": {
+                              "$multiply": [
+                                {
+                                  "$multiply": [
+                                    "$totalEntryValue",
+                                    {
+                                      "$subtract": [
+                                        1,
+                                        {
+                                          "$divide": [
+                                            "$root.bundle.immediatePercentage",
+                                            100
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "$divide": [
+                                    "$$method.percentage",
+                                    100
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "case": {
+                              "$and": [
+                                {
+                                  "$ne": [
+                                    "$$method.fixedAmount.amountType",
+                                    null
+                                  ]
+                                },
+                                {
+                                  "$ne": [
+                                    "$$method.fixedAmount.list",
+                                    []
+                                  ]
+                                },
+                                {
+                                  "$ne": [
+                                    {
+                                      "$arrayElemAt": [
+                                        "$$method.fixedAmount.list.amount",
+                                        0
+                                      ]
+                                    },
+                                    null
+                                  ]
+                                }
+                              ]
+                            },
+                            "then": {
+                              "$arrayElemAt": [
+                                "$$method.fixedAmount.list.amount",
+                                0
+                              ]
+                            }
+                          },
+                          {
+                            "case": {
+                              "$ne": [
+                                "$$method.installment.quantity",
+                                0
+                              ]
+                            },
+                            "then": {
+                              "$divide": [
+                                {
+                                  "$multiply": [
+                                    "$totalEntryValue",
+                                    {
+                                      "$subtract": [
+                                        1,
+                                        {
+                                          "$divide": [
+                                            "$root.bundle.immediatePercentage",
+                                            100
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "$cond": {
+                                    "if": {
+                                      "$eq": [
+                                        "years",
+                                        "$$method.installment.type"
+                                      ]
+                                    },
+                                    "then": {
+                                      "$multiply": [
+                                        "$$method.installment.quantity",
+                                        12
+                                      ]
+                                    },
+                                    "else": "$$method.installment.quantity"
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "case": {
+                              "$ne": [
+                                "$$method.actuarialFactorValue",
+                                null
+                              ]
+                            },
+                            "then": {
+                              "$multiply": [
+                                {
+                                  "$multiply": [
+                                    "$totalEntryValue",
+                                    {
+                                      "$subtract": [
+                                        1,
+                                        {
+                                          "$divide": [
+                                            "$root.bundle.immediatePercentage",
+                                            100
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "$divide": [
+                                    "$$method.actuarialFactorValue",
+                                    100
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        ],
+                        "default": null
+                      }
+                    }
+                  }
+                },
+                0
+              ]
+            },
+            2
+          ]
+        },
+        "immediateValue": {
+          "$round": [
+            {
+              "$multiply": [
+                "$totalEntryValue",
+                {
+                  "$divide": [
+                    "$root.bundle.immediatePercentage",
+                    100
+                  ]
+                }
+              ]
+            },
+            2
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "initialMonthlyQuota": {
+          "$divide": [
+            "$initialMonthlyValue",
+            {
+              "$divide": [
+                "$totalEntryValue",
+                "$totalEntryQuota"
+              ]
+            }
+          ]
+        },
+        "immediateValueQuota": {
+          "$divide": [
+            "$immediateValue",
+            {
+              "$divide": [
+                "$totalEntryValue",
+                "$totalEntryQuota"
+              ]
+            }
+          ]
+        },
+        "lifetimeBenefit": {
+          "$cond": {
+            "if": {
+              "$and": [
+                {
+                  "$ne": [
+                    "$root.receivingMethods.paymentReceiving.paymentReceivingType",
+                    "lifetime_bd"
+                  ]
+                },
+                {
+                  "$ne": [
+                    "root.receivingMethods.paymentReceiving.paymentReceivingType",
+                    "lifetime_bd_with_actuarial_factor"
+                  ]
+                }
+              ]
+            },
+            "then": false,
+            "else": true
+          }
+        },
+        "getDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "immediatePercentage": [
+          {
+            "cashImmediateValue": "$immediateValue",
+            "quotaImmediateValue": "$immediateValueQuota",
+            "accountCashBalance": "$totalEntryValue",
+            "accountQuotaBalance": "$totalEntryQuota",
+            "percentage": "$root.bundle.immediatePercentage",
+            "paymentPayrollDate": null,
+            "solicitationDate": "$root.bundle.requestDate",
+            "effectiveDate": {
+              "startedAt": "$root.bundle.paymentStartDate",
+              "endedAt": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "institute_types",
+        "localField": "bundle.instituteTypeId",
+        "foreignField": "_id",
+        "as": "instituteType"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$instituteType",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "concessionType": "$instituteType.type",
+        "institute": {
+          "type": "$instituteType",
+          "data": {
+            "amount": {
+              "$toDouble": 0
+            },
+            "baseSalary": {
+              "$toDouble": 0
+            },
+            "benefitValueEstimate": {
+              "$toDouble": 0
+            },
+            "concessionDocuments": {
+              "$arrayElemAt": [
+                "$bundle.instituteData.concessionDocuments",
+                0
+              ]
+            },
+            "costingPlan": null,
+            "eligibilityReceiptDate": "$bundle.requestDate",
+            "firstExpectedInstallmentValue": {
+              "$toDouble": "$bundle.firstExpectedInstallmentValue"
+            },
+            "entity": null,
+            "firstExpectedPaymentDate": "$bundle.firstExpectedPaymentDate",
+            "lastContributionDate": null,
+            "minimumBenefit": null,
+            "paymentDate": "$bundle.firstExpectedPaymentDate",
+            "paymentMethod": {
+              "$arrayElemAt": [
+                "$paymentMethods",
+                0
+              ]
+            },
+            "payments": "$bundle.payments",
+            "percentage": {
+              "$toDouble": "0"
+            },
+            "ruleDescription": "ruleDescription",
+            "selfSponsorshipStartDate": null,
+            "validationStatusType": "created",
+            "waitingPeriods": {
+              "$arrayElemAt": [
+                "$bundle.instituteData.waitingPeriods",
+                0
+              ]
+            }
+          }
+        },
+        "participation": "$bundle.participationId",
+        "benefitSource": null,
+        "benefitStarDate": "$bundle.requestDate",
+        "paymentStartDate": "$bundle.firstExpectedPaymentDate",
+        "lastParcel": null,
+        "lastPaymentDate": null,
+        "sheetEntryDate": "$bundle.firstExpectedPaymentDate",
+        "lifetimeBenefit": {
+          "$toBool": false
+        },
+        "quota": null,
+        "paymentMethods": [
+          {
+            "method": {
+              "$arrayElemAt": [
+                "$paymentMethods",
+                0
+              ]
+            },
+            "parcelsQuantity": {
+              "$arrayElemAt": [
+                "$bundle.receivingMethods.installment.quantity",
+                0
+              ]
+            },
+            "percentage": {
+              "$toDouble": {
+                "$arrayElemAt": [
+                  "$bundle.receivingMethods.percentage",
+                  0
+                ]
+              }
+            },
+            "value": "$bundle.firstExpectedInstallmentValue"
+          }
+        ],
+        "receivingMethods": "$bundle.receivingMethods",
+        "history": [
+          {
+            "status": "Ativo",
+            "updatedBy": "Oceano",
+            "effectiveDate": "$bundle.requestDate",
+            "expirationDate": null,
+            "optingExemption": false,
+            "monthlyValueInQuotas": 0,
+            "monthlyValueInCash": "$bundle.firstExpectedInstallmentValue",
+            "accountQuotaBalance": 0,
+            "accountCashBalance": 0,
+            "paymentMethods": [
+              {
+                "method": {
+                  "$arrayElemAt": [
+                    "$paymentMethods",
+                    0
+                  ]
+                },
+                "parcelsQuantity": {
+                  "$arrayElemAt": [
+                    "$bundle.receivingMethods.installment.quantity",
+                    0
+                  ]
+                },
+                "percentage": {
+                  "$toDouble": {
+                    "$arrayElemAt": [
+                      "$bundle.receivingMethods.percentage",
+                      0
+                    ]
+                  }
+                },
+                "value": "$bundle.firstExpectedInstallmentValue"
+              }
+            ]
+          }
+        ],
+        "immediatePercentage": null,
+        "taxRegimeTypes": "$bundle.taxRegimeTypes"
+      }
+    }
+  ]
+}

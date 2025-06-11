@@ -1,0 +1,10 @@
+{
+  "_id": "6418becf6dcafc9b25c167ab",
+  "name": "id_beneficio_pensao_por_morte",
+  "description": "Id do benefício de pensão por morte",
+  "data": {
+    "value": "6732672311e1d84832e0ad35",
+    "type": "constant",
+    "isDefault": false
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "_id": "6434357e4bc1531a9fed6649",
+  "type": {
+    "_id": "6520150da2da4282abfcddd9",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReportIrValidationDependentChanges",
+  "description": "Componente de escrita relatório payroll_report_ir_validation_dependent_changes",
+  "main_collection": "payroll_report_ir_validation_dependent_changes",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_write_ir_dependent_change"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_trf_project_write_ir_dependent_change.participation._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_write_ir_dependent_change.payrollPlanning"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

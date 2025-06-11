@@ -1,0 +1,28 @@
+{
+  "_id": "63d3e4bd429e640008e761c4",
+  "type": {
+    "_id": "651aced534ad7041f5af441a",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReportIrValidationDiseases",
+  "description": "Componente de escrita relatório payroll_report_ir_validation_diseases",
+  "main_collection": "payroll_report_ir_validation_diseases",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_write_report_ir_diseases"
+      },
+      "filter": {
+        "$and": [
+          {
+            "participation._id": "$.$$.otp_trf_project_write_report_ir_diseases.participation._id"
+          },
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_write_report_ir_diseases.payrollPlanning"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

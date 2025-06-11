@@ -1,0 +1,318 @@
+{
+  "_id": "64dbd2587493c2647517d991",
+  "type": {
+    "_id": "64dbd116cc84fbf977b28c84",
+    "name": "queries"
+  },
+  "name": "project_taxa_de_carregamento",
+  "description": "project_taxa_de_carregamento",
+  "main_collection": "participations",
+  "output_name": "otp_trf_escrita_taxa_de_carregamento",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "referenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "acceptedDifferenceMargin",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "costing_plans",
+    "financial_statements",
+    "costing_plan_configurations"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "dateFilter": {
+          "$toDate": "$.referenceDate"
+        },
+        "planIdFilter": "$.planId",
+        "personWithParticipationActived": "$.otp_trf_buscar_participacoes_ativas",
+        "acceptedDifferenceMargin": {
+          "$toInt": "$.acceptedDifferenceMargin"
+        },
+        "rubricFilter": [
+          "p:6467c5e656d0d0d38a061550",
+          "p:6501f048d2b2a92fe2dc9691"
+        ],
+        "personIdWithValidationError": "$.otp_check_contribuition_error",
+        "personContribuicaoCarregamento": "$.otp_calcular_taxa_carregamento"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "person": 1,
+        "dateFilter": 1,
+        "planIdFilter": 1,
+        "personWithParticipationActived": 1,
+        "acceptedDifferenceMargin": 1,
+        "rubricFilter": 1,
+        "personIdWithValidationError": 1,
+        "personContribuicaoCarregamento": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$personContribuicaoCarregamento",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$personContribuicaoCarregamento.personId",
+            "$person"
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$not": {
+            "$in": [
+              "$person",
+              "$personIdWithValidationError._id"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$personWithParticipationActived",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$personWithParticipationActived.participation._id",
+            "$_id"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plans",
+        "localField": "planIdFilter",
+        "foreignField": "plan",
+        "as": "costingPlans",
+        "let": {
+          "rubricFilter": "$rubricFilter"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$rubric",
+                  "$$rubricFilter"
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$costingPlans",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "financialrubrics": [
+          "$personContribuicaoCarregamento.contribuitionParticipation.rubric",
+          "$personContribuicaoCarregamento.contribuitionSponsor.rubric"
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "financial_statements",
+        "localField": "person",
+        "foreignField": "person",
+        "as": "financialStatement",
+        "let": {
+          "dateFilter": "$dateFilter",
+          "financialrubrics": "$financialrubrics"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      {
+                        "$toInt": {
+                          "$dateToString": {
+                            "format": "%m",
+                            "date": "$$dateFilter"
+                          }
+                        }
+                      },
+                      "$referencyMonth"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      {
+                        "$toInt": {
+                          "$dateToString": {
+                            "format": "%Y",
+                            "date": "$$dateFilter"
+                          }
+                        }
+                      },
+                      "$referencyYear"
+                    ]
+                  },
+                  {
+                    "$in": [
+                      "$rubric",
+                      "$$financialrubrics"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$financialStatement",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "costing_plan_configurations",
+        "localField": "planIdFilter",
+        "foreignField": "plan._id",
+        "as": "rubricResult",
+        "let": {
+          "rubricFilter": "$rubricFilter",
+          "dateFilter": "$dateFilter"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "effectiveDate.endedAt": {
+                "$ifNull": [
+                  "$effectiveDate.endedAt",
+                  ""
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$in": [
+                      "$$rubricFilter",
+                      "$rubrics.destiny._id"
+                    ]
+                  },
+                  {
+                    "$gte": [
+                      "$$dateFilter",
+                      "$effectiveDate.startedAt"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          ""
+                        ]
+                      },
+                      {
+                        "$lte": [
+                          "$$dateFilter",
+                          "$effectiveDate.endedAt"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$addFields": {
+              "rubric": {
+                "$first": {
+                  "$filter": {
+                    "input": "$rubrics",
+                    "cond": {
+                      "$eq": [
+                        "$$rubric.destiny._id",
+                        "$$rubricFilter"
+                      ]
+                    },
+                    "as": "rubric"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricResult",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "participation": "$personWithParticipationActived.participation._id",
+        "financialStatement": "$financialStatement._id",
+        "receiptRecord": "$rubricResult.rubric.destiny.name",
+        "origin": "importado",
+        "discountSponsor": "$financialStatement.discountSponsor",
+        "rubric": "$costingPlans.rubric",
+        "competencyMonth": "$financialStatement.competencyMonth",
+        "competencyYear": "$financialStatement.competencyYear",
+        "referencyMonth": "$financialStatement.referencyMonth",
+        "referencyYear": "$financialStatement.referencyYear",
+        "value": "$personContribuicaoCarregamento.loadingRateParticipation",
+        "paymentDate": {
+          "$toDate": "$financialStatement.paymentDate"
+        },
+        "plan": "$planIdFilter"
+      }
+    }
+  ]
+}

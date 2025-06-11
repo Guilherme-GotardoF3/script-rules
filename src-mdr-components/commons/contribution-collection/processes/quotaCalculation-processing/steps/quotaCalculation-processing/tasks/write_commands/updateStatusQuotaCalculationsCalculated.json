@@ -1,0 +1,27 @@
+{
+  "_id": "66e9c2932e2320761f98e131",
+  "type": {
+    "_id": "66e8887cffb240209dd2dd83",
+    "name": "write_commands"
+  },
+  "name": "updateStatusQuotaCalculationsCalculated",
+  "description": "Atualiza o status da collection quota_calculations",
+  "main_collection": "quota_calculations",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "status": "$.status"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.id"
+          }
+        ]
+      },
+      "upsert": false
+    }
+  }
+}

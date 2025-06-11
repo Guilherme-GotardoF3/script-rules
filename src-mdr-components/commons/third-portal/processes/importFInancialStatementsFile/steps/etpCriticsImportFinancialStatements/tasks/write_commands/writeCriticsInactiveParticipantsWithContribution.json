@@ -1,0 +1,31 @@
+{
+  "_id": "67d576eaae2fb5ada3c65a54",
+  "type": {
+    "_id": "67d576eaae2fb5ada3c65a52",
+    "name": "write_commands"
+  },
+  "name": "writeCriticsInactiveParticipantsWithContribution",
+  "description": "Escrita da consulta de crítica listando participantes inativos na ficha de contribuição, porém que constam contribuições no mês. ",
+  "main_collection": "processed_collection_review",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpCriticsInactiveParticipantsWithContribution"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person._id": "$.$$.otpCriticsInactiveParticipantsWithContribution.person._id"
+          },
+          {
+            "person.participation._id": "$.$$.otpCriticsInactiveParticipantsWithContribution.person.participation._id"
+          },
+          {
+            "referenceDate": "$.$$.otpCriticsInactiveParticipantsWithContribution.referenceDate"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

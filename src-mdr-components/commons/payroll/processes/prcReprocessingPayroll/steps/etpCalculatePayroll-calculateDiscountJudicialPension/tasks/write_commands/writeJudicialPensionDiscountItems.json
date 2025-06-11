@@ -1,0 +1,27 @@
+{
+  "_id": "660196a4db6266e84ce9dd58",
+  "type": {
+    "_id": "66019b0bdb6266e84ce9dd5d",
+    "name": "write_commands"
+  },
+  "name": "writeJudicialPensionDiscountItems",
+  "description": "Escrita para os calculos de descontos da folha referente a pensao judical",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payrollItems": "$.$$.otp_projectJudicialPensionsToWrite.payrollItems"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_projectJudicialPensionsToWrite._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

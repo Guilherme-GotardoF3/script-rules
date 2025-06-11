@@ -1,0 +1,10 @@
+{
+  "_id": "63d7bc9dcadc480008e068d8",
+  "name": "rubrica_ir_regressivo",
+  "description": "Parâmetro que define a rubrica do IR Regressivo.",
+  "data": {
+    "value": "674e6d8e519c6b3b81a2d12d",
+    "type": "constant",
+    "isDefault": false
+  }
+}

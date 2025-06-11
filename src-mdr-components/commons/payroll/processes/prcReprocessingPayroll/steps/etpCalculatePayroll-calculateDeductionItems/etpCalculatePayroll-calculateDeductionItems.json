@@ -1,0 +1,35 @@
+{
+  "_id": "65d8f1a90ee692ef28d671c4",
+  "name": "etpCalculatePayroll-calculateDeductionItems",
+  "description": "Etapa para o calculo das deduções a serem calculadas na folha de pagamento",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "641de428f5bf6ac30d4cdbf4",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "641de47bf5bf6ac30d4cdc09",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "661075079a83e802d9a3b36d",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "64d54de85c4165b76ade8ff9",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:27:37.262Z",
+  "updatedAt": "2024-07-09T21:23:17.590Z",
+  "__v": 0
+}

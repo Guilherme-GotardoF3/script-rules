@@ -1,0 +1,120 @@
+{
+  "_id": "66609653934bfcc5c555442c",
+  "type": {
+    "_id": "666096537b717c2f77cafdb9",
+    "name": "queries"
+  },
+  "name": "getBalancePortfolio",
+  "description": "Busca o saldo do participante para o processo do portifolio",
+  "main_collection": "people",
+  "output_name": "otp_getBalancePortfolio",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "people",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "account_balances_rmdrc"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.people"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "participationId": "$participations._id",
+        "participation": {
+          "_id": "$participations._id",
+          "number": "$participations.number",
+          "participationClass._id": "$participations.participationClass._id",
+          "participationClass.plan": "$participations.participationClass.plan"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "account_balances_rmdrc",
+        "localField": "_id",
+        "foreignField": "person._id",
+        "as": "balance",
+        "let": {
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          },
+          "participationId": "$participationId"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$competenceDate",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$person.participation._id",
+                      "$$participationId"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "competenceDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "_id": "$_id",
+              "competenceDate": "$competenceDate",
+              "date": "$date",
+              "operationDate": "$operationDate",
+              "pensionAccountList": "$pensionAccountList",
+              "value": "$value"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$balance",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "participation": 1,
+        "balance": 1
+      }
+    }
+  ]
+}

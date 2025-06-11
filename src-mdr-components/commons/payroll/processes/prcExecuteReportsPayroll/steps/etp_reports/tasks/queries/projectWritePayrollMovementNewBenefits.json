@@ -1,0 +1,384 @@
+{
+  "_id": "63d3e94589c26d0008fa0ed4",
+  "type": {
+    "_id": "63d3e8dcb8f9ef0008dc8ba6",
+    "name": "queries"
+  },
+  "name": "projectWritePayrollMovementNewBenefits",
+  "description": "relatório da folha que consulta novos beneficios pro mês de processamento",
+  "main_collection": "payroll_plannings",
+  "output_name": "otp_trf_project_write_report_movement_new_benefits",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC",
+    "payroll_plannings",
+    "benefits",
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "competenceDate": 1,
+        "payrollType": 1,
+        "planId": "$plan._id"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "payrollType",
+        "foreignField": "payrollPlanning.payrollType",
+        "as": "actualPayroll",
+        "let": {
+          "payrollPlanningId": "$_id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "judicialPension": {
+                "$exists": false
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollPlanning._id",
+                  "$$payrollPlanningId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "benefit": 1,
+              "participation": 1,
+              "grossAmount": 1,
+              "netAmount": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$actualPayroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payroll_plannings",
+        "localField": "payrollType",
+        "foreignField": "payrollType",
+        "as": "agoPayrollPlanning",
+        "let": {
+          "idAtual": "$_id",
+          "dataReferencia": "$competenceDate",
+          "planId": "$planId"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$ne": [
+                      "$$idAtual",
+                      "$_id"
+                    ]
+                  },
+                  {
+                    "$lt": [
+                      "$competenceDate",
+                      "$$dataReferencia"
+                    ]
+                  },
+                  {
+                    "$in": [
+                      "$status",
+                      [
+                        "PROCESSED",
+                        "FINISHED"
+                      ]
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$plan._id",
+                      "$$planId"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "competenceDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "competenceDate": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$agoPayrollPlanning",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "payrollType",
+        "foreignField": "payrollPlanning.payrollType",
+        "as": "agoPayroll",
+        "let": {
+          "agopayrollPlanningId": "$agoPayrollPlanning._id",
+          "benefitIdActualPayroll": "$actualPayroll.benefit._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "judicialPension": {
+                "$exists": false
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$benefit._id",
+                      "$$benefitIdActualPayroll"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$payrollPlanning._id",
+                      "$$agopayrollPlanningId"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "benefit": 1,
+              "participation": 1,
+              "grossAmount": 1,
+              "netAmount": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$match": {
+        "agoPayroll": []
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "actualPayroll.benefit._id",
+        "foreignField": "_id",
+        "as": "benefitId",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$history",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$history.status",
+                      "Ativo"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$history.expirationDate",
+                      null
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "history": 1,
+              "benefitStartDate": 1,
+              "type": 1,
+              "paymentStartDate": 1,
+              "participation": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefitId",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefitId.history",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payrollPlanning": "$_id",
+        "participation": "$actualPayroll.participation",
+        "benefit": {
+          "_id": "$actualPayroll.benefit._id",
+          "type": "$benefitId.type"
+        },
+        "grossAmount": "$actualPayroll.grossAmount",
+        "netAmount": "$actualPayroll.netAmount",
+        "benefitStartDate": "$benefitId.benefitStartDate",
+        "paymentStartDate": "$benefitId.paymentStartDate",
+        "endDate": "$benefitId.history.effectiveDate"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "participation._id",
+        "foreignField": "participations._id",
+        "as": "people",
+        "let": {
+          "participationId": "$participation._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "documents.document": 1,
+              "documents.type": 1,
+              "participations": 1,
+              "deathDate": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$people",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "isDeath": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$people.deathDate",
+                    null
+                  ]
+                },
+                "then": false
+              }
+            ],
+            "default": true
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payrollPlanning": "$payrollPlanning",
+        "benefitType": {
+          "_id": "$benefit.type._id",
+          "name": "$benefit.type.name"
+        },
+        "participation": "$participation",
+        "person": {
+          "_id": "$people._id",
+          "name": "$people.name",
+          "documents": "$people.documents"
+        },
+        "grossAmount": "$grossAmount",
+        "netAmount": "$netAmount",
+        "benefitStartDate": {
+          "$toDate": "$benefitStartDate"
+        },
+        "paymentStartDate": {
+          "$toDate": "$paymentStartDate"
+        },
+        "createdAt": "$getdate"
+      }
+    }
+  ]
+}

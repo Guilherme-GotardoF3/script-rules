@@ -1,0 +1,10 @@
+{
+  "_id": "6799248ec9c660f1404ec2fd",
+  "name": "id_type_cancelado",
+  "description": "Id do tipo da classe de participação cancelado",
+  "data": {
+    "value": "66bd4cb14eb4534a4f851ede",
+    "type": "constant",
+    "isDefault": false
+  }
+}

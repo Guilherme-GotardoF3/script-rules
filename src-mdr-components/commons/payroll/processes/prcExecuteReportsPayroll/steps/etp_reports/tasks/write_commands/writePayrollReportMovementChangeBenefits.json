@@ -1,0 +1,28 @@
+{
+  "_id": "6430232a0706efceafe08d81",
+  "type": {
+    "_id": "651465f655fe7ecd12dc71a2",
+    "name": "write_commands"
+  },
+  "name": "writePayrollReportMovementChangeBenefits",
+  "description": "Componente de escrita para o relatorio de alteração de benficio",
+  "main_collection": "payroll_report_movement_change_benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_trf_project_write_report_alteracao_beneficio"
+      },
+      "filter": {
+        "$and": [
+          {
+            "payrollPlanning": "$.$$.otp_trf_project_write_report_alteracao_beneficio.payrollPlanning"
+          },
+          {
+            "participation._id": "$.$$.otp_trf_project_write_report_alteracao_beneficio.participation._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

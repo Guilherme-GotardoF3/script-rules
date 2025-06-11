@@ -1,0 +1,531 @@
+{
+  "_id": "66bfa16bff895311294ff034",
+  "type": {
+    "_id": "66bfa16ab3d8cc0b7a3f77a6",
+    "name": "queries"
+  },
+  "name": "projectLimitedDiscounts",
+  "description": "limita os descontos da ordem de processamento em 30%",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otpProjectLimitedDiscounts",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "loanItemId",
+      "type": "Parameter",
+      "description": "id da rubrica de empréstimo",
+      "value": "674e6d67519c6b3b81a2d0f3"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "processing_orders",
+    "payrolls_RMDRC"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId",
+        "_id": "$.$$.otp_trf_projectDiscountItemsToWrite._id"
+      }
+    },
+    {
+      "$addFields": {
+        "discountItems": "$payrollItems"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "payrollItems.rubric.configurations.isDiscount": false
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id",
+        "grossAmount": {
+          "$sum": "$payrollItems.finalAmount"
+        },
+        "discountItems": {
+          "$first": "$discountItems"
+        },
+        "person": {
+          "$first": "$person"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$discountItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "discountItems.rubric.configurations.isDiscount": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "processing_orders",
+        "localField": "discountItems.rubric._id",
+        "foreignField": "rubrics._id",
+        "as": "processingOrders",
+        "let": {
+          "planId": "$person.participation.participationClass.plan._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$plan._id",
+                  "$$planId"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$processingOrders",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "rubricsPriority": "$processingOrders.rubrics"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricsPriority",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$discountItems.rubric._id",
+            "$rubricsPriority._id"
+          ]
+        }
+      }
+    },
+    {
+      "$sort": {
+        "priority": 1
+      }
+    },
+    {
+      "$addFields": {
+        "limitedValue": {
+          "$multiply": [
+            "$grossAmount",
+            {
+              "$divide": [
+                30,
+                100
+              ]
+            },
+            -1
+          ]
+        },
+        "discountItems.finalAmount": {
+          "$multiply": [
+            "$discountItems.finalAmount"
+          ]
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id",
+        "data": {
+          "$push": "$$ROOT"
+        },
+        "itemsId": {
+          "$push": "$discountItems._id"
+        },
+        "totalDiscount": {
+          "$sum": "$discountItems.amount"
+        },
+        "limitedValue": {
+          "$first": "$limitedValue"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$data",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "data.discountItems.finalAmount": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$eq": [
+                        "$data.discountItems.rubric._id",
+                        "p:66a78cd7dc7efd212efea372"
+                      ]
+                    },
+                    {
+                      "$lte": [
+                        "$data.discountItems.finalAmount",
+                        "$limitedValue"
+                      ]
+                    }
+                  ]
+                },
+                "then": "$limitedValue"
+              }
+            ],
+            "default": {
+              "$cond": {
+                "if": {
+                  "$and": [
+                    {
+                      "$ne": [
+                        "$data.discountItems.rubric._id",
+                        "p:66a78cd7dc7efd212efea372"
+                      ]
+                    },
+                    {
+                      "$lte": [
+                        "$data.discountItems.finalAmount",
+                        "$limitedValue"
+                      ]
+                    }
+                  ]
+                },
+                "then": 0,
+                "else": "$data.discountItems.finalAmount"
+              }
+            }
+          }
+        },
+        "data.discountItems.amount": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$eq": [
+                        "$data.discountItems.rubric._id",
+                        "p:66a78cd7dc7efd212efea372"
+                      ]
+                    },
+                    {
+                      "$lte": [
+                        "$data.discountItems.amount",
+                        "$limitedValue"
+                      ]
+                    }
+                  ]
+                },
+                "then": "$limitedValue"
+              }
+            ],
+            "default": {
+              "$cond": {
+                "if": {
+                  "$and": [
+                    {
+                      "$ne": [
+                        "$data.discountItems.rubric._id",
+                        "p:66a78cd7dc7efd212efea372"
+                      ]
+                    },
+                    {
+                      "$lte": [
+                        "$data.discountItems.finalAmount",
+                        "$limitedValue"
+                      ]
+                    }
+                  ]
+                },
+                "then": 0,
+                "else": "$data.discountItems.finalAmount"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id",
+        "root": {
+          "$push": "$$ROOT"
+        },
+        "limitedValue": {
+          "$first": "$limitedValue"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "limit": {
+          "$toDouble": "$limitedValue"
+        },
+        "root": 1,
+        "values": "$root.data.discountItems.finalAmount"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "root": 1,
+        "limit": 1,
+        "values": 1,
+        "totalDiscount": {
+          "$sum": "$values"
+        },
+        "filterValues": {
+          "$reduce": {
+            "input": "$values",
+            "initialValue": [],
+            "in": {
+              "$cond": {
+                "if": {
+                  "$gte": [
+                    {
+                      "$add": [
+                        {
+                          "$sum": "$$value"
+                        },
+                        "$$this"
+                      ]
+                    },
+                    "$limit"
+                  ]
+                },
+                "then": {
+                  "$concatArrays": [
+                    "$$value",
+                    [
+                      "$$this"
+                    ]
+                  ]
+                },
+                "else": "$$value"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$root",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$limit": 1
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "_id",
+        "as": "payroll",
+        "let": {
+          "processingOrderRubrics": "$root.data.processingOrders.rubrics._id",
+          "filterValues": "$filterValues",
+          "itemsId": "$root.itemsId"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "itemsId": "$$itemsId",
+              "processingOrderRubrics": "$$processingOrderRubrics"
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$payrollItems"
+            }
+          },
+          {
+            "$addFields": {
+              "validItem": {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$in": [
+                          "$payrollItems.rubric._id",
+                          "$processingOrderRubrics"
+                        ]
+                      },
+                      "then": false
+                    }
+                  ],
+                  "default": true
+                }
+              }
+            }
+          },
+          {
+            "$match": {
+              "validItem": true
+            }
+          },
+          {
+            "$project": {
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "_id",
+        "as": "discountOrderValueItem",
+        "let": {
+          "processingOrderRubrics": "$root.data.processingOrders.rubrics._id",
+          "filterValues": "$filterValues",
+          "adjustedItem": "$root.data.discountItems._id",
+          "itemsId": "$root.itemsId"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "itemsId": "$$itemsId",
+              "processingOrderRubrics": "$$processingOrderRubrics"
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$payrollItems"
+            }
+          },
+          {
+            "$addFields": {
+              "validItem": {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$in": [
+                          "$payrollItems.rubric._id",
+                          "$processingOrderRubrics"
+                        ]
+                      },
+                      "then": false
+                    }
+                  ],
+                  "default": true
+                }
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$validItem",
+                      false
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$payrollItems._id",
+                      "$$adjustedItem"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "payrollItems.finalAmount": {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$in": [
+                          "$payrollItems.finalAmount",
+                          "$$filterValues"
+                        ]
+                      },
+                      "then": "$payrollItems.finalAmount"
+                    }
+                  ],
+                  "default": 0
+                }
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "payrollItems.amount": {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$in": [
+                          "$payrollItems.amount",
+                          "$$filterValues"
+                        ]
+                      },
+                      "then": "$payrollItems.amount"
+                    }
+                  ],
+                  "default": 0
+                }
+              }
+            }
+          },
+          {
+            "$project": {
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "payrollItems": {
+          "$concatArrays": [
+            "$payroll.payrollItems",
+            "$discountOrderValueItem.payrollItems",
+            [
+              "$root.data.discountItems"
+            ]
+          ]
+        }
+      }
+    }
+  ]
+}

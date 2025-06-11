@@ -1,0 +1,27 @@
+{
+  "_id": "64d3d0fb95c0caf00384a979",
+  "type": {
+    "_id": "64e790e788460b7c40a854bb",
+    "name": "write_commands"
+  },
+  "name": "writeEarningsItems",
+  "description": "Escrita para os calculos de provento da folha",
+  "main_collection": "payrolls_RMDRC",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "payrollItems": "$.$$.otp_trf_projectEarningsItemsToWrite.payrollItems"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_trf_projectEarningsItemsToWrite._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,316 @@
+{
+  "_id": "66901aadc318d5f8da8088af",
+  "type": {
+    "_id": "66901aad9a2b0f13e891c562",
+    "name": "queries"
+  },
+  "name": "criticsParticipantsSentImproperly",
+  "description": "Crítica que identifica qual(is), participante(s), foram enviado(s) de forma indevida. ",
+  "main_collection": "financial_statements",
+  "output_name": "otp_criticsParticipantsSentImproperly",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "criticReviewTypeSalaryImport",
+      "type": "Parameter",
+      "description": "Parâmetro para o id do tipo de importação de salário da collection type_review_process. Usado para gerar críticas da importação.",
+      "value": "66e2e359e029353542629c4c"
+    },
+    {
+      "name": "plan",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "startedAt",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "review_collection",
+    "processed_collection_review"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "$expr": {
+          "$anyElementTrue": {
+            "$map": {
+              "input": {
+                "$ifNull": [
+                  "$person.participations.participationClass",
+                  []
+                ]
+              },
+              "as": "class",
+              "in": {
+                "$eq": [
+                  "$$class.plan._id",
+                  "$.plan"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person.participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$person.participations.participationClass.plan._id",
+            "$.plan"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "person": 1,
+        "competenceDate": 1,
+        "employmentHistory": 1
+      }
+    },
+    {
+      "$addFields": {
+        "bundle": {
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          },
+          "plan": {
+            "$toObjectId": "$.plan"
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$competenceDate",
+            "$bundle.competenceDate"
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "person.participations.participationClass.status.name": {
+          "$not": {
+            "$regex": "ativ",
+            "$options": "i"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "review_collection",
+        "localField": "person.participations.participationClass.plan._id",
+        "foreignField": "plan._id",
+        "as": "reviewCollection",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$type._id",
+                  "p:67c098bde9c51a0f5dee0f1d"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$critics"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$critics.description",
+                  "Participante enviado indevidamente"
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "critics": {
+                "$push": "$critics"
+              },
+              "type": {
+                "$first": "$type"
+              },
+              "plan": {
+                "$first": "$plan"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": "$reviewCollection"
+    },
+    {
+      "$lookup": {
+        "from": "processed_collection_review",
+        "localField": "person._id",
+        "foreignField": "person._id",
+        "as": "previewProcessedCollectionReview",
+        "let": {
+          "participationId": "$participations._id",
+          "referenceDate": "$bundle.competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$person.participation._id",
+                      "$$participationId"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$referenceDate",
+                      "$$referenceDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$reviewCollections",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$addFields": {
+              "critic": {
+                "$ifNull": [
+                  {
+                    "$arrayElemAt": [
+                      "$reviewCollections.reviewCollection.critics",
+                      0
+                    ]
+                  },
+                  null
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$ne": [
+                      "$reviewCollections.reviewCollection.type._id",
+                      "p:67c098bde9c51a0f5dee0f1d"
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$critic.description",
+                      "Participante enviado indevidamente"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "reviewCollections": {
+                "$push": "$reviewCollections"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$previewProcessedCollectionReview",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": {
+          "_id": "$person._id",
+          "name": "$person.name",
+          "documents": "$person.documents",
+          "participation": {
+            "_id": "$person.participations._id",
+            "number": "$person.participations.number",
+            "particpationClass": "$person.participations.participationClass"
+          }
+        },
+        "referenceDate": "$competenceDate",
+        "reviewCollections": {
+          "$concatArrays": [
+            {
+              "$ifNull": [
+                "$previewProcessedCollectionReview.reviewCollections",
+                []
+              ]
+            },
+            [
+              {
+                "origin": {
+                  "_id": "$_id",
+                  "name": "financial_statements"
+                },
+                "reviewCollection": "$reviewCollection",
+                "competenceDate": "$bundle.competenceDate",
+                "values": {
+                  "imported": {
+                    "$toInt": 0
+                  },
+                  "calculated": {
+                    "$toInt": 0
+                  },
+                  "diff": {
+                    "$toInt": 0
+                  }
+                },
+                "statusReason": "Participante enviado indevidamente",
+                "validation": {
+                  "description": "",
+                  "responsible": "",
+                  "date": "$.startedAt"
+                },
+                "status": "SUCCESS"
+              }
+            ]
+          ]
+        },
+        "company": "$employmentHistory.company"
+      }
+    }
+  ]
+}

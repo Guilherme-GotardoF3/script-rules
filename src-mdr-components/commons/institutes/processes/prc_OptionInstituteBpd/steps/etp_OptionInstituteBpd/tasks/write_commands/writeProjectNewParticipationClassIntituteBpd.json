@@ -1,0 +1,27 @@
+{
+  "_id": "676d9b82cf0f69b384e27dc5",
+  "type": {
+    "_id": "676d9b8262cfaf1891d4d965",
+    "name": "write_commands"
+  },
+  "name": "writeProjectNewParticipationClassIntituteBpd",
+  "description": "Escreve novo tipo de participação (classe de participação) conforme escolha pelo instituto de BPD",
+  "main_collection": "people",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "participations": "$.$$.otp_projectNewParticipationClassIntituteBpd.participations"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_projectNewParticipationClassIntituteBpd._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,396 @@
+{
+  "_id": "64eb5d650f616f24297b762e",
+  "type": {
+    "_id": "641c69ed1b5e64d2c1e5ff11",
+    "name": "queries"
+  },
+  "name": "relatorioComparativoFolha",
+  "description": "relatorioComparativoFolha",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_trf_relatorioComparativoFolha",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payroll_plannings",
+    "benefits",
+    "rubrics",
+    "people"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "payrollPlanning": 1,
+        "benefitType": 1,
+        "IRDependents": 1,
+        "benefit": 1,
+        "participation": 1,
+        "netAmount": 1,
+        "grossAmount": 1,
+        "payrollItems": 1
+      }
+    },
+    {
+      "$lookup": {
+        "localField": "payrollPlanning._id",
+        "from": "payroll_plannings",
+        "foreignField": "_id",
+        "as": "benefit_sheet_processing",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 0,
+              "competenceDate": 1,
+              "paymentDate": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollPlanning"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "benefit._id",
+        "foreignField": "_id",
+        "as": "generated_benefits",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$paymentMethods"
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "type": 1,
+              "name": "$paymentMethods.method.name",
+              "paymentMethodId": "$paymentMethods.method._id",
+              "paymentMethodValue": "$paymentMethods.value",
+              "parcelsQuantity": "$paymentMethods.parcelsQuantity",
+              "paymentMethodPercentage": "$paymentMethods.percentage"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$generated_benefits",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "payroll_item": "$payrollItems"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "payroll_item.rubric._id",
+        "foreignField": "_id",
+        "as": "rubrics",
+        "pipeline": [
+          {
+            "$addFields": {
+              "isDiscount": {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$eq": [
+                          "$configurations.isDiscount",
+                          true
+                        ]
+                      },
+                      "then": "Desconto"
+                    }
+                  ],
+                  "default": "Provento"
+                }
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "name": 1,
+              "number": 1,
+              "isDiscount": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubrics",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "participation._id",
+        "foreignField": "participations._id",
+        "as": "people",
+        "let": {
+          "participationId": "$participation._id",
+          "tipoCpf": "642225aae1434d75a740fdbc"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$documents",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$documents.type._id",
+                  "$$tipoCpf"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "participations": 1,
+              "name": 1,
+              "cpf": "$documents.document"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$people",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "formaPagamento": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$generated_benefits.name",
+                    "Prazo certo"
+                  ]
+                },
+                "then": "$generated_benefits.parcelsQuantity"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$generated_benefits.name",
+                    "Percentual"
+                  ]
+                },
+                "then": "$generated_benefits.paymentMethodPercentage"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$generated_benefits.name",
+                    "Valor definido"
+                  ]
+                },
+                "then": "$generated_benefits.paymentMethodValue"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$generated_benefits.name",
+                    "Pagamento único"
+                  ]
+                },
+                "then": "$generated_benefits.paymentMethodValue"
+              }
+            ],
+            "default": 0
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "valorCalculadoItemFolha": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$rubrics.isDiscount",
+                    "Desconto"
+                  ]
+                },
+                "then": {
+                  "$multiply": [
+                    "$payroll_item.finalAmount",
+                    -1
+                  ]
+                }
+              }
+            ],
+            "default": "$payroll_item.finalAmount"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "idParticipação": "$people.participations._id",
+        "idPlanejamento": "$payrollPlanning._id",
+        "idTipoBeneficio": "$generated_benefits.type._id",
+        "idFolhaPagamento": "$_id",
+        "idRubrica": "$payroll_item.rubric._id",
+        "participação": "$people.participations.number",
+        "nome": "$people.name",
+        "cpf": "$people.cpf",
+        "dataReferencia": "$payrollPlanning.competenceDate",
+        "dataPagamento": "$payrollPlanning.paymentDate",
+        "tipoBeneficio": "$generated_benefits.type.name",
+        "descricaoFormaPagamento": "$generated_benefits.name",
+        "formaPagamento": "$formaPagamento",
+        "valorCalculado": "$valorCalculadoItemFolha",
+        "valorExcecao": {
+          "$toDouble": {
+            "$round": [
+              "$payroll_item.exceptionAmount",
+              2
+            ]
+          }
+        },
+        "valorLiquidoFolha": {
+          "$toDouble": {
+            "$round": [
+              "$netAmount",
+              2
+            ]
+          }
+        },
+        "valorBrutoFolha": {
+          "$toDouble": {
+            "$round": [
+              "$grossAmount",
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$idParticipação",
+        "root": {
+          "$mergeObjects": "$$ROOT"
+        },
+        "payrollItemLiquido": {
+          "$sum": {
+            "$add": [
+              "$valorCalculado"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "comparativoLiquido": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$payrollItemLiquido",
+                    "$root.valorLiquidoFolha"
+                  ]
+                },
+                "then": "Liquidos iguais"
+              }
+            ],
+            "default": "Liquidos divergentes"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "idParticipação": "$root.idParticipação",
+        "idPlanejamento": "$root.idPlanejamento",
+        "idTipoBeneficio": "$root.idTipoBeneficio",
+        "idFolhaPagamento": "$root.idFolhaPagamento",
+        "participação": "$root.participação",
+        "nome": "$root.nome",
+        "cpf": "$root.cpf",
+        "dataReferencia": "$root.dataReferencia",
+        "dataPagamento": "$root.dataPagamento",
+        "tipoBeneficio": "$root.tipoBeneficio",
+        "valorBrutoFolha": "$root.valorBrutoFolha",
+        "valorLiquidoFolha": "$root.valorLiquidoFolha",
+        "valorItensFolhaLiquido": "$payrollItemLiquido",
+        "comparativo": "$comparativoLiquido"
+      }
+    },
+    {
+      "$merge": {
+        "into": "aa_test_relatorio_consolidado",
+        "on": [
+          "idParticipação",
+          "idPlanejamento",
+          "idTipoBeneficio",
+          "idFolhaPagamento"
+        ],
+        "whenMatched": "merge",
+        "whenNotMatched": "insert"
+      }
+    }
+  ]
+}

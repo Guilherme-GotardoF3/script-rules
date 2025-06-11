@@ -1,0 +1,89 @@
+{
+  "_id": "66a3a850246315c1b55376c2",
+  "type": {
+    "_id": "66a3a850eec4a74d2092e87a",
+    "name": "queries"
+  },
+  "name": "financialPersonList",
+  "description": "Lista de pessoas na ficha financeira.",
+  "main_collection": "financial_statements",
+  "output_name": "otp_financialPersonList",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "plan",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "plan": "$.plan",
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "person": 1,
+        "competenceDate": 1,
+        "bundle": 1
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            {
+              "$dateToString": {
+                "format": "%Y-%m-%d",
+                "date": "$competenceDate"
+              }
+            },
+            {
+              "$dateToString": {
+                "format": "%Y-%m-%d",
+                "date": "$bundle.competenceDate"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person.participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$person.participations.participationClass.plan._id",
+            "$bundle.plan"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": "$person._id",
+        "name": "$person.name",
+        "documents": "$person.documents",
+        "participation": "$person.participations"
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "_id": "64eb4c5577eda621ef4d5c13",
+  "name": "etp_execut_analitics_reports_payroll",
+  "description": "Etapar para os relatorios de analise da folha",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "64eb4d1baf66fd38b22184b4",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2023-08-27T13:15:01.268Z",
+  "updatedAt": "2024-07-03T23:22:00.162Z",
+  "__v": 0
+}

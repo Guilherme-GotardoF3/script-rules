@@ -1,0 +1,10 @@
+{
+  "_id": "66e03abdd0e7f4f32d0bf537",
+  "name": "telefonicaBdPlanId",
+  "description": "parâmetro que guarda o id do plano Telefônica BD",
+  "data": {
+    "value": "665cd426d11b2a523e4708b5",
+    "type": "constant",
+    "isDefault": false
+  }
+}

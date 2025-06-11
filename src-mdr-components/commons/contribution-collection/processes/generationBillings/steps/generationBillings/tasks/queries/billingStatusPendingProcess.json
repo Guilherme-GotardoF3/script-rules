@@ -1,0 +1,41 @@
+{
+  "_id": "67267df76e7a511108e8d7c0",
+  "type": {
+    "_id": "67267df79aea32ffcba96b54",
+    "name": "queries"
+  },
+  "name": "billingStatusPendingProcess",
+  "description": "muda o status da cobrança pra \"PENDING_PROCESS\"",
+  "main_collection": "collection_contributions",
+  "output_name": "otpBillingStatusPendingProcess",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "processingCollectionContributionId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$processingCollectionContribution._id",
+            "$.processingCollectionContributionId"
+          ]
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$processingCollectionContribution._id",
+        "status": {
+          "$first": "PENDING_PROCESS"
+        }
+      }
+    }
+  ]
+}

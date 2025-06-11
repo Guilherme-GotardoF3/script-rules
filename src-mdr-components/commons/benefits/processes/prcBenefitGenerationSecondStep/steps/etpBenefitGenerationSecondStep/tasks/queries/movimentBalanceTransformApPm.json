@@ -1,0 +1,274 @@
+{
+  "_id": "66ec7da987657fe0c2d5ced1",
+  "type": {
+    "_id": "66ec7da89c9e5017b5285f98",
+    "name": "queries"
+  },
+  "name": "movimentBalanceTransformApPm",
+  "description": "Transfere o saldo do assistido falecido para os beneficiários de pensão por morte",
+  "main_collection": "benefits",
+  "output_name": "otp_movimentBalanceTransformApPm",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "definedBenefitId",
+      "type": "Parameter",
+      "description": "id do tipo do plano de beneficio definido ",
+      "value": "6732642511e1d84832e0acd6"
+    },
+    {
+      "name": "occurrenceTransformApPm",
+      "type": "Parameter",
+      "description": "Ocorrencia de transformar aposentadoria em pensão por morte",
+      "value": "66ec6b1a8120718f530c0983"
+    },
+    {
+      "name": "listBenefits",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "benefits",
+    "people",
+    "plans",
+    "occurrences",
+    "pension_accounts"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "bundle": {
+          "listBenefits": "$.listBenefits"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$bundle.listBenefits",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$_id",
+            "$bundle.listBenefits._id"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "participation": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "_id",
+        "foreignField": "_id",
+        "as": "benefitHistory",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$history",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$sort": {
+              "history.effectiveDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$match": {
+              "history.status": "Ativo"
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "history": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefitHistory",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "participation",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participation": "$participation"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$$participation",
+                  "$participations._id"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "name": 1,
+              "documents": 1,
+              "participation": {
+                "_id": "$participations._id",
+                "number": 1,
+                "participationClass": {
+                  "_id": "$participations.participationClass._id",
+                  "plan": "$participations.participationClass.plan"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "plans",
+        "localField": "person.participation.participationClass.plan._id",
+        "foreignField": "_id",
+        "as": "plan",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$ne": [
+                  "$type._id",
+                  "p:66d77353228261df78a0cd64"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "name": 1,
+              "companies": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$plan",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "occurenceId": "p:66ec78a3498488fff234d4e0"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "occurrences",
+        "localField": "occurenceId",
+        "foreignField": "_id",
+        "as": "occurrence",
+        "pipeline": [
+          {
+            "$project": {
+              "name": 1,
+              "occurrenceRules": 1
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$occurrenceRules"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$occurrence"
+      }
+    },
+    {
+      "$addFields": {
+        "getDate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "pension_accounts",
+        "localField": "occurrence.occurrenceRules.accounts.origin._id",
+        "foreignField": "_id",
+        "as": "pensionAccounts"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$pensionAccounts",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "competenceDate": "$getDate",
+        "occurrence": {
+          "_id": "$occurrence._id",
+          "name": "$occurrence.name"
+        },
+        "occurrenceDate": "$getDate",
+        "operationDate": "$getDate",
+        "origin": {
+          "_id": "$_id",
+          "name": "benefit"
+        },
+        "pensionAccount": {
+          "_id": "$occurrence.occurrenceRules.accounts.origin._id",
+          "name": "$occurrence.occurrenceRules.accounts.origin.name",
+          "monetaryUnit": "$pensionAccounts.monetaryUnit"
+        },
+        "person": 1,
+        "value": "$benefitHistory.history.accountCashBalance",
+        "percentageMovement": {
+          "$toInt": 100
+        }
+      }
+    }
+  ]
+}

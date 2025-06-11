@@ -1,0 +1,54 @@
+{
+  "_id": "64b83f9a9de6561bf40b6b18",
+  "type": {
+    "_id": "64b83f6387c02b7b874c67ad",
+    "name": "queries"
+  },
+  "name": "projectUpdatePayrollsManualChange",
+  "description": "Projecao para atualizar os itens alterados manualmente na tela para a folha processada",
+  "main_collection": "payrolls_RMDRC",
+  "output_name": "otp_projectUpdatePayrollsManualChange",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "benefits",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payrollPlanning._id": "$.payrollPlanningId",
+        "benefit._id": {
+          "$in": "$.benefits"
+        }
+      }
+    },
+    {
+      "$match": {
+        "status": "NO_CALCULATED"
+      }
+    },
+    {
+      "$set": {
+        "status": "CALCULATED",
+        "payrollItems.status": "CALCULATED"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "status": 1,
+        "payrollItems": 1
+      }
+    }
+  ]
+}

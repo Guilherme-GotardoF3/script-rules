@@ -1,0 +1,144 @@
+{
+  "_id": "6426eb0187c4ec5a99bb7c4e",
+  "type": {
+    "_id": "6426eaae7a4c04324a305b96",
+    "name": "queries"
+  },
+  "name": "buscar_participacoes_ativas",
+  "description": "consulta busca as participacoes ativas baseadas no filtro de pessoas e plano informados",
+  "main_collection": "participations",
+  "output_name": "otp_trf_buscar_participacoes_ativas",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "participationList",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "participation_classes",
+    "participation_status",
+    "participation_types"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$project": {
+        "_id": 1,
+        "participationClass": 1,
+        "effectiveDate": 1,
+        "person": 1
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$in": [
+            "$_id",
+            "$.participationList"
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "participation_classes",
+        "localField": "participationClass",
+        "foreignField": "_id",
+        "as": "participationClass",
+        "let": {
+          "planIdFilter": "$.planId"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$$planIdFilter",
+                  "$plan"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "status": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participationClass",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "participation_status",
+        "localField": "participationClass.status",
+        "foreignField": "_id",
+        "as": "participationClass.status",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$name",
+                  "Ativo"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participationClass.status",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "participation_types",
+        "localField": "participationClass.status.status",
+        "foreignField": "status",
+        "as": "participationClass.type",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$name",
+                  "Contribuinte"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participationClass.type",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": "$person",
+        "participation._id": "$_id",
+        "participation.effectiveDate": "$effectiveDate"
+      }
+    }
+  ]
+}

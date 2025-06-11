@@ -1,0 +1,61 @@
+{
+  "_id": "6418840b42dd53c634fbbc5f",
+  "name": "movementQuotation",
+  "description": "Processo de cotização de movimentos",
+  "trigger": {
+    "type": "manual"
+  },
+  "context": "collection",
+  "owners": [
+    {
+      "ref": "89af5839-0755-4f51-8ef9-7c94dab8a4dc",
+      "type": "user"
+    }
+  ],
+  "isDefault": false,
+  "status": "63754b1939630e4bf49ab514",
+  "steps": [
+    {
+      "step": "66d6141405e005441c56e873",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "6418836a37ed7cedd2f38105",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "66d78591a54b0429aaa24307",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "66118e544be1b7c85c98a990",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "66d79189033ccace1fb27acf",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "step": "66eb526c4cac1f35a1c5bb89",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2023-03-20T16:04:27.588Z",
+  "updatedAt": "2024-10-25T12:13:18.945Z",
+  "__v": 0,
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "isSync": false
+}

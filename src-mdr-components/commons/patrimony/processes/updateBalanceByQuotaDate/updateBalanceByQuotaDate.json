@@ -1,0 +1,25 @@
+{
+  "_id": "66eb5123e335110d3e942132",
+  "name": "updateBalanceByQuotaDate",
+  "description": "Atualiza o saldo de conta de acordo com a data de cota, para atualizar o valor financeiro com base na cota informada.\nIMPORTANTE: Processo não atua nos movimentos, apenas corrige valor financeiro do saldo",
+  "context": "collection",
+  "steps": [
+    {
+      "step": "66eb526c4cac1f35a1c5bb89",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "561b2f38-3eec-496b-831f-de08d758b65f",
+    "username": "ti@f3capital.com.br"
+  },
+  "createdAt": "2024-09-18T22:16:03.883Z",
+  "updatedAt": "2024-09-18T22:22:16.266Z",
+  "__v": 0,
+  "isSync": false
+}

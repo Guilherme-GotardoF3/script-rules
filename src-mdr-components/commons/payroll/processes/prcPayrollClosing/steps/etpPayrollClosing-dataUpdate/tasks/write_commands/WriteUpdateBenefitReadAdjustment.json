@@ -1,0 +1,28 @@
+{
+  "_id": "671bf1c1d55fe0585b640c96",
+  "type": {
+    "_id": "671bf1c1fe3d49dd96d3b1d4",
+    "name": "write_commands"
+  },
+  "name": "WriteUpdateBenefitReadAdjustment",
+  "description": "Escreve na base a atualização dos benefícios no paymentMethods quando for o mês de aplicação do reajuste6",
+  "main_collection": "benefits",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "history": "$.$$.otp_updateBenefitReadAdjustment.history",
+          "paymentMethods": "$.$$.otp_updateBenefitReadAdjustment.paymentMethods"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_updateBenefitReadAdjustment._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

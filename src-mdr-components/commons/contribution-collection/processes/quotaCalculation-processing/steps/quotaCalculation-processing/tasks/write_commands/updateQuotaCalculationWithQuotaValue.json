@@ -1,0 +1,25 @@
+{
+  "_id": "66e9be523afc3b8a1855db7b",
+  "type": {
+    "_id": "66e9be52f648b555791dd995",
+    "name": "write_commands"
+  },
+  "name": "updateQuotaCalculationWithQuotaValue",
+  "description": "Atualiza quotaCalculation com o valor da cota",
+  "main_collection": "quota_calculations",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_quotaCalculation"
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

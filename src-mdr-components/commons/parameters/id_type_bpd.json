@@ -1,0 +1,10 @@
+{
+  "_id": "676d52193d2a2dff8fe47a40",
+  "name": "id_type_bpd",
+  "description": "seleciona o tipo de participação bpd",
+  "data": {
+    "value": "66bd4cbe4eb4534a4f8527b3",
+    "type": "constant",
+    "isDefault": false
+  }
+}

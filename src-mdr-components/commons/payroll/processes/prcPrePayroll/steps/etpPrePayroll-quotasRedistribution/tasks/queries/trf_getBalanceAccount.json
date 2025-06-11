@@ -1,0 +1,73 @@
+{
+  "_id": "66560fcd0f1a1027a1f58c81",
+  "type": {
+    "_id": "66560fcd8f31ae437ea0084a",
+    "name": "queries"
+  },
+  "name": "trf_getBalanceAccount",
+  "description": "Tarefa para apurar o saldo do pensionista.",
+  "main_collection": "account_balances_rmdrc",
+  "output_name": "otp_trf_getBalanceAccount",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$person.participation._id",
+            "$.participationId"
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$or": [
+            {
+              "$lte": [
+                "$competenceDate",
+                {
+                  "$toDate": "$.competenceDate"
+                }
+              ]
+            },
+            {
+              "$eq": [
+                null,
+                null
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$sort": {
+        "competenceDate": -1
+      }
+    },
+    {
+      "$limit": 1
+    },
+    {
+      "$project": {
+        "_id": 0
+      }
+    }
+  ]
+}

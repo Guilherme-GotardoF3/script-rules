@@ -1,0 +1,371 @@
+{
+  "_id": "63bd9e87e7c4e900080e342e",
+  "isDefault": false,
+  "name": "etp_reports",
+  "description": "etp_reports",
+  "actions": [
+    {
+      "ref": "63bd9e004a031d00085fa42f",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "63bd9fa1a2be4f00080f8361",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "63c1d2ef759713000855d85a",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "63c1d30c759713000855d86d",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "63d3e499429e640008e761b2",
+      "type": "tasks",
+      "order": 7,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "63d3e4bd429e640008e761c4",
+      "type": "tasks",
+      "order": 8,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "63d3e94589c26d0008fa0ed4",
+      "type": "tasks",
+      "order": 9,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "63d3e96589c26d0008fa0ee7",
+      "type": "tasks",
+      "order": 10,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "63dd27976c679b0008fcceed",
+      "type": "tasks",
+      "order": 11,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "63dd27b16c679b0008fccf00",
+      "type": "tasks",
+      "order": 12,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "63e162b65ab8dc000808eae6",
+      "type": "tasks",
+      "order": 13,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "63e162d95ab8dc000808eaf9",
+      "type": "tasks",
+      "order": 14,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64272ca0c00774877ad90fb3",
+      "type": "tasks",
+      "order": 15,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "642ac55efee9ea3d2b271bd7",
+      "type": "tasks",
+      "order": 16,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "642d96ff983d80ff51b8d0e1",
+      "type": "tasks",
+      "order": 17,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "642d9b2fa5cf2417666e73e1",
+      "type": "tasks",
+      "order": 18,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "642c47086aef5e2d1070c456",
+      "type": "tasks",
+      "order": 19,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "642c49853e39732f06740791",
+      "type": "tasks",
+      "order": 20,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "642db4021729540d9f613c5c",
+      "type": "tasks",
+      "order": 21,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "642db8f0a9bc65f7a2789b62",
+      "type": "tasks",
+      "order": 22,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "643021d9db797259885b0400",
+      "type": "tasks",
+      "order": 23,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "6430232a0706efceafe08d81",
+      "type": "tasks",
+      "order": 24,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "643406c30df161b1b3d5a7d7",
+      "type": "tasks",
+      "order": 25,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64340debaa1f1d95751ea3f8",
+      "type": "tasks",
+      "order": 26,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "643434bb4bc1531a9fed6636",
+      "type": "tasks",
+      "order": 27,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "6434357e4bc1531a9fed6649",
+      "type": "tasks",
+      "order": 28,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "6425cd104f2705eed3f94486",
+      "type": "tasks",
+      "order": 29,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64417c34f9b7b44611c190ac",
+      "type": "tasks",
+      "order": 30,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64638d2d810463c25c6d219e",
+      "type": "tasks",
+      "order": 31,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64638d7c810463c25c6d21b1",
+      "type": "tasks",
+      "order": 32,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64947e4cfee58cb2b81f580f",
+      "type": "tasks",
+      "order": 33,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64947e96fee58cb2b81f5822",
+      "type": "tasks",
+      "order": 34,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64947f19fee58cb2b81f5835",
+      "type": "tasks",
+      "order": 35,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64947fc4fee58cb2b81f5848",
+      "type": "tasks",
+      "order": 36,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "648ca1833e6025e6e41617dd",
+      "type": "tasks",
+      "order": 37,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    },
+    {
+      "ref": "64906779e6217fe166e426ce",
+      "type": "tasks",
+      "order": 38,
+      "status": "63754b1939630e4bf49ab514",
+      "execution": {
+        "type": "automatic",
+        "owners": null
+      }
+    }
+  ],
+  "createdAt": "2023-01-10T17:21:11.652Z",
+  "updatedAt": "2023-10-09T19:03:29.881Z",
+  "__v": 0
+}

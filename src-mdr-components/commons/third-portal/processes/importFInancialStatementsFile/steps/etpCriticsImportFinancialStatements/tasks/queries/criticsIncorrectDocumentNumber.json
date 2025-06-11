@@ -1,0 +1,493 @@
+{
+  "_id": "67d576eaae2fb5ada3c65a30",
+  "type": {
+    "_id": "67d576eaae2fb5ada3c65a2e",
+    "name": "queries"
+  },
+  "name": "criticsIncorrectDocumentNumber",
+  "description": "Consulta de crítica comparando divergência no número de CPF cadastrado do participante em depara com o fornecido pelo arquivo de movimentação.",
+  "main_collection": "files_lines_contents",
+  "output_name": "otpCriticsIncorrectDocumentNumber",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "telefonicaBdPlanId",
+      "type": "Parameter",
+      "description": "parâmetro que guarda o id do plano Telefônica BD",
+      "value": "665cd426d11b2a523e4708b5"
+    },
+    {
+      "name": "id_ImportFinancialStatementsFile",
+      "type": "Parameter",
+      "description": "Parâmetro para o id do tipo de importação do arquivo de movimento da. Usado para gerar críticas durante o processo de importação do arquivo de movimento no painel de terceiros.",
+      "value": "67d3218cd61a29ba7b25b441"
+    },
+    {
+      "name": "fileId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "startedAt",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "files",
+    "people",
+    "review_collection",
+    "processed_collection_review"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "file": "$.fileId",
+        "status": "success",
+        "content.parsed.cpf": {
+          "$ne": null
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "files",
+        "localField": "file",
+        "foreignField": "_id",
+        "as": "fileData"
+      }
+    },
+    {
+      "$unwind": "$fileData"
+    },
+    {
+      "$addFields": {
+        "data": {
+          "plan": {
+            "$toInt": "$content.parsed.plano_de_beneficio"
+          },
+          "competenceDate": {
+            "$toDate": {
+              "$concat": [
+                {
+                  "$substr": [
+                    "$content.parsed.data_da_competencia",
+                    2,
+                    4
+                  ]
+                },
+                "-",
+                {
+                  "$substr": [
+                    "$content.parsed.data_da_competencia",
+                    0,
+                    2
+                  ]
+                },
+                "-01"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "data": {
+          "person": {
+            "name": "$content.parsed.nome_do_participante",
+            "cpf": "$content.parsed.cpf",
+            "employmentHistory": {
+              "company": {
+                "$toInt": "$content.parsed.codigo_da_patrocinadora"
+              },
+              "registration": "$content.parsed.matricula_patrocinadora"
+            },
+            "birthDate": {
+              "$toDate": {
+                "$concat": [
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_nascimento",
+                      0,
+                      4
+                    ]
+                  },
+                  "-",
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_nascimento",
+                      4,
+                      2
+                    ]
+                  },
+                  "-",
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_nascimento",
+                      6,
+                      2
+                    ]
+                  }
+                ]
+              }
+            },
+            "accessionDate": {
+              "$toDate": {
+                "$concat": [
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_adesao",
+                      0,
+                      4
+                    ]
+                  },
+                  "-",
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_adesao",
+                      4,
+                      2
+                    ]
+                  },
+                  "-",
+                  {
+                    "$substr": [
+                      "$content.parsed.data_de_adesao",
+                      6,
+                      2
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "as": "person",
+        "let": {
+          "parameters": "$data.person"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$in": [
+                  "$$parameters.cpf",
+                  "$documents.document"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$documents"
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$participations"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$documents.type.name",
+                      "CPF"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$documents.document",
+                      "$$parameters.cpf"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$participations.participationClass.plan._id",
+                      "p:66e03abdd0e7f4f32d0bf537"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "documents": 1,
+              "addresses": 1,
+              "bankAccounts": 1,
+              "emails": 1,
+              "participations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$match": {
+        "person": {
+          "$eq": []
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "competenceDate": {
+          "$dateFromParts": {
+            "year": {
+              "$year": "$data.competenceDate"
+            },
+            "month": {
+              "$month": "$data.competenceDate"
+            },
+            "day": {
+              "$dayOfMonth": "$data.competenceDate"
+            },
+            "hour": 3,
+            "minute": 0,
+            "second": 0,
+            "millisecond": 0,
+            "timezone": "+00:00"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "review_collection",
+        "localField": "person.participations.participationClass.plan._id",
+        "foreignField": "plan._id",
+        "as": "reviewCollection",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$type._id",
+                  "p:67d42a8e98c3896283cd9c4b"
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$critics"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$critics.description",
+                  "CPF divergente do cadastrado"
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "critics": {
+                "$push": "$critics"
+              },
+              "type": {
+                "$first": "$type"
+              },
+              "plan": {
+                "$first": "$plan"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$reviewCollection",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "processed_collection_review",
+        "localField": "person._id",
+        "foreignField": "person._id",
+        "as": "previewProcessedCollectionReview",
+        "let": {
+          "participationId": "$person.participations._id",
+          "referenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$person.participation._id",
+                      "$$participationId"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$referenceDate",
+                      "$$referenceDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$reviewCollections",
+              "preserveNullAndEmptyArrays": true
+            }
+          },
+          {
+            "$addFields": {
+              "critic": {
+                "$ifNull": [
+                  {
+                    "$arrayElemAt": [
+                      "$reviewCollections.reviewCollection.critics",
+                      0
+                    ]
+                  },
+                  null
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$cond": {
+                  "if": {
+                    "$eq": [
+                      "$reviewCollections.reviewCollection.type._id",
+                      "p:67d42a8e98c3896283cd9c4b"
+                    ]
+                  },
+                  "then": {
+                    "$ne": [
+                      "$critic.description",
+                      "CPF divergente do cadastrado"
+                    ]
+                  },
+                  "else": {
+                    "$and": [
+                      {
+                        "$ne": [
+                          "$reviewCollections.reviewCollection.type._id",
+                          "p:67d42a8e98c3896283cd9c4b"
+                        ]
+                      },
+                      {
+                        "$ne": [
+                          "$critic.description",
+                          "CPF divergente do cadastrado"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "reviewCollections": {
+                "$push": "$reviewCollections"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$previewProcessedCollectionReview",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": {
+          "name": "$content.parsed.nome_do_participante",
+          "documents": [
+            {
+              "document": "$content.parsed.cpf",
+              "type": {
+                "name": "CPF"
+              }
+            }
+          ],
+          "participation": "$person.participations"
+        },
+        "referenceDate": "$competenceDate",
+        "reviewCollections": {
+          "$concatArrays": [
+            {
+              "$ifNull": [
+                "$previewProcessedCollectionReview.reviewCollections",
+                []
+              ]
+            },
+            [
+              {
+                "origin": {
+                  "_id": "$_id",
+                  "name": "files_lines_contents"
+                },
+                "reviewCollection": "$reviewCollection",
+                "competenceDate": "$competenceDate",
+                "values": {
+                  "imported": {
+                    "$toInt": 0
+                  },
+                  "calculated": {
+                    "$toInt": 0
+                  },
+                  "diff": {
+                    "$toInt": 0
+                  }
+                },
+                "statusReason": "O número de CPF está errado ou nulo",
+                "validation": {
+                  "description": "Divergência de CPF na patrocinadora",
+                  "responsible": "",
+                  "date": "$.startedAt"
+                },
+                "status": "SUCCESS"
+              }
+            ]
+          ]
+        },
+        "company": {
+          "_id": "$fileData.details.company.id",
+          "companyName": "$fileData.details.company.companyName"
+        }
+      }
+    }
+  ]
+}

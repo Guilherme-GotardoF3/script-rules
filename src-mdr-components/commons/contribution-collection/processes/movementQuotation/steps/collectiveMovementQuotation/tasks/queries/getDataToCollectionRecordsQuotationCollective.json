@@ -1,0 +1,229 @@
+{
+  "_id": "66d8f81a73b0b6e1c4707005",
+  "type": {
+    "_id": "66d8f819ff405269a49dc106",
+    "name": "queries"
+  },
+  "name": "getDataToCollectionRecordsQuotationCollective",
+  "description": "Busca os movimentos cotizados para inserir os dados na collection de contribuição",
+  "main_collection": "collective_account_movements",
+  "output_name": "otp_getDataToCollectionRecordsQuotationCollective",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "collectionRecordProcessId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "planId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "competenceDate",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "collection_records"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "origin.collectionRecordProcess": "$.collectionRecordProcessId"
+      }
+    },
+    {
+      "$addFields": {
+        "bundle": {
+          "plan": "$.planId",
+          "competenceDate": {
+            "$toDate": "$.competenceDate"
+          },
+          "collectionRecordProcess": "$.collectionRecordProcessId"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$bundle.plan",
+                "$plan._id"
+              ]
+            },
+            {
+              "$eq": [
+                "$bundle.competenceDate",
+                "$competenceDate"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "collection_records",
+        "localField": "origin._id",
+        "foreignField": "_id",
+        "as": "records",
+        "let": {
+          "originId": "$origin._id",
+          "competenceDate": "$bundle.competenceDate",
+          "movement": "$$ROOT",
+          "value": "$value"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$referenceDate",
+                      "$$competenceDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$set": {
+              "movement": "$$movement"
+            }
+          },
+          {
+            "$set": {
+              "rubrics": {
+                "$map": {
+                  "input": "$rubrics",
+                  "as": "rubrics",
+                  "in": {
+                    "_id": "$$rubrics._id",
+                    "rubric": "$$rubrics.rubric",
+                    "competenceDate": "$$rubrics.competenceDate",
+                    "origin": "$$rubrics.origin",
+                    "baseCalculation": "$$rubrics.baseCalculation",
+                    "value": "$$rubrics.value",
+                    "movements": {
+                      "$cond": {
+                        "if": {
+                          "$eq": [
+                            {
+                              "$round": [
+                                "$$rubrics.value",
+                                0
+                              ]
+                            },
+                            {
+                              "$round": [
+                                "$movement.value",
+                                0
+                              ]
+                            }
+                          ]
+                        },
+                        "then": [
+                          "$movement"
+                        ],
+                        "else": []
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$rubrics"
+            }
+          },
+          {
+            "$match": {
+              "rubrics.movements": {
+                "$size": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$records"
+      }
+    },
+    {
+      "$group": {
+        "_id": "$records._id",
+        "origin": {
+          "$first": "$origin"
+        },
+        "rubricsUpdated": {
+          "$push": "$records.rubrics"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "collection_records",
+        "localField": "origin._id",
+        "foreignField": "_id",
+        "as": "recordsNoUpdated",
+        "let": {
+          "rubricsUpdated": "$rubricsUpdated"
+        },
+        "pipeline": [
+          {
+            "$set": {
+              "rubricsUpdated": "$$rubricsUpdated"
+            }
+          },
+          {
+            "$project": {
+              "rubrics": {
+                "$filter": {
+                  "input": "$rubrics",
+                  "as": "rubrics",
+                  "cond": {
+                    "$not": {
+                      "$in": [
+                        "$$rubrics.rubric._id",
+                        "$rubricsUpdated.rubric._id"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$recordsNoUpdated",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "rubrics": {
+          "$concatArrays": [
+            "$recordsNoUpdated.rubrics",
+            "$rubricsUpdated"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "_id": "637e8b88f364180060b3d686",
+  "type": {
+    "_id": "637e8aba234fb400611dbcba",
+    "name": "queries"
+  },
+  "name": "getEarningsRubrics",
+  "description": "Busca as rubricas de provento para calculo da folha",
+  "main_collection": "benefit_rubrics",
+  "output_name": "opt_trf_buscar_rubricas_proventos",
+  "fixed_value": false,
+  "input_parameters": [],
+  "collections": [
+    "rubrics"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$addFields": {
+        "benefiTypeId": "$.$$.otp_getBenefitsInPayrollProcess.payload.benefit.type._id",
+        "planId": "$.$$.otp_getBenefitsInPayrollProcess.payload.person.participations.participationClass.plan._id",
+        "benefitId": "$.$$.otp_getBenefitsInPayrollProcess.payload.benefit._id"
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$benefitType._id",
+                "$benefiTypeId"
+              ]
+            },
+            {
+              "$eq": [
+                "$plan._id",
+                "$planId"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "rubrics": {
+          "$setUnion": [
+            "$rubrics"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubrics",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubrics._id",
+        "foreignField": "_id",
+        "as": "br_rubrics_proventos",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$configurations.isDiscount",
+                      false
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$configurations.isAdvancePayment",
+                      false
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$rule.ref",
+                      null
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$br_rubrics_proventos",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "br_rubrics_proventos.rule.ref": {
+          "$exists": true
+        }
+      }
+    },
+    {
+      "$project": {
+        "benefiType": "$benefitType._id",
+        "benefitId": 1,
+        "plan": "$plan._id",
+        "br_rubrics_proventos": [
+          {
+            "_id": "$br_rubrics_proventos._id",
+            "name": "$br_rubrics_proventos.name",
+            "isDiscount": "$br_rubrics_proventos.configurations.isDiscount",
+            "status": "$br_rubrics_proventos.status._id",
+            "rule": {
+              "ref": "$br_rubrics_proventos.rule.ref",
+              "name": "$br_rubrics_proventos.rule.name",
+              "type": "$br_rubrics_proventos.rule.type"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

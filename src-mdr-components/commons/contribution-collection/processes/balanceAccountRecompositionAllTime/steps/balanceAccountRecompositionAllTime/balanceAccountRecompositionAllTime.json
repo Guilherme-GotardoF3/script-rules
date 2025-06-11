@@ -1,0 +1,23 @@
+{
+  "_id": "667d9e5fc0a6d310dc14e00d",
+  "name": "balanceAccountRecompositionAllTime",
+  "description": "Recomposicao do saldo atraves das movimentacoes, comparando mes a mes se o saldo esta igual ao total das movimentacoes apuradas ate a data de competencia informada",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "667d9f3e1a707d48163f303b",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "667d9ec11a707d48163f2ff9",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-06-27T17:16:15.399Z",
+  "updatedAt": "2024-06-27T17:20:23.962Z",
+  "__v": 0
+}

@@ -1,0 +1,35 @@
+{
+  "_id": "65d8f13f0ee692ef28d67137",
+  "name": "etpPrePayroll-dataUpdate",
+  "description": "Etapa para registro das atualizações necessárias dos benefícios",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "660b00351f1a292b02107f1e",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66b4f7832523e7c25e302227",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66158772408dbb08f14ad05e",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "661588a6408dbb08f14ad05f",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-02-23T19:25:51.034Z",
+  "updatedAt": "2024-08-08T17:16:47.997Z",
+  "__v": 0
+}

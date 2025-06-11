@@ -1,0 +1,84 @@
+{
+  "_id": "67ed889e256f47eff2cf3885",
+  "type": {
+    "_id": "67ed889e256f47eff2cf3883",
+    "name": "queries"
+  },
+  "name": "verifyFilesWithCritic",
+  "description": "Consulta para atualizar campo de status de arquivos que foram importados com críticas.",
+  "main_collection": "files",
+  "output_name": "otpVerifyFilesWithCritic",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "fileId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "startedAt",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "processed_collection_review"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.fileId"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "processed_collection_review",
+        "let": {
+          "processDate": {
+            "$toDate": "$.startedAt"
+          }
+        },
+        "as": "collectionReview",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$in": [
+                      "$$processDate",
+                      "$reviewCollections.validation.date"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "status": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$collectionReview",
+                []
+              ]
+            },
+            "then": "proccesed",
+            "else": "proccesed-with-errors"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "status": 1
+      }
+    }
+  ]
+}
