@@ -1,0 +1,28 @@
+{
+  "_id": "66faa92f9a3d85e58108a891",
+  "type": {
+    "_id": "66faa92e96a704987971bcf7",
+    "name": "write_commands"
+  },
+  "name": "writeRegisterInIrRegressivoUseBase",
+  "description": "Escrita que registra na use_base",
+  "main_collection": "payroll_ir_regressive_controll_use_base",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otp_regressiveBaseRecompose"
+      },
+      "filter": {
+        "$and": [
+          {
+            "payrollPlanning._id": "$.$$.otp_regressiveBaseRecompose.payrollPlanning._id"
+          },
+          {
+            "collectionRecord": "$.$$.otp_regressiveBaseRecompose.collectionRecord"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "_id": "66f56dc57013f78265000439",
+  "name": "regressiveTest",
+  "description": "teste gerar dados na use_base",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "66f567ee91839e9a3f444d7c",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "66faa92f9a3d85e58108a891",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdAt": "2024-09-26T14:20:53.960Z",
+  "updatedAt": "2025-02-26T13:14:35.030Z",
+  "__v": 0
+}

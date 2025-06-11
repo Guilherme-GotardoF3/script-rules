@@ -1,0 +1,10 @@
+{
+  "_id": "65316463b2125fd52605f45c",
+  "name": "etp_consulta_folha_de_pagamento_bi",
+  "description": "etapa que organiza a consulta de dados da folha para o relatorio em bi",
+  "isDefault": false,
+  "actions": [],
+  "createdAt": "2023-10-19T17:16:19.715Z",
+  "updatedAt": "2023-10-19T17:16:19.715Z",
+  "__v": 0
+}

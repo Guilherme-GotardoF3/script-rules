@@ -1,0 +1,25 @@
+{
+  "_id": "66f56e41774a9f9daffc73fa",
+  "name": "prcRegressiveUsedBaseTest",
+  "description": "Processo de teste para gravação na use_base",
+  "context": "benefit",
+  "steps": [
+    {
+      "step": "66f56dc57013f78265000439",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "createdBy": {
+    "keycloakId": "bc2b7f62-a50d-4f5d-92da-875a1aef431f",
+    "username": "ansilva@f3capital.com.br"
+  },
+  "updatedBy": {
+    "keycloakId": "bc2b7f62-a50d-4f5d-92da-875a1aef431f",
+    "username": "ansilva@f3capital.com.br"
+  },
+  "createdAt": "2024-09-26T14:22:57.148Z",
+  "updatedAt": "2024-09-26T14:22:57.148Z",
+  "__v": 0,
+  "isSync": false
+}
