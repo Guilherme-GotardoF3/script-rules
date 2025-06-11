@@ -1,0 +1,306 @@
+//_id: {"$oid": "66f454bd7f4bb1706c9444f7"}
+//_tenant: sandbox-cs
+//name: bankAccountsMigration
+//description: atualiza o campo de contas bancarias na collection de people
+//collection: pre_people
+
+//use("sandbox-cs");
+
+//db.pre_people.aggregate(
+    [
+        {
+          "$lookup": {
+            "from": "Collection_dictionary",
+            "localField": "identificador",
+            "foreignField": "id_origem",
+            "as": "idPeople",
+            "pipeline": [
+              {
+                "$match": {
+                  "$expr": {
+                    "$eq": [
+                      "$collection_name",
+                      "Pessoa"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$idPeople",
+            "preserveNullAndEmptyArrays": false
+          }
+        },
+        {
+          "$project": {
+            "_id": "$idPeople.id_destino",
+            "bankAccounts": {
+              "$ifNull": [
+                "$contas_bancarias",
+                []
+              ]
+            }
+          }
+        },
+        {
+          "$match": {
+            "$or": [
+              {
+                "$expr": {
+                  "$eq": [
+                    {
+                      "$size": [
+                        "$.people"
+                      ]
+                    },
+                    0
+                  ]
+                }
+              },
+              {
+                "_id": {
+                  "$in": "$.people"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$bankAccounts",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$lookup": {
+            "from": "Collection_dictionary",
+            "localField": "bankAccounts.identificador_finalidade_conta_bancaria",
+            "foreignField": "id_origem",
+            "as": "idPurpose",
+            "pipeline": [
+              {
+                "$match": {
+                  "$expr": {
+                    "$eq": [
+                      "$collection_name",
+                      "Finalidade_Conta_Bancaria"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$idPurpose",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$lookup": {
+            "from": "Collection_dictionary",
+            "localField": "bankAccounts.identificador_tipo_conta_bancaria",
+            "foreignField": "id_origem",
+            "as": "idTipoContaBancaria",
+            "pipeline": [
+              {
+                "$match": {
+                  "$expr": {
+                    "$eq": [
+                      "$collection_name",
+                      "Tipo_Conta_Bancaria"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$idTipoContaBancaria",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$lookup": {
+            "from": "Collection_dictionary",
+            "localField": "bankAccounts.identificador_banco",
+            "foreignField": "id_origem",
+            "as": "idBanco",
+            "pipeline": [
+              {
+                "$match": {
+                  "$expr": {
+                    "$eq": [
+                      "$collection_name",
+                      "Bancos"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$idBanco",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$lookup": {
+            "from": "CollectionIntegration_Tipo_Conta_Bancaria",
+            "localField": "bankAccounts.identificador_tipo_conta_bancaria",
+            "foreignField": "identificador",
+            "as": "nomeContaBancaria"
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$nomeContaBancaria",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$lookup": {
+            "from": "CollectionIntegration_Finalidade_Conta_Bancaria",
+            "localField": "bankAccounts.identificador_finalidade_conta_bancaria",
+            "foreignField": "identificador",
+            "as": "nomeProposito"
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$nomeProposito",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$lookup": {
+            "from": "CollectionIntegration_Bancos",
+            "localField": "bankAccounts.identificador_banco",
+            "foreignField": "identificador",
+            "as": "nomeBanco"
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$nomeBanco",
+            "preserveNullAndEmptyArrays": false
+          }
+        },
+        {
+          "$lookup": {
+            "from": "Collection_dictionary",
+            "localField": "bankAccounts.identificador",
+            "foreignField": "id_origem",
+            "as": "idRaizBankAccounts",
+            "pipeline": [
+              {
+                "$match": {
+                  "$expr": {
+                    "$eq": [
+                      "$collection_name",
+                      "Bancos"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$idRaizBankAccounts",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$addFields": {
+            "bankAccounts": {
+              "$ifNull": [
+                "$bankAccounts",
+                null
+              ]
+            }
+          }
+        },
+        {
+          "$project": {
+            "_id": 1,
+            "bankAccounts": {
+              "$switch": {
+                "branches": [
+                  {
+                    "case": {
+                      "$eq": [
+                        "$bankAccounts",
+                        null
+                      ]
+                    },
+                    "then": []
+                  }
+                ],
+                "default": [
+                  {
+                    "_id": "$idRaizBankAccounts.id_destino",
+                    "type": {
+                      "name": "$nomeContaBancaria.nome",
+                      "_id": "$idTipoContaBancaria.id_destino"
+                    },
+                    "purpose": {
+                      "name": "$nomeProposito.nome",
+                      "_id": "$idPurpose.id_destino"
+                    },
+                    "pix": {
+                      "$switch": {
+                        "branches": [
+                          {
+                            "case": {
+                              "$eq": [
+                                "$bankAccounts.pix",
+                                null
+                              ]
+                            },
+                            "then": null
+                          }
+                        ],
+                        "default": []
+                      }
+                    },
+                    "account": {
+                      "$toString": "$bankAccounts.conta"
+                    },
+                    "bank": {
+                      "_id": "$idBanco.id_destino",
+                      "name": "$nomeBanco.nome"
+                    },
+                    "digit": "$bankAccounts.digito",
+                    "agency": "$bankAccounts.agencia"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$bankAccounts",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$group": {
+            "_id": "$_id",
+            "bankAccounts": {
+              "$push": "$bankAccounts"
+            }
+          }
+        }
+      ]
+        //);

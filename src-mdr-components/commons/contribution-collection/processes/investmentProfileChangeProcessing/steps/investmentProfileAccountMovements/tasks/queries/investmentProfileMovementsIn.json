@@ -1,0 +1,91 @@
+{
+  "_id": "6825e850391cf86c41a3cc71",
+  "type": {
+    "_id": "6825e850391cf86c41a3cc22",
+    "name": "queries"
+  },
+  "name": "investmentProfileMovementsIn",
+  "description": "Consulta para geração de movimentos na account balance de entrada de saldo nas novas contas previdenciárias. ",
+  "main_collection": "investment_profile_process_option",
+  "output_name": "otpInvestmentProfileMovementsIn",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "ticket",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "startedAt",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "occurrences"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "ticketInfo._id": "$.ticket"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$current.pensionAccountList",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "occurrences",
+        "localField": "person.participation.participationClass.plan._id",
+        "foreignField": "plan._id",
+        "as": "occurrence",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$regexMatch": {
+                  "input": "$description",
+                  "regex": "Migração",
+                  "options": "i"
+                }
+              }
+            }
+          },
+          {
+            "$sort": {
+              "effectiveDate.startedAt": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$occurrence",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": 1,
+        "competenceDate": "$ticketInfo.createdAt",
+        "occurrence": 1,
+        "occurrenceDate": "$$NOW",
+        "operationDate": "$.startedAt",
+        "pensionAccount": "$current.pensionAccountList.pensionAccount",
+        "percentageMovement": {
+          "$toInt": 100
+        },
+        "value": "$current.pensionAccountList.totalValue.value"
+      }
+    }
+  ]
+}

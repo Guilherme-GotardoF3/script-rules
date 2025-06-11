@@ -1,5 +1,9 @@
 {
-  "_id": "6679dcbf2c592b5f1896b9ad",
+  "_id": "6679dcbffb0a64caba30bd4f",
+  "type": {
+    "_id": "6679dcbf2c592b5f1896b9ad",
+    "name": "parameters"
+  },
   "name": "rubricGroupJudicialPensionsId",
   "description": "id do grupo das rubricas de pensão judicial",
   "data": {

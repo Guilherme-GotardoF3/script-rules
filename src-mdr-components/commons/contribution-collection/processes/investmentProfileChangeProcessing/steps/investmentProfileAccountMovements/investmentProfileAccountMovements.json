@@ -1,0 +1,53 @@
+{
+  "_id": "6825e851391cf86c41a3ccc2",
+  "name": "investmentProfileAccountMovements",
+  "description": "Movimentos de entrada e saída após troca de perfil de investimento.",
+  "isDefault": false,
+  "actions": [
+    {
+      "ref": "6825e850391cf86c41a3cc71",
+      "type": "tasks",
+      "order": 1,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6825e8022fb4162954ef748a",
+      "type": "tasks",
+      "order": 2,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6825e850391cf86c41a3ccad",
+      "type": "tasks",
+      "order": 3,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6825e9325b7a31ee2da1e4fd",
+      "type": "tasks",
+      "order": 4,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "682736143113ed1a82e759dd",
+      "type": "tasks",
+      "order": 5,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "6827350d3113ed1a82e7599c",
+      "type": "tasks",
+      "order": 6,
+      "status": "63754b1939630e4bf49ab514"
+    },
+    {
+      "ref": "682735e63113ed1a82e759bd",
+      "type": "tasks",
+      "order": 7,
+      "status": "63754b1939630e4bf49ab514"
+    }
+  ],
+  "__v": 0,
+  "createdAt": "2025-05-15T13:12:49.083Z",
+  "updatedAt": "2025-05-23T14:32:21.153Z"
+}

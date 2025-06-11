@@ -1,0 +1,25 @@
+{
+  "_id": "6827350d3113ed1a82e7599c",
+  "type": {
+    "_id": "6827350d9d4d86ed6f5c0158",
+    "name": "write_commands"
+  },
+  "name": "writeEndDateParticipationProfile",
+  "description": "Escrita da consulta para alteração da effectiveDate (endedAt) do participante que solicitou a alteração do perfil de investimento",
+  "main_collection": "participation_investment_profiles",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": "$.$$.otpEndDateParticipationProfile"
+      },
+      "filter": {
+        "$and": [
+          {
+            "person.participation._id": "$.$$.otpEndDateParticipationProfile.person.participation._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

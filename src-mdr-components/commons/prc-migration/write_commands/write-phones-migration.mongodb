@@ -1,0 +1,25 @@
+//_id: {'$oid': '66f459b86711856e2232f15b'}
+//_tenant: sandbox-cs
+//name: writePhonesMigration
+//description: Escrita que atualiza o campo de telefone na collection people
+//collection: people
+
+{
+	command: {
+        "updateOne": {
+            "update": {
+                "$set": {
+                    "phones": "$.$$.otpPhonesMigration.phones"
+                }
+            },
+            "filter": {
+                "$and": [
+                    {
+                        "_id": "$.$$.otpPhonesMigration._id"
+                    }
+                ]
+            },
+            "upsert": true
+        }
+    }
+}

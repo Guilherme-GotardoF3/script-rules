@@ -1,0 +1,382 @@
+{
+  "_id": "681cc3cfec46d916413cd574",
+  "type": {
+    "_id": "681cc3ceec46d916413cd527",
+    "name": "queries"
+  },
+  "name": "getRetirementData",
+  "description": "Consulta que retorna os dados necessários para simulação de aposentadoria no Portal Oceano. ",
+  "main_collection": "people",
+  "output_name": "otpRetirementData",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "idRubricContributionDeath",
+      "type": "Parameter",
+      "description": "Id da rubrica referente a contribuição de risco (morte).\n",
+      "value": "674e6d67519c6b3b81a2d0f0"
+    },
+    {
+      "name": "idRubricContributionDisability",
+      "type": "Parameter",
+      "description": "Id da rubrica referente a contribuição de risco (invalidez).",
+      "value": "674e6db5519c6b3b81a2d1d3"
+    },
+    {
+      "name": "idRubricNormalSponsoredContribution",
+      "type": "Parameter",
+      "description": "Id da rubrica referente a contribuição normal da patrocinadora.",
+      "value": "674e6d67519c6b3b81a2d0d6"
+    },
+    {
+      "name": "participationId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "employment_history",
+    "salary_imports",
+    "individual_collections_parameters",
+    "costing_plans",
+    "account_balances_rmdrc",
+    "participation_investment_profiles",
+    "monetary_unit_values"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "participations._id": "$.participationId"
+      }
+    },
+    {
+      "$addFields": {
+        "bundle": {
+          "participationId": "$.participationId"
+        },
+        "paramaters": {
+          "idRubricContributionDeath": "p:681cc464697966641611330d",
+          "idRubricContributionDisability": "p:681cc4a56979666416113310",
+          "idRubricNormalSponsoredContribution": "p:681cc4e06979666416113313"
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "employment_history",
+        "localField": "_id",
+        "foreignField": "person._id",
+        "as": "employmentAdmission",
+        "pipeline": [
+          {
+            "$sort": {
+              "effectiveDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$employmentAdmission",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "salary_imports",
+        "localField": "_id",
+        "foreignField": "person._id",
+        "as": "salaries",
+        "pipeline": [
+          {
+            "$sort": {
+              "referenceDate": -1
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$salaries"
+            }
+          },
+          {
+            "$match": {
+              "salaries.type": "base"
+            }
+          },
+          {
+            "$limit": 1
+          },
+          {
+            "$addFields": {
+              "salaryAmount": {
+                "$sum": "$salaries.amount"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$salaries",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$facet": {
+        "individualParameters": [
+          {
+            "$lookup": {
+              "from": "individual_collections_parameters",
+              "localField": "bundle.bundle.participationId",
+              "foreignField": "participation._id",
+              "as": "contributionsIC",
+              "pipeline": [
+                {
+                  "$sort": {
+                    "effectiveDate.startedAt": -1
+                  }
+                },
+                {
+                  "$limit": 1
+                },
+                {
+                  "$project": {
+                    "rubric": {
+                      "_id": 1,
+                      "name": 1
+                    },
+                    "value": 1,
+                    "dataType": {
+                      "$toUpper": "$dataType"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "costingPlans": [
+          {
+            "$lookup": {
+              "from": "costing_plans",
+              "as": "contributionsCP",
+              "pipeline": [
+                {
+                  "$match": {
+                    "effectiveDate.endedAt": null
+                  }
+                },
+                {
+                  "$match": {
+                    "$or": [
+                      {
+                        "rubric._id": "$parameters.idRubricContributionDeath"
+                      },
+                      {
+                        "rubric._id": "$parameters.idRubricContributionDisability"
+                      },
+                      {
+                        "rubric._id": "$parameters.idRubricNormalSponsoredContribution"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "$unwind": {
+                    "path": "$rangeItems"
+                  }
+                },
+                {
+                  "$project": {
+                    "rubric": {
+                      "_id": 1,
+                      "name": 1
+                    },
+                    "value": "$rangeItems.value",
+                    "dataType": "$rangeItems.type"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$project": {
+        "root": "$$ROOT.individualParameters",
+        "combinedContributions": {
+          "$concatArrays": [
+            {
+              "$ifNull": [
+                {
+                  "$arrayElemAt": [
+                    "$individualParameters.contributionsIC",
+                    0
+                  ]
+                },
+                []
+              ]
+            },
+            {
+              "$ifNull": [
+                {
+                  "$arrayElemAt": [
+                    "$costingPlans.contributionsCP",
+                    0
+                  ]
+                },
+                []
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": "$root"
+    },
+    {
+      "$replaceRoot": {
+        "newRoot": {
+          "$mergeObjects": [
+            "$root",
+            {
+              "combinedContributions": "$combinedContributions"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "account_balances_rmdrc",
+        "localField": "bundle.participationId",
+        "foreignField": "person.participation._id",
+        "as": "accountBalance",
+        "pipeline": [
+          {
+            "$sort": {
+              "date": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$accountBalance",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "participation_investment_profiles",
+        "localField": "_id",
+        "foreignField": "person._id",
+        "as": "investmentProfile",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$effectiveDate.endedAt",
+                  null
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "effectiveDate.startedAt": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$investmentProfile",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "monetary_unit_values",
+        "localField": "investmentProfile.entryMonetaryUnit._id",
+        "foreignField": "monetaryUnit._id",
+        "as": "monetaryUnitValue",
+        "pipeline": [
+          {
+            "$sort": {
+              "referenceDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$monetaryUnitValue",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "birthDate": 1,
+        "employmentAdmission": {
+          "effectiveDate": 1
+        },
+        "participation": {
+          "effectiveDate": {
+            "$first": {
+              "$map": {
+                "input": {
+                  "$filter": {
+                    "input": "$participations",
+                    "as": "p",
+                    "cond": {
+                      "$eq": [
+                        "$$p._id",
+                        "$.participationId"
+                      ]
+                    }
+                  }
+                },
+                "as": "p",
+                "in": "$$p.effectiveDate"
+              }
+            }
+          }
+        },
+        "salaryAmount": "$salaries.salaryAmount",
+        "currentTotalBalance": "$accountBalance.value",
+        "contributions": "$combinedContributions",
+        "person": {
+          "_id": "$_id",
+          "name": "$name",
+          "documents": "$documents",
+          "investmentProfile": "$investmentProfile.investmentProfile",
+          "monetaryUnit": "$investmentProfile.monetaryUnits",
+          "monetaryUnitValue": "$monetaryUnitValue"
+        }
+      }
+    }
+  ]
+}

@@ -1,5 +1,9 @@
 {
-  "_id": "66eb925d10685a5a03d38e7c",
+  "_id": "66eb925de14ddaf38aa53163",
+  "type": {
+    "_id": "66eb925d10685a5a03d38e7c",
+    "name": "parameters"
+  },
   "name": "regressiveRubricDeathPension",
   "description": "id da rubrica de provento do beneficio de pensão por morte regressivo",
   "data": {

@@ -1,0 +1,253 @@
+//_id: {""}
+//_tenant: sandbox-migration
+//name: integrationMovimento
+//description: Aggregation utilizado para validar se as chaves estrangeiras existem.
+//use("sandbox-migration");
+
+//db.CollectionRepositoryBase_Movimento_Conta.aggregate(
+    [
+        {
+          "$project": {
+            "_id": 1, 
+            "all": "$$ROOT"
+          }
+        }, {
+          "$lookup": {
+            "from": "CollectionIntegration_Participacao", 
+            "localField": "all.identificador_participacao", 
+            "foreignField": "identificador", 
+            "as": "person", 
+            "pipeline": [
+              {
+                "$project": {
+                  "_id": 1, 
+                  "numero": 1
+                }
+              }, {
+                "$lookup": {
+                  "from": "CollectionIntegration_Pessoa", 
+                  "localField": "_id", 
+                  "foreignField": "participacoes._id", 
+                  "as": "person", 
+                  "let": {
+                    "participationId": "$_id"
+                  }, 
+                  "pipeline": [
+                    {
+                      "$project": {
+                        "_id": 1, 
+                        "name": "$nome", 
+                        "participations": "$participacoes"
+                      }
+                    }, {
+                      "$unwind": {
+                        "path": "$participations", 
+                        "preserveNullAndEmptyArrays": true
+                      }
+                    }, {
+                      "$match": {
+                        "$expr": {
+                          "$eq": [
+                            "$participations._id", "$$participationId"
+                          ]
+                        }
+                      }
+                    }, {
+                      "$project": {
+                        "_id": 1, 
+                        "name": 1, 
+                        "participation": {
+                          "_id": "$participations._id", 
+                          "participationClass": {
+                            "_id": "$participations.participationClass._id", 
+                            "plan": {
+                              "_id": "$participations.participationClass.plan._id", 
+                              "name": "$participations.participationClass.plan.name"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }, {
+                "$unwind": {
+                  "path": "$person", 
+                  "preserveNullAndEmptyArrays": true
+                }
+              }, {
+                "$replaceRoot": {
+                  "newRoot": "$person"
+                }
+              }
+            ]
+          }
+        }, {
+          "$unwind": {
+            "path": "$person", 
+            "preserveNullAndEmptyArrays": true
+          }
+        }, {
+          "$lookup": {
+            "from": "CollectionIntegration_Valor_Unidade_Monetaria", 
+            "localField": "all.identificador_valor_unidade_monetaria", 
+            "foreignField": "identificador", 
+            "as": "monetaryUnitValue", 
+            "pipeline": [
+              {
+                "$project": {
+                  "_id": 1, 
+                  "value": "$translated.value", 
+                  "referenceDate": "$translated.referenceDate"
+                }
+              }
+            ]
+          }
+        }, {
+          "$unwind": {
+            "path": "$monetaryUnitValue", 
+            "preserveNullAndEmptyArrays": true
+          }
+        }, {
+          "$lookup": {
+            "from": "CollectionIntegration_Ocorrencia", 
+            "localField": "all.identificador_ocorrencia", 
+            "foreignField": "identificador", 
+            "as": "occurrence", 
+            "pipeline": [
+              {
+                "$project": {
+                  "_id": 1, 
+                  "name": "$translated.name", 
+                  "isPreQuota": "$translated.isPreQuota"
+                }
+              }
+            ]
+          }
+        }, {
+          "$unwind": {
+            "path": "$occurrence", 
+            "preserveNullAndEmptyArrays": true
+          }
+        }, {
+          "$lookup": {
+            "from": "CollectionIntegration_Conta_Previdenciaria", 
+            "localField": "all.identificador_conta_previdenciaria", 
+            "foreignField": "identificador", 
+            "as": "pensionAccount", 
+            "pipeline": [
+              {
+                "$project": {
+                  "_id": 1, 
+                  "name": "$nome", 
+                  "monetaryUnit": 1
+                }
+              }
+            ]
+          }
+        }, {
+          "$unwind": {
+            "path": "$pensionAccount", 
+            "preserveNullAndEmptyArrays": true
+          }
+        }, {
+          "$project": {
+            "_id": 1, 
+            "all": 1, 
+            "person": 1, 
+            "monetaryUnitValue": 1, 
+            "occurrence": 1, 
+            "pensionAccount": 1, 
+            "action": {
+              "$cond": {
+                "if": {
+                  "$and": [
+                    {
+                      "$ne": [
+                        "$all.identificador_participacao", null
+                      ]
+                    }, {
+                      "$eq": [
+                        {
+                          "$ifNull": [
+                            "$person._id", null
+                          ]
+                        }, null
+                      ]
+                    }
+                  ]
+                }, 
+                "then": "failure", 
+                "else": {
+                  "$cond": {
+                    "if": {
+                      "$and": [
+                        {
+                          "$ne": [
+                            "$all.identificador_valor_unidade_monetaria", null
+                          ]
+                        }, {
+                          "$eq": [
+                            {
+                              "$ifNull": [
+                                "$monetaryUnitValue._id", null
+                              ]
+                            }, null
+                          ]
+                        }
+                      ]
+                    }, 
+                    "then": "failure", 
+                    "else": {
+                      "$cond": {
+                        "if": {
+                          "$and": [
+                            {
+                              "$ne": [
+                                "$all.identificador_ocorrencia", null
+                              ]
+                            }, {
+                              "$eq": [
+                                {
+                                  "$ifNull": [
+                                    "$occurrence._id", null
+                                  ]
+                                }, null
+                              ]
+                            }
+                          ]
+                        }, 
+                        "then": "failure", 
+                        "else": {
+                          "$cond": {
+                            "if": {
+                              "$and": [
+                                {
+                                  "$ne": [
+                                    "$all.identificador_conta_previdenciaria", null
+                                  ]
+                                }, {
+                                  "$eq": [
+                                    {
+                                      "$ifNull": [
+                                        "$pensionAccount._id", null
+                                      ]
+                                    }, null
+                                  ]
+                                }
+                              ]
+                            }, 
+                            "then": "failure", 
+                            "else": "done"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+                //);

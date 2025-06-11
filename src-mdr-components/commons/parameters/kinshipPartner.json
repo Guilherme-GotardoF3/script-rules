@@ -1,5 +1,9 @@
 {
-  "_id": "671024fa5756605daf6c73ce",
+  "_id": "671024fa424d43cb4e11e310",
+  "type": {
+    "_id": "671024fa5756605daf6c73ce",
+    "name": "parameters"
+  },
   "name": "kinshipPartner",
   "description": "id referente ao parentesco \"companheiro(a)\" da collection kinships",
   "data": {

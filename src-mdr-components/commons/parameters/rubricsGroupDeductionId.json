@@ -1,5 +1,9 @@
 {
-  "_id": "6679db079ac5b4f483670a25",
+  "_id": "6679db072a0b68b1bf3c7bcd",
+  "type": {
+    "_id": "6679db079ac5b4f483670a25",
+    "name": "parameters"
+  },
   "name": "rubricsGroupDeductionId",
   "description": "id do grupo das rubricas de dedução.",
   "data": {

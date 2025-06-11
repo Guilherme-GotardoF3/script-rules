@@ -1,0 +1,74 @@
+//_id: {"$oid": "6703dd74ee69f1024776db2f"}
+//_tenant: sandbox-cs
+//name: updateParticipationsAccountBalance
+//description: projeção do campo pessoa com base na people para a atualização da referencia estendida na account_balance
+//collection: account_balances_rmdrc
+
+//use("sandbox-cs");
+
+//db.account_balances_rmdrc.aggregate(
+    [
+        {
+          "$project": {
+            "_id": 1,
+            "person": 1
+          }
+        },
+        {
+          "$lookup": {
+            "from": "people",
+            "localField": "person._id",
+            "foreignField": "_id",
+            "as": "people",
+            "let": {
+              "participationId": "$person.participation._id"
+            },
+            "pipeline": [
+              {
+                "$unwind": {
+                  "path": "$participations"
+                }
+              },
+              {
+                "$match": {
+                  "$expr": {
+                    "$eq": [
+                      "$participations._id",
+                      "$$participationId"
+                    ]
+                  }
+                }
+              },
+              {
+                "$project": {
+                  "person": {
+                    "_id": "$_id",
+                    "name": "$name",
+                    "documents": "$documents",
+                    "participation": {
+                      "_id": "$participations._id",
+                      "number": "$participations.number",
+                      "participationClass._id": "$participations.participationClass._id",
+                      "participationClass.plan": "$participations.participationClass.plan"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$people",
+            "preserveNullAndEmptyArrays": false
+          }
+        },
+        {
+          "$project": {
+            "_id": 0,
+            "accountBalances": "$_id",
+            "person": "$people.person"
+          }
+        }
+      ]
+        //);

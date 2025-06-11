@@ -1,5 +1,9 @@
 {
-  "_id": "66feefcf3a27cebc4c998760",
+  "_id": "66feefcfdc8f7d3ba341997d",
+  "type": {
+    "_id": "66feefcf3a27cebc4c998760",
+    "name": "parameters"
+  },
   "name": "rubricResidualBalance",
   "description": "id da rubrica de resíduo - quando acontece o pagamento residual do saldo de conta",
   "data": {

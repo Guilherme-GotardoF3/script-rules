@@ -1,0 +1,227 @@
+//_id: {"$oid": "67002e3c96b075a4a914eff7"}
+//_tenant: sandbox-cs
+//name: newPeopleEmailsMigration
+//description: projeta os dados de emails para os novos cadastros na people
+//collection: pre_people
+
+//use("sandbox-cs");
+
+//db.pre_people.aggregate(
+    [
+        {
+          "$lookup": {
+            "from": "Collection_dictionary",
+            "localField": "identificador",
+            "foreignField": "id_origem",
+            "as": "idPeople",
+            "pipeline": [
+              {
+                "$match": {
+                  "$expr": {
+                    "$eq": [
+                      "$collection_name",
+                      "Pessoa"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$idPeople",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$match": {
+            "$expr": {
+              "$ne": [
+                "$nome",
+                ""
+              ]
+            },
+            "idPeople": {
+              "$exists": false
+            }
+          }
+        },
+        {
+          "$lookup": {
+            "from": "people",
+            "as": "idPeople",
+            "let": {
+              "document": "$documentos.documento"
+            },
+            "pipeline": [
+              {
+                "$unwind": {
+                  "path": "$documents"
+                }
+              },
+              {
+                "$match": {
+                  "$expr": {
+                    "$in": [
+                      "$documents.document",
+                      "$$document"
+                    ]
+                  }
+                }
+              },
+              {
+                "$limit": 1
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$idPeople",
+            "preserveNullAndEmptyArrays": false
+          }
+        },
+        {
+          "$project": {
+            "_id": "$idPeople._id",
+            "emails": {
+              "$ifNull": [
+                "$emails",
+                []
+              ]
+            }
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$emails"
+          }
+        },
+        {
+          "$lookup": {
+            "from": "Collection_dictionary",
+            "localField": "emails.identificador_tipo_email",
+            "foreignField": "id_origem",
+            "as": "idTipoEmail",
+            "pipeline": [
+              {
+                "$match": {
+                  "$expr": {
+                    "$eq": [
+                      "$collection_name",
+                      "Tipo_Email"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$idTipoEmail",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$lookup": {
+            "from": "CollectionIntegration_Tipo_Email",
+            "localField": "idTipoEmail.id_origem",
+            "foreignField": "identificador",
+            "as": "tipoEmail"
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$tipoEmail",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$lookup": {
+            "from": "Collection_dictionary",
+            "localField": "emails.identificador",
+            "foreignField": "id_origem",
+            "as": "idRaizEmails",
+            "pipeline": [
+              {
+                "$match": {
+                  "$expr": {
+                    "$eq": [
+                      "$collection_name",
+                      "Email"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$idRaizEmails",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$addFields": {
+            "emails": {
+              "$ifNull": [
+                "$emails",
+                null
+              ]
+            }
+          }
+        },
+        {
+          "$project": {
+            "_id": 1,
+            "root": 1,
+            "documents": 1,
+            "addresses": 1,
+            "phones": 1,
+            "emails": {
+              "$switch": {
+                "branches": [
+                  {
+                    "case": {
+                      "$eq": [
+                        "$emails",
+                        null
+                      ]
+                    },
+                    "then": []
+                  }
+                ],
+                "default": [
+                  {
+                    "_id": "$idRaizEmails.id_destino",
+                    "isPrimary": "$idTipoEmail.primario",
+                    "type": {
+                      "_id": "$idTipoEmail.id_destino",
+                      "name": "$tipoEmail.nome"
+                    },
+                    "email": "$emails.email"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "$unwind": {
+            "path": "$emails",
+            "preserveNullAndEmptyArrays": true
+          }
+        },
+        {
+          "$group": {
+            "_id": "$_id",
+            "emails": {
+              "$push": "$emails"
+            }
+          }
+        }
+      ]
+        //);

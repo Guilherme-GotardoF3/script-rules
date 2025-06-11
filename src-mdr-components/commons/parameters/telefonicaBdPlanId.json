@@ -1,5 +1,9 @@
 {
-  "_id": "66e03abdd0e7f4f32d0bf537",
+  "_id": "66e03abdc7bf7224fb123643",
+  "type": {
+    "_id": "66e03abdd0e7f4f32d0bf537",
+    "name": "parameters"
+  },
   "name": "telefonicaBdPlanId",
   "description": "parâmetro que guarda o id do plano Telefônica BD",
   "data": {

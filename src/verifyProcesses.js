@@ -1,89 +1,54 @@
 import fs from "fs";
 import path from "path";
-import { getDb } from "./mongo.js";
 
-const BASE_DIR = "src-mdr-components/commons";
+export async function verifyExportedProcesses(baseDir = "src-mdr-components/commons") {
+    const processNameMap = new Map();
 
-export async function verifyDatabase() {
-  const db = await getDb();
-  const dbProcesses = await db.collection("processes").find().toArray();
-  const dbProcessNames = dbProcesses.map(p => p.name);
+    function getProcessDirectories(areaPath) {
+        const processesRoot = path.join(areaPath, "processes");
+        if (!fs.existsSync(processesRoot)) return [];
 
-  const missingInFilesystem = [];
-  const duplicatedInFilesystem = [];
-  const unknownInFilesystem = [];
-
-  console.log("\n Verificando pastas de processos nas áreas...");
-
-  const areas = fs.readdirSync(BASE_DIR, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => dirent.name);
-
-  for (const area of areas) {
-    const processPath = path.join(BASE_DIR, area, "processes");
-    if (!fs.existsSync(processPath)) continue;
-
-    const folders = fs.readdirSync(processPath)
-      .filter(name => fs.statSync(path.join(processPath, name)).isDirectory());
-
-    const seen = new Set();
-
-    for (const folder of folders) {
-      if (seen.has(folder)) {
-        duplicatedInFilesystem.push({ area, name: folder });
-      } else {
-        seen.add(folder);
-      }
-
-      if (!dbProcessNames.includes(folder)) {
-        unknownInFilesystem.push({ area, name: folder });
-      }
+        return fs.readdirSync(processesRoot, { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory())
+            .map(dirent => dirent.name);
     }
-  }
 
-  // Verifica quais do banco não estão versionados
-  const versionedProcesses = [];
+    const areas = fs.readdirSync(baseDir, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name);
 
-  for (const area of areas) {
-    const processPath = path.join(BASE_DIR, area, "processes");
-    if (!fs.existsSync(processPath)) continue;
+    let total = 0;
 
-    const folders = fs.readdirSync(processPath)
-      .filter(name => fs.statSync(path.join(processPath, name)).isDirectory());
+    console.log("Validando processos exportados...");
+    for (const area of areas) {
+        const areaPath = path.join(baseDir, area);
+        const processes = getProcessDirectories(areaPath);
 
-    versionedProcesses.push(...folders);
-  }
+        total += processes.length;
 
-  for (const dbName of dbProcessNames) {
-    if (!versionedProcesses.includes(dbName)) {
-      missingInFilesystem.push(dbName);
+        console.log(`Área "${area}": ${processes.length} processo(s)`);
+
+        for (const proc of processes) {
+            const fullPath = `${area}/processes/${proc}`;
+            if (processNameMap.has(proc)) {
+                processNameMap.get(proc).push(fullPath);
+            } else {
+                processNameMap.set(proc, [fullPath]);
+            }
+        }
     }
-  }
 
-  console.log("\n Resultados da verificação:\n");
+    console.log(`\nTotal de processos encontrados: ${total}`);
 
-  if (duplicatedInFilesystem.length > 0) {
-    console.log("  Processos duplicados por pasta:");
-    duplicatedInFilesystem.forEach(p => console.log(`- ${p.name} (área: ${p.area})`));
-  }
+    const duplicated = [...processNameMap.entries()].filter(([_, paths]) => paths.length > 1);
 
-  if (unknownInFilesystem.length > 0) {
-    console.log("\n Pastas que não correspondem a nenhum processo no banco:");
-    unknownInFilesystem.forEach(p => console.log(`- ${p.name} (área: ${p.area})`));
-  }
-
-  if (missingInFilesystem.length > 0) {
-    console.log("\n Processos que existem no banco mas não estão versionados:");
-    missingInFilesystem.forEach(p => console.log(`- ${p}`));
-  }
-
-  if (
-    duplicatedInFilesystem.length === 0 &&
-    unknownInFilesystem.length === 0 &&
-    missingInFilesystem.length === 0
-  ) {
-    console.log(" Todos os processos estão corretamente versionados!");
-  }
-
-  console.log("\n Verificação concluída.");
+    if (duplicated.length > 0) {
+        console.warn("\nProcessos com nomes duplicados encontrados:");
+        for (const [name, locations] of duplicated) {
+            console.warn(`- "${name}" encontrado em:`);
+            locations.forEach(loc => console.warn(`   • ${loc}`));
+        }
+    } else {
+        console.log("Nenhum processo duplicado encontrado.");
+    }
 }

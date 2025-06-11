@@ -15,7 +15,7 @@ const AREAS = {
   "9": "registration",
   "p": "Update Parameters",
   "v": "Verification Processes",
-  "b": "Verification database",
+  "b": "Verification Database",
   "x": "Sair"
 };
 
@@ -53,13 +53,12 @@ const VALID_AREAS = Object.values(AREAS).filter(
     process.exit(0);
   }
 
-  if (areaChoice === "Verification database") {
+  if (areaChoice === "Verification Database") {
     console.log("Iniciando verificação de processos no banco de dados...");
     await verifyDatabase();
     process.exit(0);
   }
 
-  // Somente áreas válidas chegam aqui
   if (!VALID_AREAS.includes(areaChoice)) {
     console.error("Opção inválida.");
     process.exit(1);

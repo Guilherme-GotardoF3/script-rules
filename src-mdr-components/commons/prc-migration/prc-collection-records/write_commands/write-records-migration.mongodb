@@ -1,0 +1,29 @@
+//_id: {'$oid': '670447074472505798b6fa7c'}
+//_tenant: sandbox-cs
+//name: writeRecordsMigration
+//description: escrita dos dados de contribuição 
+//collection: collection_records_RMDRC
+
+{
+	command: {
+        "updateOne": {
+            "update": {
+                "$set": "$.$$.otpCollectionRecordsMigration"
+            },
+            "filter": {
+                "$and": [
+                    {
+                        "person.participation._id": "$.$$.otpCollectionRecordsMigration.person.participation._id"
+                    },
+                    {
+                        "paymentDate": "$.$$.otpCollectionRecordsMigration.paymentDate"
+                    },
+                    {
+                        "referenceDate": "$.$$.otpCollectionRecordsMigration.referenceDate"
+                    }
+                ]
+            },
+            "upsert": true
+        }
+    }
+}

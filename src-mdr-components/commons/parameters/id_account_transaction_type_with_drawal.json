@@ -1,5 +1,9 @@
 {
-  "_id": "67d17b2f349a10c4528cda40",
+  "_id": "67d17b2fa058376d908441bb",
+  "type": {
+    "_id": "67d17b2f349a10c4528cda40",
+    "name": "parameters"
+  },
   "name": "id_account_transaction_type_with_drawal",
   "description": "Parâmetro de baixa por pagamento de benefício",
   "data": {

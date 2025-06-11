@@ -1,0 +1,938 @@
+//_id: {"$oid": "66fff92c5306652e78fbbf8a"}
+//_tenant: sandbox-cs
+//name: newPeopleMigration
+//description: Tarefa que leva novas pessoas a collection de people
+//collection: pre_people
+
+//use("sandbox-cs");
+
+//db.pre_people.aggregate(
+  [
+    {
+      "$lookup": {
+        "from": "Collection_dictionary",
+        "localField": "identificador",
+        "foreignField": "id_origem",
+        "as": "idPeople",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$collection_name",
+                  "Pessoa"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$idPeople",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$ne": [
+            "$nome",
+            ""
+          ]
+        },
+        "idPeople": {
+          "$exists": false
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "data_nascimento": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$data_nascimento",
+                null
+              ]
+            },
+            "then": null,
+            "else": {
+              "$toDate": "$data_nascimento"
+            }
+          }
+        },
+        "data_falecimento": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$data_falecimento",
+                null
+              ]
+            },
+            "then": null,
+            "else": {
+              "$toDate": "$data_falecimento"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "CollectionIntegration_Estado_Civil",
+        "localField": "identificador_estado_civil",
+        "foreignField": "identificador",
+        "as": "maritalStatus"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$maritalStatus",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "name": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$nome",
+                    ""
+                  ]
+                },
+                "then": null
+              }
+            ],
+            "default": "$nome"
+          }
+        },
+        "birthDate": "$data_nascimento",
+        "image": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$imagem",
+                    ""
+                  ]
+                },
+                "then": null
+              }
+            ],
+            "default": "$imagem"
+          }
+        },
+        "sex": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$sexo",
+                    ""
+                  ]
+                },
+                "then": null
+              }
+            ],
+            "default": "$sexo"
+          }
+        },
+        "nationality": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$nacionalidade",
+                    ""
+                  ]
+                },
+                "then": null
+              }
+            ],
+            "default": "$nacionalidade"
+          }
+        },
+        "deathDate": "$data_falecimento",
+        "documents": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$documentos",
+                    ""
+                  ]
+                },
+                "then": []
+              }
+            ],
+            "default": "$documentos"
+          }
+        },
+        "foreignerData.livesAbroad": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$dado_estrangeiro",
+                    ""
+                  ]
+                },
+                "then": null
+              }
+            ],
+            "default": "$dado_estrangeiro"
+          }
+        },
+        "socialSecurityBenefit": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$identificador_beneficio_seguranca_social",
+                    ""
+                  ]
+                },
+                "then": null
+              }
+            ],
+            "default": "$identificador_beneficio_seguranca_social"
+          }
+        },
+        "educationLevel": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$nivel_educacional",
+                    ""
+                  ]
+                },
+                "then": null
+              }
+            ],
+            "default": "$nivel_educacional"
+          }
+        },
+        "isTaxFreeAtSixtyFive": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$livre_imposto_aos_sessenta_cincolivre_imposto_aos_sessenta_cinco",
+                    ""
+                  ]
+                },
+                "then": null
+              }
+            ],
+            "default": "$livre_imposto_aos_sessenta_cinco"
+          }
+        },
+        "isFatca": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$fatca",
+                    ""
+                  ]
+                },
+                "then": null
+              }
+            ],
+            "default": "$fatca"
+          }
+        },
+        "participations": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$or": [
+                    {
+                      "$eq": [
+                        "$participacoes",
+                        ""
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        "$participacoes",
+                        null
+                      ]
+                    }
+                  ]
+                },
+                "then": []
+              }
+            ],
+            "default": "$participacoes"
+          }
+        },
+        "disablement": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$invalido",
+                    ""
+                  ]
+                },
+                "then": null
+              }
+            ],
+            "default": "$invalido"
+          }
+        },
+        "isPoliticallyExposedPerson": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$pessoa_politicamente_exposta",
+                    ""
+                  ]
+                },
+                "then": null
+              }
+            ],
+            "default": "$pessoa_politicamente_exposta"
+          }
+        },
+        "incomeTaxFree": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$isento_imposto_renda",
+                    ""
+                  ]
+                },
+                "then": null
+              }
+            ],
+            "default": "$isento_imposto_renda"
+          }
+        },
+        "fatherName": "$nome_pai",
+        "motherName": "$nome_mae",
+        "maritalStatus": {
+          "_id": "$maritalStatus._id",
+          "name": "$maritalStatus.nome"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$documents",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "Collection_dictionary",
+        "localField": "documents.identificador_tipo_documento",
+        "foreignField": "id_origem",
+        "as": "idDocument",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$collection_name",
+                  "Tipo_Documento"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$idDocument",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "CollectionIntegration_Tipo_Documento",
+        "localField": "idDocument.id_origem",
+        "foreignField": "identificador",
+        "as": "tipoDocumento"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$tipoDocumento",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "documents": {
+          "$ifNull": [
+            "$documents",
+            null
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "name": 1,
+        "maritalStatus": 1,
+        "birthDate": 1,
+        "image": 1,
+        "sex": 1,
+        "nationality": 1,
+        "deathDate": 1,
+        "documents": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$documents",
+                    null
+                  ]
+                },
+                "then": []
+              }
+            ],
+            "default": [
+              {
+                "type": {
+                  "name": "$tipoDocumento.nome",
+                  "_id": "$idDocument.id_destino"
+                },
+                "isFake": "$documents.is_falso",
+                "document": "$documents.documento",
+                "issuedAt": {
+                  "$cond": {
+                    "if": {
+                      "$eq": [
+                        "$documents.data_emissao",
+                        null
+                      ]
+                    },
+                    "then": null,
+                    "else": {
+                      "$toDate": "$documents.data_emissao"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "foreignerData": 1,
+        "socialSecurityBenefit": 1,
+        "educationLevel": 1,
+        "isTaxFreeAtSixtyFive": 1,
+        "isFatca": 1,
+        "disablement": 1,
+        "isPoliticallyExposedPerson": 1,
+        "false": 1,
+        "incomeTaxFree": 1,
+        "fatherName": 1,
+        "motherName": 1,
+        "participations": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$documents",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "name": "$name",
+          "birthDate": "$birthDate"
+        },
+        "root": {
+          "$first": "$$ROOT"
+        },
+        "participations": {
+          "$first": "$participations"
+        },
+        "documents": {
+          "$push": "$documents"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "Collection_dictionary",
+        "localField": "participations.identificador_classe_participacao",
+        "foreignField": "id_origem",
+        "as": "idClasseParticipacao",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$collection_name",
+                  "Classes_Participacao"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$idClasseParticipacao",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "Collection_dictionary",
+        "localField": "participations.identificador_grupo_participacao",
+        "foreignField": "id_origem",
+        "as": "idGrupoParticipacao",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$collection_name",
+                  "Grupos_participacao"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$idGrupoParticipacao",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "Collection_dictionary",
+        "localField": "participations.identificador_fonte_participacao",
+        "foreignField": "id_origem",
+        "as": "idFonteParticipacao",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$collection_name",
+                  "Participacao"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$idFonteParticipacao",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "Collection_dictionary",
+        "localField": "participations.identificador_tipo_regime_tributario",
+        "foreignField": "id_origem",
+        "as": "idTipoRegimeTributario",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$collection_name",
+                  "Tipo_Regime_Tributario"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$idTipoRegimeTributario",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "CollectionIntegration_Classes_Participacao",
+        "localField": "idClasseParticipacao.id_origem",
+        "foreignField": "identificador",
+        "as": "plano"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$plano",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "Collection_dictionary",
+        "localField": "plano.identificador_plano",
+        "foreignField": "id_origem",
+        "as": "idClassePlano",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$collection_name",
+                  "Planos"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$idClassePlano",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "Collection_dictionary",
+        "localField": "plano.identificador_situacao",
+        "foreignField": "id_origem",
+        "as": "idClasseSituacao",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$collection_name",
+                  "Situacao_Participacao"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$idClasseSituacao",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "Collection_dictionary",
+        "localField": "plano.identificador_tipo_classe_participacao",
+        "foreignField": "id_origem",
+        "as": "idClasseTipo",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$collection_name",
+                  "Tipo_Participacao"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$idClasseTipo",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "CollectionIntegration_Tipo_Regime_Tributario",
+        "localField": "idTipoRegimeTributario.id_origem",
+        "foreignField": "identificador",
+        "as": "nomeRegimeTributario"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$nomeRegimeTributario",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "Collection_dictionary",
+        "localField": "participations.identificador",
+        "foreignField": "id_origem",
+        "as": "idParticipation",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$collection_name",
+                  "Participacao"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$idParticipation",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "participations": {
+          "$ifNull": [
+            "$participations",
+            null
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "root.documents": "$documents",
+        "participations": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$participations",
+                    null
+                  ]
+                },
+                "then": []
+              }
+            ],
+            "default": [
+              {
+                "_id": "$idParticipation.id_destino",
+                "participationClass": {
+                  "_id": "$idClasseParticipacao.id_destino",
+                  "plan": {
+                    "_id": "$idClassePlano.id_destino",
+                    "name": "$plano.plan.nome"
+                  },
+                  "type": {
+                    "_id": "$idClasseTipo.id_destino",
+                    "name": "$plano.type.nome"
+                  },
+                  "status": {
+                    "_id": "$idClasseSituacao.id_destino",
+                    "name": "$plano.status.nome"
+                  }
+                },
+                "customFields": {
+                  "IDParticipante": {
+                    "$trim": {
+                      "input": {
+                        "$arrayElemAt": [
+                          {
+                            "$split": [
+                              {
+                                "$arrayElemAt": [
+                                  {
+                                    "$split": [
+                                      "$participations.identificador_original",
+                                      " - "
+                                    ]
+                                  },
+                                  0
+                                ]
+                              },
+                              "IDParticipante: "
+                            ]
+                          },
+                          1
+                        ]
+                      }
+                    }
+                  },
+                  "ContratoParticipante": {
+                    "$trim": {
+                      "input": {
+                        "$arrayElemAt": [
+                          {
+                            "$split": [
+                              {
+                                "$arrayElemAt": [
+                                  {
+                                    "$split": [
+                                      "$participations.identificador_original",
+                                      " - "
+                                    ]
+                                  },
+                                  1
+                                ]
+                              },
+                              "ContratoPartipante: "
+                            ]
+                          },
+                          1
+                        ]
+                      }
+                    }
+                  }
+                },
+                "participationGroup": {
+                  "$switch": {
+                    "branches": [
+                      {
+                        "case": {
+                          "$eq": [
+                            "$idGrupoParticipacao",
+                            null
+                          ]
+                        },
+                        "then": null
+                      }
+                    ],
+                    "default": null
+                  }
+                },
+                "effectiveDate": {
+                  "endedAt": {
+                    "$cond": {
+                      "if": {
+                        "$eq": [
+                          "$participations.final_vigencia",
+                          null
+                        ]
+                      },
+                      "then": null,
+                      "else": {
+                        "$toDate": "$participations.final_vigencia"
+                      }
+                    }
+                  },
+                  "startedAt": {
+                    "$cond": {
+                      "if": {
+                        "$eq": [
+                          "$participations.inicio_vigencia",
+                          null
+                        ]
+                      },
+                      "then": null,
+                      "else": {
+                        "$toDate": "$participations.inicio_vigencia"
+                      }
+                    }
+                  }
+                },
+                "tags": {
+                  "$switch": {
+                    "branches": [
+                      {
+                        "case": {
+                          "$eq": [
+                            "$idGrupoParticipacao.identificador_tag",
+                            ""
+                          ]
+                        },
+                        "then": null
+                      }
+                    ],
+                    "default": "$idGrupoParticipacao.identificador_tag"
+                  }
+                },
+                "number": "$participations.numero",
+                "taxRegimeType": {
+                  "_id": "$idTipoRegimeTributario.id_destino",
+                  "date": {
+                    "$cond": {
+                      "if": {
+                        "$eq": [
+                          "$participations.data_opcao_tributacao",
+                          null
+                        ]
+                      },
+                      "then": null,
+                      "else": {
+                        "$toDate": "$participations.data_opcao_tributacao"
+                      }
+                    }
+                  },
+                  "name": "$nomeRegimeTributario.nome"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id",
+        "root": {
+          "$first": "$root"
+        },
+        "participations": {
+          "$push": "$participations"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "root.participations": "$participations"
+      }
+    },
+    {
+      "$replaceRoot": {
+        "newRoot": "$root"
+      }
+    }
+  ]
+        //);

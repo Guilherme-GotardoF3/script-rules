@@ -1,5 +1,9 @@
 {
-  "_id": "66a78cd7dc7efd212efea372",
+  "_id": "66a78cd8da2171c2839d89e3",
+  "type": {
+    "_id": "66a78cd7dc7efd212efea372",
+    "name": "parameters"
+  },
   "name": "loanItemId",
   "description": "id da rubrica de empréstimo",
   "data": {

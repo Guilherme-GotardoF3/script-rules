@@ -1,0 +1,1161 @@
+//_id: {""}
+//_tenant: sandbox-migration
+//name: integrationPessoa
+//description: Aggregation utilizado para validar se as chaves estrangeiras existem.
+//use("sandbox-migration");
+
+//db.CollectionRepositoryBase_Pessoa.aggregate(
+  [
+    {
+      "$project": {
+        "_id": 1, 
+        "all": "$$ROOT", 
+        "documentos": {
+          "$ifNull": [
+            "$documentos", []
+          ]
+        }
+      }
+    }, {
+      "$unwind": {
+        "path": "$documentos", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$addFields": {
+        "documents": {
+          "issuedAt": {
+            "$ifNull": [
+              {
+                "$toDate": "$documentos.data_emissao._date"
+              }, null
+            ]
+          }, 
+          "document": "$documentos.documento"
+        }
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Tipo_Documento", 
+        "localField": "documentos.identificador_tipo_documento", 
+        "foreignField": "identificador", 
+        "as": "documents.type", 
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1, 
+              "name": "$nome"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$documents.type", 
+        "preserveNullAndEmptyArrays": false
+      }
+    }, {
+      "$group": {
+        "_id": "$_id", 
+        "all": {
+          "$first": "$all"
+        }, 
+        "documents": {
+          "$push": "$documents"
+        }, 
+        "address": {
+          "$first": "$all.enderecos"
+        }
+      }
+    }, {
+      "$unwind": {
+        "path": "$address", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Tipo_Endereco", 
+        "localField": "address.identificador_tipo_endereco", 
+        "foreignField": "identificador", 
+        "as": "address.type", 
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1, 
+              "name": "$nome"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$address.type", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Cidades", 
+        "localField": "address.identificador_cidade", 
+        "foreignField": "identificador", 
+        "as": "address.city", 
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1, 
+              "name": "$nome"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$address.city", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Estados", 
+        "localField": "address.identificador_estado", 
+        "foreignField": "identificador", 
+        "as": "address.state", 
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1, 
+              "name": "$nome"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$address.state", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Paises", 
+        "localField": "address.identificador_pais", 
+        "foreignField": "identificador", 
+        "as": "address.country", 
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1, 
+              "name": "$nome"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$address.country", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$project": {
+        "_id": 1, 
+        "all": 1, 
+        "documents": 1, 
+        "address": {
+          "type": "$address.type", 
+          "address": "$address.endereco", 
+          "number": "$numero", 
+          "complement": "$address.complemento", 
+          "neighborhood": "$address.bairro", 
+          "city": "$address.city", 
+          "state": "$address.state", 
+          "country": "$address.country", 
+          "zipcode": "$address.cep", 
+          "isPrimary": "$address.endereco_padrao"
+        }
+      }
+    }, {
+      "$group": {
+        "_id": "$_id", 
+        "all": {
+          "$first": "$all"
+        }, 
+        "documents": {
+          "$first": "$documents"
+        }, 
+        "address": {
+          "$push": "$address"
+        }, 
+        "emails": {
+          "$first": "$all.emails"
+        }
+      }
+    }, {
+      "$unwind": {
+        "path": "$emails", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Tipo_Email", 
+        "localField": "emails.identificador_tipo_email", 
+        "foreignField": "identificador", 
+        "as": "emails.type", 
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1, 
+              "name": "$nome"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$emails.type", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$project": {
+        "_id": 1, 
+        "all": 1, 
+        "documents": 1, 
+        "address": 1, 
+        "emails": {
+          "email": "$emails.email", 
+          "type": "$emails.type", 
+          "isPrimary": "$emails.principal"
+        }
+      }
+    }, {
+      "$group": {
+        "_id": "$_id", 
+        "all": {
+          "$first": "$all"
+        }, 
+        "documents": {
+          "$first": "$documents"
+        }, 
+        "address": {
+          "$first": "$address"
+        }, 
+        "emails": {
+          "$push": "$emails"
+        }, 
+        "phones": {
+          "$first": "$all.telefones"
+        }
+      }
+    }, {
+      "$unwind": {
+        "path": "$phones", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Tipo_Telefone", 
+        "localField": "phones.identificador_tipo_telefone", 
+        "foreignField": "identificador", 
+        "as": "phones.type", 
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1, 
+              "name": "$nome"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$phones.type", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$project": {
+        "_id": 1, 
+        "all": 1, 
+        "documents": 1, 
+        "address": 1, 
+        "emails": 1, 
+        "phones": {
+          "type": "$phones.type", 
+          "ddi": "$phones.ddi", 
+          "ddd": "$phones.ddd", 
+          "number": "$phones.numero", 
+          "extension": "$phones.extensao", 
+          "isPrimary": "$phones.primario", 
+          "notification": {
+            "sms": "$phones.notificacao_sms", 
+            "whatsapp": "$phones.notificacao_whatsapp"
+          }
+        }
+      }
+    }, {
+      "$group": {
+        "_id": "$_id", 
+        "all": {
+          "$first": "$all"
+        }, 
+        "documents": {
+          "$first": "$documents"
+        }, 
+        "address": {
+          "$first": "$address"
+        }, 
+        "emails": {
+          "$first": "$emails"
+        }, 
+        "phones": {
+          "$push": "$phones"
+        }, 
+        "bankAccounts": {
+          "$first": "$all.contas_bancarias"
+        }
+      }
+    }, {
+      "$unwind": {
+        "path": "$bankAccounts", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Finalidade_Conta_Bancaria", 
+        "localField": "bankAccounts.identificador_finalidade_conta_bancaria", 
+        "foreignField": "identificador", 
+        "as": "bankAccounts.purpose", 
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1, 
+              "name": "$nome"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$bankAccounts.purpose", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Tipo_Conta_Bancaria", 
+        "localField": "bankAccounts.identificador_tipo_conta_bancaria", 
+        "foreignField": "identificador", 
+        "as": "bankAccounts.type", 
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1, 
+              "name": "$nome"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$bankAccounts.type", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Bancos", 
+        "localField": "bankAccounts.identificador_banco", 
+        "foreignField": "identificador", 
+        "as": "bankAccounts.bank", 
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1, 
+              "name": "$nome"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$bankAccounts.bank", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$project": {
+        "_id": 1, 
+        "all": 1, 
+        "documents": 1, 
+        "address": 1, 
+        "emails": 1, 
+        "phones": 1, 
+        "bankAccounts": {
+          "pix": "$bankAccounts.pix", 
+          "purpose": "$bankAccounts.purpose", 
+          "type": "$bankAccounts.type", 
+          "bank": "$bankAccounts.bank", 
+          "agency": "$bankAccounts.agencia", 
+          "account": "$bankAccounts.conta", 
+          "digit": "$bankAccounts.digito", 
+          "isPrimary": "$bankAccounts.primaria"
+        }
+      }
+    }, {
+      "$group": {
+        "_id": "$_id", 
+        "all": {
+          "$first": "$all"
+        }, 
+        "documents": {
+          "$first": "$documents"
+        }, 
+        "address": {
+          "$first": "$address"
+        }, 
+        "emails": {
+          "$first": "$emails"
+        }, 
+        "phones": {
+          "$first": "$phones"
+        }, 
+        "bankAccounts": {
+          "$push": "$bankAccounts"
+        }, 
+        "maritalStatus": {
+          "$first": "$all.identificador_estado_civil"
+        }
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Estado_Civil", 
+        "localField": "maritalStatus", 
+        "foreignField": "identificador", 
+        "as": "maritalStatus", 
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1, 
+              "name": "$nome"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$maritalStatus", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$project": {
+        "_id": 1, 
+        "all": 1, 
+        "documents": 1, 
+        "address": 1, 
+        "emails": 1, 
+        "phones": 1, 
+        "bankAccounts": 1, 
+        "maritalStatus": 1, 
+        "participations": "$all.participacoes"
+      }
+    }, {
+      "$unwind": {
+        "path": "$participations", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Classes_Participacao", 
+        "localField": "participations.identificador_classe_participacao", 
+        "foreignField": "identificador", 
+        "as": "participations.participationClass", 
+        "pipeline": [
+          {
+            "$addFields": {
+              "translated._id": "$_id"
+            }
+          }, {
+            "$replaceRoot": {
+              "newRoot": "$translated"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$participations.participationClass", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Tipo_Regime_Tributario", 
+        "localField": "participations.identificador_tipo_regime_tributario", 
+        "foreignField": "identificador", 
+        "as": "participations.taxRegimeType", 
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1, 
+              "name": "$nome"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$participations.taxRegimeType", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Grupo_Participacao", 
+        "localField": "participations.identificador_grupo_participacao", 
+        "foreignField": "identificador", 
+        "as": "participations.participationGroup", 
+        "pipeline": [
+          {
+            "$addFields": {
+              "translated._id": "$_id"
+            }
+          }, {
+            "$replaceRoot": {
+              "newRoot": "$translated"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$participations.participationGroup", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$project": {
+        "_id": 1, 
+        "all": 1, 
+        "documents": 1, 
+        "address": 1, 
+        "emails": 1, 
+        "phones": 1, 
+        "bankAccounts": 1, 
+        "maritalStatus": 1, 
+        "participations": {
+          "number": "$participations.numero", 
+          "participationClass": "$participations.participationClass", 
+          "participationGroup": "$participations.participationGroup", 
+          "tags": "$participations.identificador_tag", 
+          "taxRegimeType": "$participations.taxRegimeType", 
+          "effectiveDate": {
+            "endedAt": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$participations.final_vigencia", null
+                  ]
+                }, 
+                "then": null, 
+                "else": {
+                  "$toDate": "$participations.final_vigencia._date"
+                }
+              }
+            }, 
+            "startedAt": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$participations.inicio_vigencia", null
+                  ]
+                }, 
+                "then": null, 
+                "else": {
+                  "$toDate": "$participations.inicio_vigencia._date"
+                }
+              }
+            }
+          }, 
+          "history": []
+        }
+      }
+    }, {
+      "$group": {
+        "_id": "$_id", 
+        "all": {
+          "$first": "$all"
+        }, 
+        "documents": {
+          "$first": "$documents"
+        }, 
+        "address": {
+          "$first": "$address"
+        }, 
+        "emails": {
+          "$first": "$emails"
+        }, 
+        "phones": {
+          "$first": "$phones"
+        }, 
+        "bankAccounts": {
+          "$first": "$bankAccounts"
+        }, 
+        "maritalStatus": {
+          "$first": "$maritalStatus"
+        }, 
+        "participations": {
+          "$push": "$participations"
+        }, 
+        "incomeTaxFree": {
+          "$first": "$all.isento_imposto_renda"
+        }, 
+        "disablement": {
+          "$first": "$all.invalido"
+        }
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Classificacao_Doencas", 
+        "localField": "incomeTaxFree.identificador_classificacao_doencas", 
+        "foreignField": "identificador", 
+        "as": "incomeTaxFree.icd", 
+        "pipeline": [
+          {
+            "$addFields": {
+              "translated._id": "$_id"
+            }
+          }, {
+            "$replaceRoot": {
+              "newRoot": "$translated"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$incomeTaxFree.icd", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Classificacao_Doencas", 
+        "localField": "disablement.identificador_classificacao_doencas", 
+        "foreignField": "identificador", 
+        "as": "disablement.icd", 
+        "pipeline": [
+          {
+            "$addFields": {
+              "translated._id": "$_id"
+            }
+          }, {
+            "$replaceRoot": {
+              "newRoot": "$translated"
+            }
+          }
+        ]
+      }
+    }, {
+      "$unwind": {
+        "path": "$disablement.icd", 
+        "preserveNullAndEmptyArrays": true
+      }
+    }, {
+      "$project": {
+        "_id": 1, 
+        "all": 1, 
+        "documents": 1, 
+        "address": 1, 
+        "emails": 1, 
+        "phones": 1, 
+        "bankAccounts": 1, 
+        "maritalStatus": 1, 
+        "participations": 1, 
+        "incomeTaxFree": {
+          "icd": "$incomeTaxFree.icd", 
+          "observation": "$incomeTaxFree.observacao", 
+          "effectiveDate": {
+            "endedAt": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$incomeTaxFree.final_vigencia", null
+                  ]
+                }, 
+                "then": null, 
+                "else": {
+                  "$toDate": "$incomeTaxFree.final_vigencia._date"
+                }
+              }
+            }, 
+            "startedAt": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$incomeTaxFree.inicio_vigencia", null
+                  ]
+                }, 
+                "then": null, 
+                "else": {
+                  "$toDate": "$incomeTaxFree.inicio_vigencia._date"
+                }
+              }
+            }
+          }
+        }, 
+        "disablement": {
+          "icd": "$disablement.icd", 
+          "observation": "$disablement.observacao", 
+          "effectiveDate": {
+            "endedAt": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$disablement.final_vigencia", null
+                  ]
+                }, 
+                "then": null, 
+                "else": {
+                  "$toDate": "$disablement.final_vigencia._date"
+                }
+              }
+            }, 
+            "startedAt": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$disablement.inicio_vigencia", null
+                  ]
+                }, 
+                "then": null, 
+                "else": {
+                  "$toDate": "$disablement.inicio_vigencia._date"
+                }
+              }
+            }
+          }
+        }
+      }
+    }, {
+      "$project": {
+        "_id": 1, 
+        "all": 1, 
+        "emails": 1, 
+        "address": 1, 
+        "phones": 1, 
+        "documents": 1, 
+        "bankAccounts": 1, 
+        "maritalStatus": 1, 
+        "incomeTaxFree": 1, 
+        "disablement": 1, 
+        "participations": 1, 
+        "foreignerData": null, 
+        "action": {
+          "$cond": {
+            "if": {
+              "$gt": [
+                {
+                  "$size": {
+                    "$filter": {
+                      "input": "$emails", 
+                      "as": "email", 
+                      "cond": {
+                        "$and": [
+                          {
+                            "$ne": [
+                              "$all.emails", null
+                            ]
+                          }, {
+                            "$eq": [
+                              {
+                                "$ifNull": [
+                                  "$$email.type", null
+                                ]
+                              }, null
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }, 0
+              ]
+            }, 
+            "then": "failure", 
+            "else": {
+              "$cond": {
+                "if": {
+                  "$gt": [
+                    {
+                      "$size": {
+                        "$filter": {
+                          "input": "$address", 
+                          "as": "address", 
+                          "cond": {
+                            "$and": [
+                              {
+                                "$ne": [
+                                  "$all.enderecos", null
+                                ]
+                              }, {
+                                "$or": [
+                                  {
+                                    "$eq": [
+                                      {
+                                        "$ifNull": [
+                                          "$$address.type", null
+                                        ]
+                                      }, null
+                                    ]
+                                  }, {
+                                    "$eq": [
+                                      {
+                                        "$ifNull": [
+                                          "$$address.city", null
+                                        ]
+                                      }, null
+                                    ]
+                                  }, {
+                                    "$eq": [
+                                      {
+                                        "$ifNull": [
+                                          "$$address.state", null
+                                        ]
+                                      }, null
+                                    ]
+                                  }, {
+                                    "$eq": [
+                                      {
+                                        "$ifNull": [
+                                          "$$address.country", null
+                                        ]
+                                      }, null
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }, 0
+                  ]
+                }, 
+                "then": "failure", 
+                "else": {
+                  "$cond": {
+                    "if": {
+                      "$gt": [
+                        {
+                          "$size": {
+                            "$filter": {
+                              "input": "$phones", 
+                              "as": "phone", 
+                              "cond": {
+                                "$and": [
+                                  {
+                                    "$ne": [
+                                      "$all.telefones", null
+                                    ]
+                                  }, {
+                                    "$eq": [
+                                      {
+                                        "$ifNull": [
+                                          "$$phone.type", null
+                                        ]
+                                      }, null
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }, 0
+                      ]
+                    }, 
+                    "then": "failure", 
+                    "else": {
+                      "$cond": {
+                        "if": {
+                          "$gt": [
+                            {
+                              "$size": {
+                                "$filter": {
+                                  "input": "$participations", 
+                                  "as": "participation", 
+                                  "cond": {
+                                    "$and": [
+                                      {
+                                        "$ne": [
+                                          "$all.participacoes", null
+                                        ]
+                                      }, {
+                                        "$or": [
+                                          {
+                                            "$eq": [
+                                              {
+                                                "$ifNull": [
+                                                  "$$participation.participationClass", null
+                                                ]
+                                              }, null
+                                            ]
+                                          }, {
+                                            "$eq": [
+                                              {
+                                                "$ifNull": [
+                                                  "$$participation.taxRegimeType", null
+                                                ]
+                                              }, null
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            }, 0
+                          ]
+                        }, 
+                        "then": "failure", 
+                        "else": {
+                          "$cond": {
+                            "if": {
+                              "$gt": [
+                                {
+                                  "$size": {
+                                    "$filter": {
+                                      "input": "$documents", 
+                                      "as": "document", 
+                                      "cond": {
+                                        "$and": [
+                                          {
+                                            "$ne": [
+                                              "$all.documentos", null
+                                            ]
+                                          }, {
+                                            "$eq": [
+                                              {
+                                                "$ifNull": [
+                                                  "$$document.type", null
+                                                ]
+                                              }, null
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  }
+                                }, 0
+                              ]
+                            }, 
+                            "then": "failure", 
+                            "else": {
+                              "$cond": {
+                                "if": {
+                                  "$gt": [
+                                    {
+                                      "$size": {
+                                        "$filter": {
+                                          "input": "$bankAccounts", 
+                                          "as": "bankAccounts", 
+                                          "cond": {
+                                            "$and": [
+                                              {
+                                                "$ne": [
+                                                  "$all.contas_bancarias", null
+                                                ]
+                                              }, {
+                                                "$or": [
+                                                  {
+                                                    "$eq": [
+                                                      {
+                                                        "$ifNull": [
+                                                          "$$bankAccounts.type", null
+                                                        ]
+                                                      }, null
+                                                    ]
+                                                  }, {
+                                                    "$eq": [
+                                                      {
+                                                        "$ifNull": [
+                                                          "$$bankAccounts.purpose", null
+                                                        ]
+                                                      }, null
+                                                    ]
+                                                  }, {
+                                                    "$eq": [
+                                                      {
+                                                        "$ifNull": [
+                                                          "$$bankAccounts.bank", null
+                                                        ]
+                                                      }, null
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    }, 0
+                                  ]
+                                }, 
+                                "then": "failure", 
+                                "else": {
+                                  "$cond": {
+                                    "if": {
+                                      "$and": [
+                                        {
+                                          "$ne": [
+                                            "$all.identificador_estado_civil", null
+                                          ]
+                                        }, {
+                                          "$eq": [
+                                            {
+                                              "$ifNull": [
+                                                "$maritalStatus._id", null
+                                              ]
+                                            }, null
+                                          ]
+                                        }
+                                      ]
+                                    }, 
+                                    "then": "failure", 
+                                    "else": {
+                                      "$cond": {
+                                        "if": {
+                                          "$and": [
+                                            {
+                                              "$ne": [
+                                                "$all.isento_imposto_renda.identificador_classificacao_doencas", null
+                                              ]
+                                            }, {
+                                              "$eq": [
+                                                {
+                                                  "$ifNull": [
+                                                    "$incomeTaxFree.icd._id", null
+                                                  ]
+                                                }, null
+                                              ]
+                                            }
+                                          ]
+                                        }, 
+                                        "then": "failure", 
+                                        "else": {
+                                          "$cond": {
+                                            "if": {
+                                              "$and": [
+                                                {
+                                                  "$ne": [
+                                                    "$all.invalido", null
+                                                  ]
+                                                }, {
+                                                  "$eq": [
+                                                    {
+                                                      "$ifNull": [
+                                                        "$disablement.icd._id", null
+                                                      ]
+                                                    }, null
+                                                  ]
+                                                }
+                                              ]
+                                            }, 
+                                            "then": "failure", 
+                                            "else": "done"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }, {
+      "$project": {
+        "_id": 1, 
+        "all": 1, 
+        "action": 1, 
+        "documents": 1, 
+        "address": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$all.enderecos", null
+              ]
+            }, 
+            "then": [], 
+            "else": "$address"
+          }
+        }, 
+        "mails": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$all.emails", null
+              ]
+            }, 
+            "then": [], 
+            "else": "$emails"
+          }
+        }, 
+        "phones": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$all.telefones", null
+              ]
+            }, 
+            "then": [], 
+            "else": "$phones"
+          }
+        }, 
+        "bankAccounts": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$all.contas_bancarias", null
+              ]
+            }, 
+            "then": [], 
+            "else": "$bankAccounts"
+          }
+        }, 
+        "maritalStatus": 1, 
+        "participations": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$all.participacoes", null
+              ]
+            }, 
+            "then": [], 
+            "else": "$participations"
+          }
+        }, 
+        "incomeTaxFree": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$all.isento_imposto_renda", null
+              ]
+            }, 
+            "then": null, 
+            "else": "$incomeTaxFree"
+          }
+        }, 
+        "disablement": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$all.invalido", null
+              ]
+            }, 
+            "then": null, 
+            "else": "$disablement"
+          }
+        }, 
+        "foreignerData": 1
+      }
+    }
+  ]
+                //);

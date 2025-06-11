@@ -1,5 +1,9 @@
 {
-  "_id": "671abc3294fdb65603771749",
+  "_id": "671abc3213ef5c7150bb9318",
+  "type": {
+    "_id": "671abc3294fdb65603771749",
+    "name": "parameters"
+  },
   "name": "exemptRubric",
   "description": "id da rubrica do Benefício Isento (exigibilidade suspensa)",
   "data": {

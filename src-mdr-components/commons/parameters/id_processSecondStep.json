@@ -1,5 +1,9 @@
 {
-  "_id": "67e71372ce2425787f723dd4",
+  "_id": "67e7137224492fdc3850278f",
+  "type": {
+    "_id": "67e71372ce2425787f723dd4",
+    "name": "parameters"
+  },
   "name": "id_processSecondStep",
   "description": "Seleciona o id do processo prcBenefitGenerationSecondStep",
   "data": {

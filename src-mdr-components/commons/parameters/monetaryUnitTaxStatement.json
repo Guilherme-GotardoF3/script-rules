@@ -1,5 +1,9 @@
 {
-  "_id": "6737a5da0cd3a5be1abdd259",
+  "_id": "6737a5da22e68b4ba5daeb60",
+  "type": {
+    "_id": "6737a5da0cd3a5be1abdd259",
+    "name": "parameters"
+  },
   "name": "monetaryUnitTaxStatement",
   "description": "testCley",
   "data": {

@@ -1,5 +1,9 @@
 {
-  "_id": "67ded2f816b2d5085d5191f6",
+  "_id": "67ded2f8cdb24f8c8692d6b7",
+  "type": {
+    "_id": "67ded2f816b2d5085d5191f6",
+    "name": "parameters"
+  },
   "name": "id_processFirstStepOceano",
   "description": "Seleciona o id do processo do firstStepOceano que faz a transformação da aposentadoria em pensão por morte via oceano",
   "data": {

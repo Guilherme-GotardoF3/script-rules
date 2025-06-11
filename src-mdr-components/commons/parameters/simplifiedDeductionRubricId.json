@@ -1,5 +1,9 @@
 {
-  "_id": "66e08c7a2cea870a922172cf",
+  "_id": "66e08c7a5647de4b8f5fdbcb",
+  "type": {
+    "_id": "66e08c7a2cea870a922172cf",
+    "name": "parameters"
+  },
   "name": "simplifiedDeductionRubricId",
   "description": "parâmetro que guarda o id da rubrica de dedução simplificada ",
   "data": {

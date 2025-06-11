@@ -1,0 +1,25 @@
+//_id: {'$oid': '6703eb75423324021de27ee7'}
+//_tenant: sandbox-cs
+//name: writeUpdateParticipationsAccountMovements
+//description: Atualização da referencia estendida de pessoa
+//collection: account_movements
+
+{
+	command: {
+        "updateOne": {
+            "update": {
+                "$set": {
+                    "person": "$.$$.otpUpdateParticipationsAccountMovements.person"
+                }
+            },
+            "filter": {
+                "$and": [
+                    {
+                        "_id": "$.$$.otpUpdateParticipationsAccountMovements.accountMovements"
+                    }
+                ]
+            },
+            "upsert": true
+        }
+    }
+}

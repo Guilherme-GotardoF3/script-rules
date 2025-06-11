@@ -1,5 +1,9 @@
 {
-  "_id": "66e44e27137b1d08405e2f7e",
+  "_id": "66e44e278be6af7903960c76",
+  "type": {
+    "_id": "66e44e27137b1d08405e2f7e",
+    "name": "parameters"
+  },
   "name": "occurenceExemptBalanceId",
   "description": "id da ocorrência da baixa de saldo isento IN1343",
   "data": {

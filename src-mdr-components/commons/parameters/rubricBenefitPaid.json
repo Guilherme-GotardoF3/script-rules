@@ -1,5 +1,9 @@
 {
-  "_id": "672570edb44127f6dd0970b9",
+  "_id": "672570ed41f6de44f51d541b",
+  "type": {
+    "_id": "672570edb44127f6dd0970b9",
+    "name": "parameters"
+  },
   "name": "rubricBenefitPaid",
   "description": "Id da rubrica \"Benefício Saldado\"",
   "data": {

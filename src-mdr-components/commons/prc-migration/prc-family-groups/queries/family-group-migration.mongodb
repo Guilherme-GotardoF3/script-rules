@@ -1,0 +1,272 @@
+//_id: {"$oid": "67098926176c174bb71de1b9"}
+//_tenant: sandbox-cs
+//name: familyGroupMigration
+//description: migração da collection family_groups
+//collection: pre_people
+
+//use("sandbox-cs");
+
+//db.pre_people.aggregate(
+  [
+    {
+      "$lookup": {
+        "from": "Collection_dictionary",
+        "localField": "identificador",
+        "foreignField": "id_origem",
+        "as": "idPeople",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$collection_name",
+                  "Pessoa"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$idPeople",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": "$idPeople.id_destino",
+        "identificador": 1
+      }
+    },
+    {
+      "$match": {
+        "$or": [
+          {
+            "$expr": {
+              "$eq": [
+                {
+                  "$size": [
+                    "$.people"
+                  ]
+                },
+                0
+              ]
+            }
+          },
+          {
+            "_id": {
+              "$in": "$.people"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "CollectionIntegration_Grupo_Familiar",
+        "localField": "identificador",
+        "foreignField": "pessoa.identificador",
+        "as": "grupoFamiliar"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$grupoFamiliar",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$grupoFamiliar.dependentes",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "Collection_dictionary",
+        "localField": "grupoFamiliar.dependentes.pessoa.identificador",
+        "foreignField": "id_origem",
+        "as": "idPeople",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$collection_name",
+                  "Pessoa"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$idPeople",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "idPeople.id_destino",
+        "foreignField": "_id",
+        "as": "person",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "documents": 1,
+              "birthDate": 1,
+              "disablement": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "CollectionIntegration_Parentesco",
+        "localField": "grupoFamiliar.dependentes.parentesco",
+        "foreignField": "identificador",
+        "as": "parentesco"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$parentesco",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "Collection_dictionary",
+        "localField": "parentesco.identificador",
+        "foreignField": "id_origem",
+        "as": "idParentesco",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$collection_name",
+                  "Parentesco"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$idParentesco",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "dependent": {
+          "person": "$person",
+          "beneficiaries": [],
+          "tags": [],
+          "kinship": {
+            "_id": "$idParentesco.id_destino",
+            "name": "$parentesco.nome"
+          },
+          "isTaxIncomeDependent": {
+            "$switch": {
+              "branches": [
+                {
+                  "case": {
+                    "$eq": [
+                      "$grupoFamiliar.dependentes.dependente_de_IR",
+                      0
+                    ]
+                  },
+                  "then": false
+                },
+                {
+                  "case": {
+                    "$eq": [
+                      "$grupoFamiliar.dependentes.dependente_de_IR",
+                      1
+                    ]
+                  },
+                  "then": true
+                }
+              ],
+              "default": "$grupoFamiliar.dependentes.dependente_de_IR"
+            }
+          },
+          "effectiveDate": {
+            "startedAt": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$grupoFamiliar.dependentes.data_vigencia.inicio_vigencia",
+                    null
+                  ]
+                },
+                "then": null,
+                "else": {
+                  "$toDate": "$grupoFamiliar.dependentes.data_vigencia.inicio_vigencia"
+                }
+              }
+            },
+            "endedAt": {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$grupoFamiliar.dependentes.data_vigencia.final_vigencia",
+                    null
+                  ]
+                },
+                "then": null,
+                "else": {
+                  "$toDate": "$grupoFamiliar.dependentes.data_vigencia.final_vigencia"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "person": "$_id",
+        "dependent": 1
+      }
+    },
+    {
+      "$group": {
+        "_id": "$person",
+        "person": {
+          "$first": "$person"
+        },
+        "dependents": {
+          "$push": "$dependent"
+        },
+        "represented": {
+          "$push": "$represented"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0
+      }
+    }
+  ]
+            //);

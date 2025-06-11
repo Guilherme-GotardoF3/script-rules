@@ -1,0 +1,25 @@
+//_id: {'$oid': '670047c6fdb7d5bd2cd46741'}
+//_tenant: sandbox-cs
+//name: writeNewPeopleEmailsMigration
+//description: escreve os dados de emails 
+//collection: people
+
+{
+	command: {
+        "updateOne": {
+            "update": {
+                "$set": {
+                    "emails": "$.$$.otpNewPeopleEmailsMigration.emails"
+                }
+            },
+            "filter": {
+                "$and": [
+                    {
+                        "_id": "$.$$.otpNewPeopleEmailsMigration._id"
+                    }
+                ]
+            },
+            "upsert": true
+        }
+    }
+}

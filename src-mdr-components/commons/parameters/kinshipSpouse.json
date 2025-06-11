@@ -1,5 +1,9 @@
 {
-  "_id": "67101e8f1ce917e6a4e0e3e9",
+  "_id": "67101e8f69f244cd9b234b32",
+  "type": {
+    "_id": "67101e8f1ce917e6a4e0e3e9",
+    "name": "parameters"
+  },
   "name": "kinshipSpouse",
   "description": "id referente ao parentesco \"cônjuge\" da collection kinships",
   "data": {

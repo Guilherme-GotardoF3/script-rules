@@ -1,5 +1,9 @@
 {
-  "_id": "66d77353228261df78a0cd64",
+  "_id": "66d77353312088c419087ab6",
+  "type": {
+    "_id": "66d77353228261df78a0cd64",
+    "name": "parameters"
+  },
   "name": "definedBenefitId",
   "description": "id do tipo do plano de beneficio definido ",
   "data": {

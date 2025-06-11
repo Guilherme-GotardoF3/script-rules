@@ -1,0 +1,434 @@
+//_id: {""}
+//_tenant: sandbox-migration
+//name: integrationFolha
+//description: Aggregation utilizado para validar se as chaves estrangeiras existem.
+//use("sandbox-migration");
+
+//db.CollectionRepositoryBase_Folha_Pagamento.aggregate(
+    [
+        {
+          "$project": {
+            "_id": 1, 
+            "all": "$$ROOT"
+          }
+        }, {
+          "$lookup": {
+            "from": "CollectionIntegration_Pessoa", 
+            "localField": "all.identificador_pessoa", 
+            "foreignField": "identificador", 
+            "as": "person", 
+            "let": {
+              "identificador_participacao": "$all.identificador_participacao"
+            }, 
+            "pipeline": [
+              {
+                "$addFields": {
+                  "identificador_participacao": "$$identificador_participacao"
+                }
+              }, {
+                "$lookup": {
+                  "from": "CollectionIntegration_Participacao", 
+                  "localField": "identificador_participacao", 
+                  "foreignField": "identificador", 
+                  "as": "participationId", 
+                  "pipeline": [
+                    {
+                      "$project": {
+                        "_id": 1, 
+                        "numero": 1
+                      }
+                    }
+                  ]
+                }
+              }, {
+                "$unwind": {
+                  "path": "$participationId", 
+                  "preserveNullAndEmptyArrays": true
+                }
+              }, {
+                "$unwind": {
+                  "path": "$participacoes", 
+                  "preserveNullAndEmptyArrays": true
+                }
+              }, {
+                "$match": {
+                  "$expr": {
+                    "$and": [
+                      {
+                        "$eq": [
+                          "$participacoes._id", "$participationId._id"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }, {
+                "$project": {
+                  "_id": 1, 
+                  "nome": 1, 
+                  "documents": "$documentos", 
+                  "participation": {
+                    "_id": "$participacoes._id", 
+                    "number": "$participacoes.number", 
+                    "participationClass": "$participacoes.participationClass"
+                  }
+                }
+              }
+            ]
+          }
+        }, {
+          "$unwind": {
+            "path": "$person", 
+            "preserveNullAndEmptyArrays": true
+          }
+        }, {
+          "$lookup": {
+            "from": "CollectionIntegration_Beneficios", 
+            "localField": "all.identificador_beneficio", 
+            "foreignField": "identificador", 
+            "as": "benefit", 
+            "pipeline": [
+              {
+                "$project": {
+                  "_id": 1, 
+                  "type": 1, 
+                  "paymentMethods": 1, 
+                  "institute": 1
+                }
+              }
+            ]
+          }
+        }, {
+          "$unwind": {
+            "path": "$benefit", 
+            "preserveNullAndEmptyArrays": true
+          }
+        }, {
+          "$lookup": {
+            "from": "CollectionIntegration_Planejamentos_Folha", 
+            "localField": "all.identificador_planejamento_folha", 
+            "foreignField": "identificador", 
+            "as": "payrollPlanning", 
+            "pipeline": [
+              {
+                "$project": {
+                  "_id": 1, 
+                  "payrollType": 1, 
+                  "competenceDate": 1, 
+                  "paymentDate": 1, 
+                  "status": 1
+                }
+              }
+            ]
+          }
+        }, {
+          "$unwind": {
+            "path": "$payrollPlanning", 
+            "preserveNullAndEmptyArrays": true
+          }
+        }, {
+          "$lookup": {
+            "from": "CollectionIntegration_Conta_Bancaria", 
+            "localField": "all.identificador_conta_bancaria", 
+            "foreignField": "identificador", 
+            "as": "bankAccount", 
+            "pipeline": [
+              {
+                "$project": {
+                  "_id": 1, 
+                  "payrollType": 1, 
+                  "competenceDate": 1, 
+                  "paymentDate": 1, 
+                  "status": 1
+                }
+              }
+            ]
+          }
+        }, {
+          "$unwind": {
+            "path": "$bankAccount", 
+            "preserveNullAndEmptyArrays": true
+          }
+        }, {
+          "$project": {
+            "_id": 1, 
+            "all": 1, 
+            "person": 1, 
+            "participation": "$person.participation", 
+            "benefit": 1, 
+            "payrollPlanning": 1, 
+            "bankAccount": 1, 
+            "IRDependents": "$all.dependentes_ir", 
+            "grossAmount": "$all.montante_bruto", 
+            "netAmount": "$all.montante_liquido", 
+            "status": "$all.situacao", 
+            "actualParcel": "$all.parcela_atual", 
+            "totalParcel": "$all.total_parcelas", 
+            "itens_folha": "$all.itens_folha"
+          }
+        }, {
+          "$unwind": {
+            "path": "$itens_folha", 
+            "preserveNullAndEmptyArrays": true
+          }
+        }, {
+          "$lookup": {
+            "from": "CollectionIntegration_Rubricas", 
+            "localField": "itens_folha.identificador_rubrica", 
+            "foreignField": "identificador", 
+            "as": "itens_folha.rubric", 
+            "pipeline": [
+              {
+                "$project": {
+                  "_id": 1, 
+                  "name": "$nome", 
+                  "configurations": {
+                    "isDiscount": "$translated.configurations.isDiscount"
+                  }
+                }
+              }
+            ]
+          }
+        }, {
+          "$unwind": {
+            "path": "$itens_folha.rubric", 
+            "preserveNullAndEmptyArrays": false
+          }
+        }, {
+          "$lookup": {
+            "from": "CollectionIntegration_Valor_Unidade_Monetaria", 
+            "localField": "itens_folha.cota.identificador_valor_unidade_monetaria", 
+            "foreignField": "identificador", 
+            "as": "itens_folha.quota", 
+            "pipeline": [
+              {
+                "$project": {
+                  "_id": 1, 
+                  "value": "$translated.value", 
+                  "referenceDate": "$translated.referenceDate"
+                }
+              }
+            ]
+          }
+        }, {
+          "$unwind": {
+            "path": "$itens_folha.quota", 
+            "preserveNullAndEmptyArrays": true
+          }
+        }, {
+          "$project": {
+            "_id": 1, 
+            "all": 1, 
+            "person": 1, 
+            "participation": 1, 
+            "benefit": 1, 
+            "payrollPlanning": 1, 
+            "bankAccount": 1, 
+            "IRDependents": 1, 
+            "grossAmount": 1, 
+            "netAmount": 1, 
+            "status": 1, 
+            "actualParcel": 1, 
+            "totalParcel": 1, 
+            "payrollItem": {
+              "rubric": "$itens_folha.rubric", 
+              "status": "$itens_folha.situacao", 
+              "type": "$itens_folha.tipo", 
+              "finalAmount": "$itens_folha.quantia_final", 
+              "amount": "$itens_folha.quantia", 
+              "exceptionAmount": "$itens_folha.quantia_excecao", 
+              "reason": "$itens_folha.razao", 
+              "competenceDate": {
+                "$toDate": "$itens_folha.data_competencia._date"
+              }, 
+              "quota": "$itens_folha.quota", 
+              "payrollReferenceBases": []
+            }
+          }
+        }, {
+          "$group": {
+            "_id": "$_id", 
+            "all": {
+              "$first": "$all"
+            }, 
+            "person": {
+              "$first": "$person"
+            }, 
+            "participation": {
+              "$first": "$participation"
+            }, 
+            "benefit": {
+              "$first": "$benefit"
+            }, 
+            "payrollPlanning": {
+              "$first": "$payrollPlanning"
+            }, 
+            "bankAccount": {
+              "$first": "$bankAccount"
+            }, 
+            "IRDependents": {
+              "$first": "$IRDependents"
+            }, 
+            "grossAmount": {
+              "$first": "$grossAmount"
+            }, 
+            "netAmount": {
+              "$first": "$grossAmount"
+            }, 
+            "status": {
+              "$first": "$status"
+            }, 
+            "actualParcel": {
+              "$first": "$actualParcel"
+            }, 
+            "totalParcel": {
+              "$first": "$totalParcel"
+            }, 
+            "payrollItems": {
+              "$push": "$payrollItem"
+            }
+          }
+        }, {
+          "$project": {
+            "_id": 1, 
+            "all": 1, 
+            "person": 1, 
+            "participation": 1, 
+            "benefit": 1, 
+            "payrollPlanning": 1, 
+            "payrollItems": 1, 
+            "action": {
+              "$cond": {
+                "if": {
+                  "$gt": [
+                    {
+                      "$size": {
+                        "$filter": {
+                          "input": "$payrollItems", 
+                          "as": "payrollItems", 
+                          "cond": {
+                            "$and": [
+                              {
+                                "$or": [
+                                  {
+                                    "$eq": [
+                                      {
+                                        "$ifNull": [
+                                          "$$payrollItems.rubric", null
+                                        ]
+                                      }, null
+                                    ]
+                                  }, {
+                                    "$eq": [
+                                      {
+                                        "$ifNull": [
+                                          "$$payrollItems.quota", null
+                                        ]
+                                      }, null
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }, 0
+                  ]
+                }, 
+                "then": "failure", 
+                "else": {
+                  "$cond": {
+                    "if": {
+                      "$and": [
+                        {
+                          "$ne": [
+                            "$all.identificador_pessoa", null
+                          ]
+                        }, {
+                          "$eq": [
+                            {
+                              "$ifNull": [
+                                "$person._id", null
+                              ]
+                            }, null
+                          ]
+                        }
+                      ]
+                    }, 
+                    "then": "failure", 
+                    "else": {
+                      "$cond": {
+                        "if": {
+                          "$and": [
+                            {
+                              "$ne": [
+                                "$all.identificador_participacao", null
+                              ]
+                            }, {
+                              "$eq": [
+                                {
+                                  "$ifNull": [
+                                    "$participation._id", null
+                                  ]
+                                }, null
+                              ]
+                            }
+                          ]
+                        }, 
+                        "then": "failure", 
+                        "else": {
+                          "$cond": {
+                            "if": {
+                              "$and": [
+                                {
+                                  "$ne": [
+                                    "$all.identificador_beneficio", null
+                                  ]
+                                }, {
+                                  "$eq": [
+                                    {
+                                      "$ifNull": [
+                                        "$benefit._id", null
+                                      ]
+                                    }, null
+                                  ]
+                                }
+                              ]
+                            }, 
+                            "then": "failure", 
+                            "else": {
+                              "$cond": {
+                                "if": {
+                                  "$and": [
+                                    {
+                                      "$ne": [
+                                        "$all.identificador_planejamento_folha", null
+                                      ]
+                                    }, {
+                                      "$eq": [
+                                        {
+                                          "$ifNull": [
+                                            "$payrollPlanning._id", null
+                                          ]
+                                        }, null
+                                      ]
+                                    }
+                                  ]
+                                }, 
+                                "then": "failure", 
+                                "else": "done"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+                //);

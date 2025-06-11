@@ -1,0 +1,26 @@
+//_id: {'$oid': '6703e72c423324021de27ed9'}
+//_tenant: sandbox-cs
+//name: writeUpdateParticipantionsPayrolls
+//description: escrita da atualização de referencia estendida na payrolls
+//collection: payrolls_RMDRC
+
+{
+	command: {
+        "updateOne": {
+            "update": {
+                "$set": {
+                    "participation": "$.$$.otpUpdateParticipationsPayrolls.participation",
+                    "person": "$.$$.otpUpdateParticipationsPayrolls.person"
+                }
+            },
+            "filter": {
+                "$and": [
+                    {
+                        "_id": "$.$$.otpUpdateParticipationsPayrolls.payroll"
+                    }
+                ]
+            },
+            "upsert": true
+        }
+    }
+}

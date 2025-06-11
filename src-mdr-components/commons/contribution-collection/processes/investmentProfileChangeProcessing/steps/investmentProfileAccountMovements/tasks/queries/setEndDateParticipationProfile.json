@@ -1,0 +1,55 @@
+{
+  "_id": "682736143113ed1a82e759dd",
+  "type": {
+    "_id": "68273614d21fff1681f069a0",
+    "name": "queries"
+  },
+  "name": "setEndDateParticipationProfile",
+  "description": "Consulta para alteração da effectiveDate (endedAt) do participante que solicitou a alteração do perfil de investimento",
+  "main_collection": "participation_investment_profiles",
+  "output_name": "otpEndDateParticipationProfile",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "currentInvestmentProfile",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "participation",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$investmentProfile._id",
+                "$.currentInvestmentProfile"
+              ]
+            },
+            {
+              "$eq": [
+                "$person.participation._id",
+                "$.participation"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$set": {
+        "effectiveDate": {
+          "endedAt": "$$NOW"
+        }
+      }
+    }
+  ]
+}

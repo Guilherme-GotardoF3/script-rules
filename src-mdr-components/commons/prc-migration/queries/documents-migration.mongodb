@@ -1,0 +1,186 @@
+//_id: {"$oid": "66f445767f4bb1706c9444d4"}
+//_tenant: sandbox-cs
+//name: documentsMigration
+//description: atualiza os documentos na collection people
+//collection: pre_people
+
+//use("sandbox-cs");
+
+//db.pre_people.aggregate(
+  [
+    {
+      "$lookup": {
+        "from": "Collection_dictionary",
+        "localField": "identificador",
+        "foreignField": "id_origem",
+        "as": "idPeople",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$collection_name",
+                  "Pessoa"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$idPeople",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": "$idPeople.id_destino",
+        "documents": {
+          "$ifNull": [
+            "$documentos",
+            []
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "$or": [
+          {
+            "$expr": {
+              "$eq": [
+                {
+                  "$size": [
+                    "$.people"
+                  ]
+                },
+                0
+              ]
+            }
+          },
+          {
+            "_id": {
+              "$in": "$.people"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$documents",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "Collection_dictionary",
+        "localField": "documents.identificador_tipo_documento",
+        "foreignField": "id_origem",
+        "as": "idDocument",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$collection_name",
+                  "Tipo_Documento"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$idDocument",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "CollectionIntegration_Tipo_Documento",
+        "localField": "idDocument.id_origem",
+        "foreignField": "identificador",
+        "as": "tipoDocumento"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$tipoDocumento",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "documents": {
+          "$ifNull": [
+            "$documents",
+            null
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "documents": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$documents",
+                    null
+                  ]
+                },
+                "then": []
+              }
+            ],
+            "default": [
+              {
+                "type": {
+                  "name": "$tipoDocumento.nome",
+                  "_id": "$idDocument.id_destino"
+                },
+                "isFake": "$documents.is_falso",
+                "document": "$documents.documento",
+                "issuedAt": {
+                  "$cond": {
+                    "if": {
+                      "$eq": [
+                        "$documents.data_emissao",
+                        null
+                      ]
+                    },
+                    "then": null,
+                    "else": {
+                      "$toDate": "$documents.data_emissao"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$documents",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id",
+        "documents": {
+          "$push": "$documents"
+        }
+      }
+    }
+  ]
+        //);

@@ -1,0 +1,26 @@
+//_id: {'$oid': '67001b76b232a05c20becbdb'}
+//_tenant: sandbox-cs
+//name: writeNewPeopleMigration
+//description: escreve novos cadastros na collection people
+//collection: people
+
+{
+	command: {
+        "updateOne": {
+            "update": {
+                "$set": "$.$$.otpNewPeopleMigration"
+            },
+            "filter": {
+                "$and": [
+                    {
+                        "documents.document": "$.$$.otpNewPeopleMigration.documents.0.document"
+                    },
+                    {
+                        "name": "$.$$.otpNewPeopleMigration.name"
+                    }
+                ]
+            },
+            "upsert": true
+        }
+    }
+}

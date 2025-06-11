@@ -1,5 +1,9 @@
 {
-  "_id": "6679dc812c592b5f1896b9a6",
+  "_id": "6679dc81fb0a64caba30bd2e",
+  "type": {
+    "_id": "6679dc812c592b5f1896b9a6",
+    "name": "parameters"
+  },
   "name": "rubricGroupDiscountId",
   "description": "id do grupo das rubricas de descontos (exceto pensão alimentícia)",
   "data": {

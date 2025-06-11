@@ -1,0 +1,537 @@
+//_id: {""}
+//_tenant: sandbox-migration
+//name: actionDelete
+//description: Utilizar o aggregation para adicionar o campo "action: "delete" aos documentos não utilizados no dicionario"
+
+//use("sandbox-migration");
+
+//db.Collection_dictionary.aggregate(
+  [
+    {
+      "$project": {
+        "_id": 1, 
+        "id_destino": 1, 
+        "collection_name_translation": 1
+      }
+    }, {
+      "$lookup": {
+        "from": "monetary_units", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.monetary_units"
+      }
+    }, {
+      "$lookup": {
+        "from": "participation_classes", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.participation_classes"
+      }
+    }, {
+      "$lookup": {
+        "from": "investment_profiles", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.investment_profiles"
+      }
+    }, {
+      "$lookup": {
+        "from": "document_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.document_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "payment_methods", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.payment_methods"
+      }
+    }, {
+      "$lookup": {
+        "from": "email_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.email_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "pension_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.pension_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "countries", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.countries"
+      }
+    }, {
+      "$lookup": {
+        "from": "monetary_unit_values", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.monetary_unit_values"
+      }
+    }, {
+      "$lookup": {
+        "from": "employment_contract_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.employment_contract_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "pension_account_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.pension_account_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "kinships", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.kinships"
+      }
+    }, {
+      "$lookup": {
+        "from": "address_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.address_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "representation_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.representation_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "benefit_groups", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.benefit_groups"
+      }
+    }, {
+      "$lookup": {
+        "from": "plans", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.plans"
+      }
+    }, {
+      "$lookup": {
+        "from": "rubrics", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.rubrics"
+      }
+    }, {
+      "$lookup": {
+        "from": "private_pension_entities", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.private_pension_entities"
+      }
+    }, {
+      "$lookup": {
+        "from": "marital_status", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.marital_status"
+      }
+    }, {
+      "$lookup": {
+        "from": "bank_account_purposes", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.bank_account_purposes"
+      }
+    }, {
+      "$lookup": {
+        "from": "waiting_period_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.waiting_period_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "plan_status", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.plan_status"
+      }
+    }, {
+      "$lookup": {
+        "from": "states", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.states"
+      }
+    }, {
+      "$lookup": {
+        "from": "entity_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.entity_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "participation_status", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.participation_status"
+      }
+    }, {
+      "$lookup": {
+        "from": "company_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.company_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "participation_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.participation_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "benefit_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.benefit_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "configuration_status", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.configuration_status"
+      }
+    }, {
+      "$lookup": {
+        "from": "bank_account_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.bank_account_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "cities", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.cities"
+      }
+    }, {
+      "$lookup": {
+        "from": "icd", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.icd"
+      }
+    }, {
+      "$lookup": {
+        "from": "mailing_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.mailing_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "plan_formats", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.plan_formats"
+      }
+    }, {
+      "$lookup": {
+        "from": "rubric_supports", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.rubric_supports"
+      }
+    }, {
+      "$lookup": {
+        "from": "tax_regime_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.tax_regime_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "phone_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.phone_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "waiting_periods", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.waiting_periods"
+      }
+    }, {
+      "$lookup": {
+        "from": "resignation_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.resignation_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "monetary_unit_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.monetary_unit_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "companies", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.companies"
+      }
+    }, {
+      "$lookup": {
+        "from": "banks", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.banks"
+      }
+    }, {
+      "$lookup": {
+        "from": "plan_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.plan_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "pension_accounts", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.pension_accounts"
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Conta_Bancaria", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.CollectionIntegration_Conta_Bancaria"
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Documento", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.CollectionIntegration_Documento"
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Email", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.CollectionIntegration_Email"
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Endereco", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.CollectionIntegration_Endereco"
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Item_Folha_Pagamento", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.CollectionIntegration_Item_Folha_Pagamento"
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Participacao", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.CollectionIntegration_Participacao"
+      }
+    }, {
+      "$lookup": {
+        "from": "CollectionIntegration_Telefone", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.CollectionIntegration_Telefone"
+      }
+    }, {
+      "$lookup": {
+        "from": "account_balances_rmdrc", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.account_balances_rmdrc"
+      }
+    }, {
+      "$lookup": {
+        "from": "account_movements", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.account_movements"
+      }
+    }, {
+      "$lookup": {
+        "from": "account_transaction_types", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.account_transaction_types"
+      }
+    }, {
+      "$lookup": {
+        "from": "benefits", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.benefits"
+      }
+    }, {
+      "$lookup": {
+        "from": "employment_history", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.employment_history"
+      }
+    }, {
+      "$lookup": {
+        "from": "family_groups", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.family_groups"
+      }
+    }, {
+      "$lookup": {
+        "from": "occurrences", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.occurrences"
+      }
+    }, {
+      "$lookup": {
+        "from": "participation_groups", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.participation_groups"
+      }
+    }, {
+      "$lookup": {
+        "from": "payroll_plannings", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.payroll_plannings"
+      }
+    }, {
+      "$lookup": {
+        "from": "payrolls_RMDRC", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.payrolls_RMDRC"
+      }
+    }, {
+      "$lookup": {
+        "from": "people", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.people"
+      }
+    }, {
+      "$lookup": {
+        "from": "salary_imports", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.salary_imports"
+      }
+    }, {
+      "$lookup": {
+        "from": "salary_imports", 
+        "localField": "id_destino", 
+        "foreignField": "_id", 
+        "as": "action.salary_imports"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "Project_datasources_collections", 
+        "localField": "collection_name_translation", 
+        "foreignField": "collection_name_translation", 
+        "as": "action.Project_datasources_collections", 
+        "pipeline": [
+          {
+            "$match": {
+              "persist_navega": {
+                "$exists": true
+              }, 
+              "collection_name_translation": "CollectionIntegration_Dependentes",
+              "$expr": {
+                "$eq": [
+                  "$persist_navega", "subdocument"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }, {
+      "$project": {
+        "action": 1, 
+        "collection_name_translation": 1, 
+        "largeArrays": {
+          "$map": {
+            "input": {
+              "$objectToArray": "$action"
+            }, 
+            "as": "campo", 
+            "in": {
+              "$cond": {
+                "if": {
+                  "$gte": [
+                    {
+                      "$size": "$$campo.v"
+                    }, 1
+                  ]
+                }, 
+                "then": true, 
+                "else": false
+              }
+            }
+          }
+        }
+      }
+    }, {
+      "$match": {
+        "largeArrays": {
+          "$not": {
+            "$elemMatch": {
+              "$eq": true
+            }
+          }
+        }
+      }
+    }, {
+      "$project": {
+        "_id": 1, 
+        "action": "delete"
+      }
+    }, {
+      "$merge": {
+        "into": "Collection_dictionary", 
+        "on": "_id", 
+        "whenMatched": "merge", 
+        "whenNotMatched": "insert"
+      }
+    }
+  ]
+            //);

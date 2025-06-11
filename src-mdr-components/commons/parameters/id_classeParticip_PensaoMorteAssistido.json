@@ -1,5 +1,9 @@
 {
-  "_id": "67ded2ab16b2d5085d5191f3",
+  "_id": "67ded2abcdb24f8c8692d696",
+  "type": {
+    "_id": "67ded2ab16b2d5085d5191f3",
+    "name": "parameters"
+  },
   "name": "id_classeParticip_PensaoMorteAssistido",
   "description": "Seleciona o id do tipo de classe de participação para \"Pensão por Morte (Assistido)\" para a conversão de aposentadoria em pensão por morte",
   "data": {

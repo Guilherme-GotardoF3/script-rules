@@ -1,5 +1,9 @@
 {
-  "_id": "67c098bde9c51a0f5dee0f1d",
+  "_id": "67c098bd1e50976386944b79",
+  "type": {
+    "_id": "67c098bde9c51a0f5dee0f1d",
+    "name": "parameters"
+  },
   "name": "criticReviewTypeSalaryImport",
   "description": "Parâmetro para o id do tipo de importação de salário da collection type_review_process. Usado para gerar críticas da importação.",
   "data": {
