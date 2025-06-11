@@ -1,0 +1,71 @@
+{
+  "_id": "67e808dfdcc300eb829945ab",
+  "name": "Copy_calculateNormalParticipantContributionBase_5",
+  "description": "Calcula valor da contribuição normal do participante auto-patrocinado",
+  "isDefault": false,
+  "outputName": "otp_calculateNormalSelfSponsorParticContNew",
+  "rule": {
+    "ref": "67e808dfdcc300eb829945a2",
+    "type": "queries"
+  },
+  "type": "parent",
+  "parentConfig": {
+    "parameterFields": [
+      {
+        "name": "$.rubricId",
+        "description": "Rubrica a ser calculada.",
+        "_id": "67e808dfdcc300eb829945a4",
+        "createdAt": "2025-04-04T21:48:16.416Z",
+        "updatedAt": "2025-04-04T21:48:16.416Z"
+      },
+      {
+        "name": "$.plan",
+        "description": "Plano do cálculo.",
+        "_id": "67e808dfdcc300eb829945a5",
+        "createdAt": "2025-04-04T21:48:16.416Z",
+        "updatedAt": "2025-04-04T21:48:16.416Z"
+      },
+      {
+        "name": "$.upId",
+        "description": "Unidade previdenciária referencial para cálculo (monetaryUnit).",
+        "_id": "67e808dfdcc300eb829945a6",
+        "createdAt": "2025-04-04T21:48:16.416Z",
+        "updatedAt": "2025-04-04T21:48:16.416Z"
+      },
+      {
+        "name": "$.competenceDate",
+        "description": "Data de competência.",
+        "_id": "67e808dfdcc300eb829945a7",
+        "createdAt": "2025-04-04T21:48:16.416Z",
+        "updatedAt": "2025-04-04T21:48:16.416Z"
+      },
+      {
+        "name": "$.processId",
+        "description": "Codigo do processo de execução (directContributionCalculationId | collectionRecordsProcessId)",
+        "_id": "67e808dfdcc300eb829945a8",
+        "createdAt": "2025-04-04T21:48:16.416Z",
+        "updatedAt": "2025-04-04T21:48:16.416Z"
+      },
+      {
+        "name": "$.contributionType",
+        "description": "Tipo de contribuição.",
+        "_id": "67e808dfdcc300eb829945a9",
+        "createdAt": "2025-04-04T21:48:16.416Z",
+        "updatedAt": "2025-04-04T21:48:16.416Z"
+      },
+      {
+        "name": "$.contributionTypeName",
+        "description": "Nome do tipo de contribuição.",
+        "_id": "67e808dfdcc300eb829945aa",
+        "createdAt": "2025-04-04T21:48:16.416Z",
+        "updatedAt": "2025-04-04T21:48:16.416Z"
+      }
+    ],
+    "childTasks": [
+      "67e808dfdcc300eb829945a1"
+    ]
+  },
+  "__v": 0,
+  "createdAt": "2025-03-29T14:51:11.811Z",
+  "updatedAt": "2025-04-04T21:48:16.416Z"
+}

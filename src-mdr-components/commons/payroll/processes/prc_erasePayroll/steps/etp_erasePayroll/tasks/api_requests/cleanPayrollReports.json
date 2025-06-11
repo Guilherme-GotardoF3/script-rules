@@ -1,0 +1,18 @@
+{
+  "_id": "64f73ad132a8db6d8cd1f12b",
+  "type": {
+    "_id": "64f73a6e32a8db6d8cd1f128",
+    "name": "api_requests"
+  },
+  "name": "cleanPayrollReports",
+  "description": "Limpa os relatórios da folha de pagamentos.",
+  "method": "delete",
+  "headers": {
+    "tenant-id": "$.tenantId",
+    "authorization": "Bearer $.opt_trf_request_token.payload.accessToken"
+  },
+  "pathParameters": {},
+  "queryParameters": {},
+  "Url": "$.navegaApiUrl /payrolls/payroll-planning/$.payrollPlanningId /report",
+  "Body": {}
+}

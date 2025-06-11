@@ -1,0 +1,78 @@
+{
+  "_id": "67e808cadcc300eb8299452c",
+  "name": "calculateNormalParticipantContributionBase13",
+  "description": "Calcula a 13º contribuição de participantes ativos",
+  "isDefault": false,
+  "outputName": "otpCalculateNormalParticipantSponsored13",
+  "rule": {
+    "ref": "67e808cadcc300eb82994522",
+    "type": "queries"
+  },
+  "type": "parent",
+  "parentConfig": {
+    "parameterFields": [
+      {
+        "name": "$.rubricId",
+        "description": "Rubrica a ser calculada.",
+        "_id": "67e808cadcc300eb82994524",
+        "createdAt": "2025-04-04T22:22:26.914Z",
+        "updatedAt": "2025-04-04T22:22:26.914Z"
+      },
+      {
+        "name": "$.plan",
+        "description": "Plano do cálculo.",
+        "_id": "67e808cadcc300eb82994525",
+        "createdAt": "2025-04-04T22:22:26.914Z",
+        "updatedAt": "2025-04-04T22:22:26.914Z"
+      },
+      {
+        "name": "$.upId",
+        "description": "Unidade previdenciária referencial para cálculo (monetaryUnit).",
+        "_id": "67e808cadcc300eb82994526",
+        "createdAt": "2025-04-04T22:22:26.914Z",
+        "updatedAt": "2025-04-04T22:22:26.914Z"
+      },
+      {
+        "name": "$.competenceDate",
+        "description": "Data de competência.",
+        "_id": "67e808cadcc300eb82994527",
+        "createdAt": "2025-04-04T22:22:26.914Z",
+        "updatedAt": "2025-04-04T22:22:26.914Z"
+      },
+      {
+        "name": "$.processId",
+        "description": "Codigo do processo de execução (directContributionCalculationId | collectionRecordsProcessId)",
+        "_id": "67e808cadcc300eb82994528",
+        "createdAt": "2025-04-04T22:22:26.914Z",
+        "updatedAt": "2025-04-04T22:22:26.914Z"
+      },
+      {
+        "name": "$.contributionType",
+        "description": "Tipo de contribuição.",
+        "_id": "67e808cadcc300eb82994529",
+        "createdAt": "2025-04-04T22:22:26.914Z",
+        "updatedAt": "2025-04-04T22:22:26.914Z"
+      },
+      {
+        "name": "$.contributionTypeName",
+        "description": "Nome do tipo de contribuição.",
+        "_id": "67e808cadcc300eb8299452a",
+        "createdAt": "2025-04-04T22:22:26.914Z",
+        "updatedAt": "2025-04-04T22:22:26.914Z"
+      },
+      {
+        "name": "$.rubricIndividualParameter",
+        "description": "Rubrica do parametro individual.",
+        "_id": "67e808cadcc300eb8299452b",
+        "createdAt": "2025-04-04T22:22:26.914Z",
+        "updatedAt": "2025-04-04T22:22:26.914Z"
+      }
+    ],
+    "childTasks": [
+      "67e808cadcc300eb82994521"
+    ]
+  },
+  "__v": 0,
+  "createdAt": "2025-03-29T14:50:50.976Z",
+  "updatedAt": "2025-04-04T22:22:26.914Z"
+}

@@ -1,0 +1,29 @@
+{
+  "_id": "6745b463a983f2f4fc94b637",
+  "type": {
+    "_id": "6745b4635d172c487e28de06",
+    "name": "write_commands"
+  },
+  "name": "writeProjectUpdateStatusPayrollPlanning",
+  "description": "Escreve a altera o status da payrollPlannings de PROCESSED para WAITING",
+  "main_collection": "payroll_plannings",
+  "Command": {
+    "updateOne": {
+      "update": {
+        "$set": {
+          "status": "$.$$.otp_projectUpdateStatusPayrollPlanning.status",
+          "processExecution": "$.$$.otp_projectUpdateStatusPayrollPlanning.processExecution",
+          "finishProcess": "$.$$.otp_projectUpdateStatusPayrollPlanning.finishProcess"
+        }
+      },
+      "filter": {
+        "$and": [
+          {
+            "_id": "$.$$.otp_projectUpdateStatusPayrollPlanning._id"
+          }
+        ]
+      },
+      "upsert": true
+    }
+  }
+}

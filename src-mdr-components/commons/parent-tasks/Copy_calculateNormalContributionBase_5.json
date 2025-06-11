@@ -1,0 +1,78 @@
+{
+  "_id": "67e808dfdcc300eb829945c3",
+  "name": "Copy_calculateNormalContributionBase_5",
+  "description": "Calcula valor da contribuição normal da patrocinadora para o auto-patrocinado.",
+  "isDefault": false,
+  "outputName": "otp_calculateNormalSelfSponsorContribuitionNew",
+  "rule": {
+    "ref": "67e808dfdcc300eb829945b9",
+    "type": "queries"
+  },
+  "type": "parent",
+  "parentConfig": {
+    "parameterFields": [
+      {
+        "name": "$.plan",
+        "description": "Plano do cálculo.",
+        "_id": "67e808dfdcc300eb829945bb",
+        "createdAt": "2025-04-04T21:51:00.811Z",
+        "updatedAt": "2025-04-04T21:51:00.811Z"
+      },
+      {
+        "name": "$.rubricId",
+        "description": "Rubrica a ser calculada.",
+        "_id": "67e808dfdcc300eb829945bc",
+        "createdAt": "2025-04-04T21:51:00.811Z",
+        "updatedAt": "2025-04-04T21:51:00.811Z"
+      },
+      {
+        "name": "$.competenceDate",
+        "description": "Data de competência.",
+        "_id": "67e808dfdcc300eb829945bd",
+        "createdAt": "2025-04-04T21:51:00.811Z",
+        "updatedAt": "2025-04-04T21:51:00.811Z"
+      },
+      {
+        "name": "$.processId",
+        "description": "Código do processo de execução (directContributionCalculationId | collectionRecordsProcessId)",
+        "_id": "67e808dfdcc300eb829945be",
+        "createdAt": "2025-04-04T21:51:00.811Z",
+        "updatedAt": "2025-04-04T21:51:00.811Z"
+      },
+      {
+        "name": "$.contributionType",
+        "description": "Tipo da contribuição.",
+        "_id": "67e808dfdcc300eb829945bf",
+        "createdAt": "2025-04-04T21:51:00.811Z",
+        "updatedAt": "2025-04-04T21:51:00.811Z"
+      },
+      {
+        "name": "$.contributionTypeName",
+        "description": "Nome do tipo da contribuição.",
+        "_id": "67e808dfdcc300eb829945c0",
+        "createdAt": "2025-04-04T21:51:00.811Z",
+        "updatedAt": "2025-04-04T21:51:00.811Z"
+      },
+      {
+        "name": "$.statusParticipationClass",
+        "description": "Nome do status da classe de participação.",
+        "_id": "67e808dfdcc300eb829945c1",
+        "createdAt": "2025-04-04T21:51:00.811Z",
+        "updatedAt": "2025-04-04T21:51:00.811Z"
+      },
+      {
+        "name": "$.typeParticipationClass",
+        "description": "Nome do tipo da classe de participação.",
+        "_id": "67e808dfdcc300eb829945c2",
+        "createdAt": "2025-04-04T21:51:00.811Z",
+        "updatedAt": "2025-04-04T21:51:00.811Z"
+      }
+    ],
+    "childTasks": [
+      "67e808dfdcc300eb829945b8"
+    ]
+  },
+  "__v": 0,
+  "createdAt": "2025-03-29T14:51:11.934Z",
+  "updatedAt": "2025-04-04T21:51:00.811Z"
+}
