@@ -74,12 +74,12 @@ export async function exportProcess(processName, area) {
                     console.warn(`Task "${task.name}" é do tipo "child" mas não possui parentTask._id`);
                 }
             }
-            await exportRuleWithFormat(ruleDoc, ruleType, task, path.join(stepDir, "tasks", ruleType), baseDir, db);
+            await exportRuleWithFormat(ruleDoc, ruleType, task, path.join(stepDir, "tasks", ruleType), baseDir, db, processDir);
         }
     }
 }
 
-async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir, db) {
+async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir, db, processDir) {
     const enrichedBase = {
         _id: task._id,
         type: {
@@ -107,6 +107,26 @@ async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir,
             })),
             ...systemInputs
         ];
+
+        for (const param of parametersDocs) {
+            const enrichedParam = {
+                _id: task._id,
+                type: {
+                    _id: param._id,
+                    name: "parameters"
+                },
+                name: param.name,
+                description: param.description,
+                data: {
+                    value: param.value,
+                    type: param.type,
+                    isDefault: param.isDefault
+                }
+            };
+
+            const paramDir = path.join(baseDir, processDir, "parameters");
+            await saveJson(paramDir, param.name, enrichedParam);
+        }
 
         const collections = extractLookupCollections(JSON.parse(ruleDoc.query));
 
