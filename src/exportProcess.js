@@ -1,5 +1,5 @@
 import { getDb } from "./mongo.js";
-import { saveJson, clearDirIfExistis } from "./utils.js";
+import { saveJson, clearDirIfExistis, extractRubricsGroupIds } from "./utils.js";
 import { ObjectId } from "mongodb";
 import path from "path";
 
@@ -35,6 +35,7 @@ export async function exportProcess(processName, area) {
 
         const exportedParentTasks = new Set();
 
+        let rubricMode = false;
         for (const task of tasks) {
             const rule = task.rule;
             const ruleId = rule?.ref;
@@ -74,12 +75,15 @@ export async function exportProcess(processName, area) {
                     console.warn(`Task "${task.name}" é do tipo "child" mas não possui parentTask._id`);
                 }
             }
-            await exportRuleWithFormat(ruleDoc, ruleType, task, path.join(stepDir, "tasks", ruleType), baseDir, db);
+
+            if (ruleType === "ordered_reference_lists") rubricMode = true;
+
+            await exportRuleWithFormat(ruleDoc, ruleType, task, path.join(stepDir, "tasks", ruleType), baseDir, db, rubricMode)
         }
     }
 }
 
-async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir, db) {
+async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir, db, rubricMode) {
     const enrichedBase = {
         _id: task._id,
         type: {
@@ -121,15 +125,38 @@ async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir,
             Aggregation: typeof ruleDoc.query === "string" ? JSON.parse(ruleDoc.query) : ruleDoc.query
         };
         await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
-    }
 
-    if (ruleType === "write_commands") {
-        const enriched = {
-            ...enrichedBase,
-            main_collection: ruleDoc.table || ruleDoc.collection || "",
-            Command: typeof ruleDoc.command === "string" ? JSON.parse(ruleDoc.command) : ruleDoc.command
-        };
-        await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
+        if (rubricMode) {
+            console.log("Possui ordered reference List")
+
+            const aggregation = typeof ruleDoc.query === "string" ? JSON.parse(ruleDoc.query) : ruleDoc.query;
+            const groupIds = await extractRubricsGroupIds(aggregation, db);
+
+            console.log("Ids extraídos: ", groupIds);
+            const saved = new Set();
+
+            for (const gid of groupIds) {
+                const rubrics = await db.collection("rubrics").find({
+                    "support.group_id": new ObjectId(gid),
+                    rule: { $ne: null }
+                }).toArray();
+
+
+                for (const rub of rubrics) {
+                    const qName = rub?.rule?.name;
+
+                    if (!qName || saved.has(qName)) continue;
+
+                    await saveJson(
+                        `${baseDir}/${outputDir}`,
+                        linked.name,
+                        linked
+                    );
+                    saved.add(qName);
+                    console.log("Queries salvas", qName);
+                }
+            }
+        }
     }
 
     if (ruleType === "ordered_reference_lists") {
@@ -142,6 +169,14 @@ async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir,
         await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
     }
 
+    if (ruleType === "write_commands") {
+        const enriched = {
+            ...enrichedBase,
+            main_collection: ruleDoc.table || ruleDoc.collection || "",
+            Command: typeof ruleDoc.command === "string" ? JSON.parse(ruleDoc.command) : ruleDoc.command
+        };
+        await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
+    }
 
     if (ruleType === "api_requests") {
 
