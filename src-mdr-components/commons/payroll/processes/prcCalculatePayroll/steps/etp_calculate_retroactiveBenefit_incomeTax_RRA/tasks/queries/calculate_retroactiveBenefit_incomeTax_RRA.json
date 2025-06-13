@@ -56,7 +56,6 @@
     "people",
     "rubrics",
     "income_tax",
-    "plans",
     "plan_readjustments"
   ],
   "output": {},
@@ -952,20 +951,6 @@
     {
       "$replaceRoot": {
         "newRoot": "$root"
-      }
-    },
-    {
-      "$lookup": {
-        "from": "plans",
-        "localField": "planId",
-        "foreignField": "_id",
-        "as": "plan"
-      }
-    },
-    {
-      "$unwind": {
-        "path": "$plan",
-        "preserveNullAndEmptyArrays": false
       }
     },
     {
