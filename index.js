@@ -11,8 +11,9 @@ const AREAS = {
   "5": "third-portal",
   "6": "billing",
   "7": "patrimony",
-  "8": "benefits",
+  "8": "benefit-granting",
   "9": "registration",
+  "10": "legal-obligations",
   "p": "Update Parameters",
   "v": "Verification Processes",
   "b": "Verification Database",
@@ -64,15 +65,25 @@ const VALID_AREAS = Object.values(AREAS).filter(
     process.exit(1);
   }
 
-  const { processName } = await inquirer.prompt([
+  const { processNames } = await inquirer.prompt([
     {
       type: "input",
-      name: "processName",
-      message: "Digite o nome do processo que deseja exportar:"
+      name: "processNames",
+      message: "Digite os nomes dos processos separados por vírgula:"
     }
   ]);
 
-  await exportProcess(processName, areaChoice);
+  const names = processNames
+    .split(",")
+    .map(name => name.trim())
+    .filter(Boolean);
+
+  for (const name of names) {
+    console.log(`Exportando processo: ${name}`);
+    await exportProcess(name, areaChoice);
+  }
+
   console.log("Exportação concluída com sucesso.");
   process.exit(0);
+  
 })();
