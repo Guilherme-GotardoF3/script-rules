@@ -1,0 +1,182 @@
+{
+  "_id": "TASK NÃO ENCONTRADA NO BANCO DE DADOS",
+  "type": {
+    "_id": "65faf28c0560221225da9d8c",
+    "name": "queries"
+  },
+  "name": "calculateMinimumSalaryPercentage",
+  "description": "Devolve o calculo do Percentual sobre o Salário Mínimo",
+  "main_collection": "recovery_temporal_indexes",
+  "output_name": "",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "_id",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "recovery_temporal_series",
+    "payrolls_RMDRC",
+    "rubrics"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "64bacbf05eea4c44d65cc953"
+      }
+    },
+    {
+      "$addFields": {
+        "judicialPension": "$.opt_trf_buscar_beneficios_ativos.judicialPension",
+        "rubric": "$._id",
+        "payrollPlanningId": "$.opt_trf_buscar_beneficios_ativos.payrollPlanning",
+        "benefitId": "$.opt_trf_buscar_beneficios_ativos._id",
+        "competenceDate": "$.opt_trf_buscar_beneficios_ativos.planejamento_folha.referenceDate",
+        "type": "CALCULATED",
+        "status": "CALCULATED",
+        "quota": {
+          "_id": "$.opt_trf_buscar_beneficios_ativos.planejamento_folha.currency_units._id",
+          "value": {
+            "$toDouble": "$.opt_trf_buscar_beneficios_ativos.planejamento_folha.currency_units.value"
+          },
+          "reference": "$.opt_trf_buscar_beneficios_ativos.planejamento_folha.currency_units.referency"
+        }
+      }
+    },
+    {
+      "$match": {
+        "judicialPension.type": "SMPCT"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "recovery_temporal_series",
+        "localField": "_id",
+        "foreignField": "index",
+        "as": "recovery_temporal_series"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$recovery_temporal_series",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$lte": [
+            "$competenceDate",
+            "$recovery_temporal_series.data"
+          ]
+        }
+      }
+    },
+    {
+      "$sort": {
+        "recovery_temporal_series.data": -1
+      }
+    },
+    {
+      "$limit": 1
+    },
+    {
+      "$addFields": {
+        "percentualSM": {
+          "$round": [
+            {
+              "$multiply": [
+                {
+                  "$divide": [
+                    "$judicialPension.PctPJ",
+                    100
+                  ]
+                },
+                "$recovery_temporal_series.value"
+              ]
+            },
+            1
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "benefitId",
+        "foreignField": "benefit._id",
+        "as": "payroll",
+        "let": {
+          "payrollPlanningId": "$payrollPlanningId"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollPlanning._id",
+                  "$$payrollPlanningId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubric",
+        "foreignField": "_id",
+        "as": "rubric",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubric",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payroll": 1,
+        "rubric": 1,
+        "finalAmount": "$percentualSM",
+        "amount": "$percentualSM",
+        "exceptionAmount": {
+          "$toInt": 0
+        },
+        "competenceDate": 1,
+        "type": 1,
+        "status": 1,
+        "quota": 1,
+        "pensioner": 1
+      }
+    }
+  ]
+}

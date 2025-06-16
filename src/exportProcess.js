@@ -1,5 +1,5 @@
 import { getDb } from "./mongo.js";
-import { saveJson, clearDirIfExistis } from "./utils.js";
+import { saveJson, clearDirIfExistis, extractRubricsGroupIds } from "./utils.js";
 import { ObjectId } from "mongodb";
 import path from "path";
 
@@ -34,6 +34,8 @@ export async function exportProcess(processName, area) {
         const tasks = await db.collection("tasks").find({ _id: { $in: uniqueTaskIds } }).toArray();
 
         const exportedParentTasks = new Set();
+
+        let rubricMode = tasks.some(t => t.rule?.type === "ordered_reference_lists");
 
         for (const task of tasks) {
             const rule = task.rule;
@@ -74,12 +76,13 @@ export async function exportProcess(processName, area) {
                     console.warn(`Task "${task.name}" é do tipo "child" mas não possui parentTask._id`);
                 }
             }
-            await exportRuleWithFormat(ruleDoc, ruleType, task, path.join(stepDir, "tasks", ruleType), baseDir, db);
+
+            await exportRuleWithFormat(ruleDoc, ruleType, task, path.join(stepDir, "tasks", ruleType), baseDir, db, rubricMode)
         }
     }
 }
 
-async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir, db) {
+async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir, db, rubricMode) {
     const enrichedBase = {
         _id: task._id,
         type: {
@@ -121,15 +124,67 @@ async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir,
             Aggregation: typeof ruleDoc.query === "string" ? JSON.parse(ruleDoc.query) : ruleDoc.query
         };
         await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
-    }
 
-    if (ruleType === "write_commands") {
-        const enriched = {
-            ...enrichedBase,
-            main_collection: ruleDoc.table || ruleDoc.collection || "",
-            Command: typeof ruleDoc.command === "string" ? JSON.parse(ruleDoc.command) : ruleDoc.command
-        };
-        await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
+        if (rubricMode) {
+            console.log("Possui ordered reference List");
+
+            const aggObj = typeof ruleDoc.query === "string"
+                ? JSON.parse(ruleDoc.query)
+                : ruleDoc.query;
+
+            const groupIds = await extractRubricsGroupIds(aggObj, db);
+            console.log("Ids extraídos:", groupIds);
+
+            const exportedQueries = new Set();
+
+            for (const gid of groupIds) {
+                const rubrics = await db.collection("rubrics").find({
+                    "support.group._id": gid,
+                    "rule.ref": { $ne: null }
+                }).toArray();
+
+                for (const rub of rubrics) {
+                    const qId = rub.rule.ref;
+                    if (exportedQueries.has(qId.toString())) continue;
+
+                    const linkedQuery = await db.collection("queries").findOne({ _id: qId });
+                    if (!linkedQuery) {
+                        console.warn("Query não encontrada com Id:", qId);
+                        continue;
+                    }
+
+                    const queryTasks = await db.collection("tasks")
+                        .find({ "rule.ref": qId })
+                        .toArray();
+
+                    if (queryTasks.length === 0) {
+                        console.warn(`Nenhuma task referencia a query ${linkedQuery.name}; gerando stub.`);
+                        const stubTask = {
+                            _id: "TASK NÃO ENCONTRADA NO BANCO DE DADOS",
+                            name: linkedQuery.name,
+                            description: linkedQuery.description,
+                            outputName: "",
+                            rule: { ref: linkedQuery._id, type: "queries" },
+                            type: "common"
+                        };
+                        await exportRuleWithFormat(
+                            linkedQuery, "queries", stubTask,
+                            outputDir, baseDir, db, /*rubricMode*/ false
+                        );
+                    } else {
+                        for (const realTask of queryTasks) {
+                            await exportRuleWithFormat(
+                                linkedQuery, "queries", realTask,
+                                outputDir, baseDir, db, /*rubricMode*/ false
+                            );
+                        }
+                    }
+
+                    exportedQueries.add(qId.toString());
+                    console.log("Query exportada:", linkedQuery.name);
+                }
+            }
+        }
     }
 
     if (ruleType === "ordered_reference_lists") {
@@ -142,6 +197,14 @@ async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir,
         await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
     }
 
+    if (ruleType === "write_commands") {
+        const enriched = {
+            ...enrichedBase,
+            main_collection: ruleDoc.table || ruleDoc.collection || "",
+            Command: typeof ruleDoc.command === "string" ? JSON.parse(ruleDoc.command) : ruleDoc.command
+        };
+        await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
+    }
 
     if (ruleType === "api_requests") {
 

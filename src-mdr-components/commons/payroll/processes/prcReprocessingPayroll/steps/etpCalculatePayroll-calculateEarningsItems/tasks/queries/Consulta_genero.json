@@ -1,0 +1,25 @@
+{
+  "_id": "65d74d8fc537332f98c9b890",
+  "type": {
+    "_id": "65d74625b2ba75d349d0c7f7",
+    "name": "queries"
+  },
+  "name": "Consulta_genero",
+  "description": "Consulta Genero",
+  "main_collection": "people",
+  "output_name": "otp_trf_consulta_genero",
+  "fixed_value": false,
+  "input_parameters": [],
+  "collections": [],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "sex": "male"
+      }
+    },
+    {
+      "$limit": 1
+    }
+  ]
+}

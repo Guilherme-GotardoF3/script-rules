@@ -73,7 +73,7 @@ export async function verifyDatabase() {
   }
 
   if (missingInFilesystem.length > 0) {
-    console.log("\n Processos que existem no banco mas não estão versionados:");
+    console.log("\n Processos que existem no banco, mas não estão versionados:");
     missingInFilesystem.forEach(p => console.log(`- ${p}`));
   }
 

@@ -1,0 +1,983 @@
+{
+  "_id": "666a14aeb763655b16e5ddd9",
+  "type": {
+    "_id": "660aabb13c3422d4c660bdbe",
+    "name": "queries"
+  },
+  "name": "calculateLiquidPercentage",
+  "description": "Calcula o percentual sobre o valor líquido.",
+  "main_collection": "benefits",
+  "output_name": "otp_calculateLiquidPercentage",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "rubrica_ir_regressivo",
+      "type": "Parameter",
+      "description": "Parâmetro que define a rubrica do IR Regressivo.",
+      "value": "674e6d8e519c6b3b81a2d12d"
+    },
+    {
+      "name": "rubrica_ir_progressivo",
+      "type": "Parameter",
+      "description": "Parâmetro que define a rubrica do IR Progressivo.",
+      "value": "674e6eb6519c6b3b81a2d330"
+    },
+    {
+      "name": "id_tipo_ir_progressivo",
+      "type": "Parameter",
+      "description": "Id do tipo de ir progressivo",
+      "value": "66bd44764eb4534a4f834c3c"
+    },
+    {
+      "name": "id_tipo_ir_regressivo",
+      "type": "Parameter",
+      "description": "Id do ir regressivo",
+      "value": "66bd44764eb4534a4f834c3d"
+    },
+    {
+      "name": "_id",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC",
+    "rubrics",
+    "calculation_series",
+    "people",
+    "income_tax"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.opt_trf_buscar_beneficios_ativos._id"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "taxRegimeTypes": 1
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$taxRegimeTypes",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "judicialPension": "$.opt_trf_buscar_beneficios_ativos.judicialPension",
+        "rubricId": "$._id",
+        "idRubricIRProgr": "p:63ebaf899db9eb4252c06e5a",
+        "idRubricIRRegr": "p:63d7bc9dcadc480008e068d8",
+        "payrollPlanningId": "$.opt_trf_buscar_beneficios_ativos.payrollPlanning",
+        "benefitId": "$.opt_trf_buscar_beneficios_ativos._id",
+        "competenceDate": {
+          "$toDate": "$.opt_trf_buscar_beneficios_ativos.planejamento_folha.referenceDate"
+        },
+        "type": "CALCULATED",
+        "status": "CALCULATED",
+        "quota": {
+          "_id": "$.opt_trf_buscar_beneficios_ativos.planejamento_folha.currency_units._id",
+          "value": {
+            "$toDouble": "$.opt_trf_buscar_beneficios_ativos.planejamento_folha.currency_units.value"
+          },
+          "reference": {
+            "$toDate": "$.opt_trf_buscar_beneficios_ativos.planejamento_folha.currency_units.referenceDate"
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$judicialPension",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$judicialPension.calculationSeries",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "judicialPension.calculationSeries.type.name": "Percentual sobre o valor líquido"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "benefit._id",
+        "as": "payroll",
+        "let": {
+          "payrollPlanningId": "$payrollPlanningId"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollPlanning._id",
+                  "$$payrollPlanningId"
+                ]
+              },
+              "judicialPension": {
+                "$exists": false
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$payrollItems"
+            }
+          },
+          {
+            "$project": {
+              "payrollItems": {
+                "rubric": "$payrollItems.rubric",
+                "amount": "$payrollItems.amount",
+                "exceptionAmount": "$payrollItems.exceptionAmount",
+                "finalAmount": "$payrollItems.finalAmount"
+              },
+              "person": 1,
+              "participation": 1,
+              "_id": 1
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "person": {
+                "$first": "$person"
+              },
+              "participation": {
+                "$first": "$participation"
+              },
+              "payrollItems": {
+                "$push": "$payrollItems"
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubricId",
+        "foreignField": "_id",
+        "as": "rubric",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubric",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "calculation_series",
+        "localField": "rubric._id",
+        "foreignField": "referenceRubric._id",
+        "as": "base_calculo",
+        "pipeline": [
+          {
+            "$project": {
+              "multipleCalculationSerie": 1,
+              "_id": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$base_calculo",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$base_calculo.multipleCalculationSerie",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$base_calculo.multipleCalculationSerie.monthlyRubrics",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll.payrollItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$payroll.payrollItems.rubric._id",
+            "$base_calculo.multipleCalculationSerie.monthlyRubrics.rubric._id"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "baseCalculoPaSemIr": {
+          "$cond": {
+            "if": {
+              "$ne": [
+                "$payroll.payrollItems.rubric._id",
+                "p:63ebaf899db9eb4252c06e5a"
+              ]
+            },
+            "then": "$payroll.payrollItems.finalAmount",
+            "else": 0
+          }
+        },
+        "baseCalculoPaAbatidoIrRegr": {
+          "$cond": {
+            "if": {
+              "$ne": [
+                "$taxRegimeTypes.type._id",
+                "p:6418c40ee89a5fcee1d873c3"
+              ]
+            },
+            "then": "$payroll.payrollItems.finalAmount",
+            "else": 0
+          }
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id",
+        "baseCalculoPaSemIr": {
+          "$sum": "$baseCalculoPaSemIr"
+        },
+        "baseCalculoPAhip": {
+          "$sum": "$payroll.payrollItems.finalAmount"
+        },
+        "baseCalculoPaAbatidoIrRegr": {
+          "$sum": "$baseCalculoPaAbatidoIrRegr"
+        },
+        "root": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "paHipotetica": {
+          "$round": [
+            {
+              "$multiply": [
+                {
+                  "$divide": [
+                    "$root.judicialPension.calculationSeries.value",
+                    100
+                  ]
+                },
+                "$baseCalculoPAhip"
+              ]
+            },
+            1
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "calculation_series",
+        "localField": "root.idRubricIRProgr",
+        "foreignField": "referenceRubric._id",
+        "as": "base_calculoIRprog",
+        "pipeline": [
+          {
+            "$project": {
+              "simpleCalculationSerie": 1,
+              "_id": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$base_calculoIRprog",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$base_calculoIRprog.simpleCalculationSerie",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "root.payroll._id",
+        "foreignField": "_id",
+        "as": "payrolls_baseIRprogr",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payrollItems"
+            }
+          },
+          {
+            "$project": {
+              "payrollItems": {
+                "rubric": "$payrollItems.rubric",
+                "amount": "$payrollItems.amount",
+                "exceptionAmount": "$payrollItems.exceptionAmount",
+                "finalAmount": "$payrollItems.finalAmount"
+              },
+              "person": 1,
+              "participation": 1,
+              "_id": 1
+            }
+          },
+          {
+            "$group": {
+              "_id": "$_id",
+              "person": {
+                "$first": "$person"
+              },
+              "participation": {
+                "$first": "$participation"
+              },
+              "payrollItems": {
+                "$push": "$payrollItems"
+              }
+            }
+          },
+          {
+            "$project": {
+              "payrollItems": 1,
+              "person": 1,
+              "participation": 1,
+              "_id": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrolls_baseIRprogr",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrolls_baseIRprogr.payrollItems",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$or": [
+            {
+              "$eq": [
+                "$payrolls_baseIRprogr.payrollItems.rubric._id",
+                "$base_calculoIRprog.simpleCalculationSerie.rubric._id"
+              ]
+            },
+            {
+              "$ne": [
+                "$baseCalculoPaAbatidoIrRegr",
+                0
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id",
+        "baseCalculoIRprogr": {
+          "$sum": "$payrolls_baseIRprogr.payrollItems.finalAmount"
+        },
+        "listRubrics": {
+          "$push": "$payrolls_baseIRprogr.payrollItems"
+        },
+        "dadosPA": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "baseIrHip_PA": {
+          "$round": [
+            {
+              "$subtract": [
+                "$baseCalculoIRprogr",
+                "$dadosPA.paHipotetica"
+              ]
+            },
+            2
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "dadosPA.payrolls_baseIRprogr.person._id",
+        "foreignField": "_id",
+        "as": "regimeTax",
+        "let": {
+          "participationId": "$dadosPA.payrolls_baseIRprogr.participation._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "taxRegimeType": "$participations.taxRegimeType",
+              "_id": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "income_tax",
+        "localField": "regimeTax.taxRegimeType._id",
+        "foreignField": "taxRegimeType",
+        "as": "incomeTax",
+        "let": {
+          "dateFilter": {
+            "$toDate": "$dadosPA.root.competenceDate"
+          }
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$effectiveDate.startedAt",
+                      "$$dateFilter"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          null
+                        ]
+                      },
+                      {
+                        "$gte": [
+                          "$effectiveDate.endedAt",
+                          "$$dateFilter"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$incomeTax",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "percentage_aliquot": {
+          "$function": {
+            "body": "function (incomeTax, baseCalculoIRprogr) {  if (!incomeTax) return {};  if (!incomeTax.tracks || incomeTax.tracks.length === 0) return {};  incomeTax.track = incomeTax.tracks[0];  for (const curr of incomeTax.tracks) {    if (baseCalculoIRprogr < curr.track) {      return incomeTax;    } else {      incomeTax.track = curr;    }  } return incomeTax;}",
+            "args": [
+              "$incomeTax",
+              "$baseIrHip_PA"
+            ],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "valorPA": {
+          "$round": [
+            {
+              "$divide": [
+                {
+                  "$multiply": [
+                    {
+                      "$subtract": [
+                        {
+                          "$cond": {
+                            "if": {
+                              "$eq": [
+                                "$percentage_aliquot.track.aliquot",
+                                0
+                              ]
+                            },
+                            "then": "$dadosPA.root.baseCalculoPaSemIr",
+                            "else": "$baseCalculoIRprogr"
+                          }
+                        },
+                        {
+                          "$subtract": [
+                            {
+                              "$multiply": [
+                                "$baseCalculoIRprogr",
+                                {
+                                  "$divide": [
+                                    "$percentage_aliquot.track.aliquot",
+                                    100
+                                  ]
+                                }
+                              ]
+                            },
+                            "$percentage_aliquot.track.deduction"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "$divide": [
+                        "$dadosPA.root.judicialPension.calculationSeries.value",
+                        100
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "$subtract": [
+                    1,
+                    {
+                      "$multiply": [
+                        {
+                          "$divide": [
+                            "$dadosPA.root.judicialPension.calculationSeries.value",
+                            100
+                          ]
+                        },
+                        {
+                          "$divide": [
+                            "$percentage_aliquot.track.aliquot",
+                            100
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            2
+          ]
+        },
+        "valorPaRegr": {
+          "$round": [
+            {
+              "$multiply": [
+                "$dadosPA.baseCalculoPaAbatidoIrRegr",
+                {
+                  "$divide": [
+                    "$dadosPA.root.judicialPension.calculationSeries.value",
+                    100
+                  ]
+                }
+              ]
+            },
+            2
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "dadosPA.root.idRubricIRProgr",
+        "foreignField": "_id",
+        "as": "rubric",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$regimeTax",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "valorIR": {
+          "$round": [
+            {
+              "$subtract": [
+                {
+                  "$multiply": [
+                    {
+                      "$subtract": [
+                        "$baseCalculoIRprogr",
+                        "$valorPA"
+                      ]
+                    },
+                    {
+                      "$divide": [
+                        "$percentage_aliquot.track.aliquot",
+                        100
+                      ]
+                    }
+                  ]
+                },
+                "$percentage_aliquot.track.deduction"
+              ]
+            },
+            2
+          ]
+        },
+        "rubric": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$regimeTax.taxRegimeType._id",
+                "p:646d2faf0c6ae3bd9fdaa44c"
+              ]
+            },
+            "then": [
+              "$dadosPA.root.rubric"
+            ],
+            "else": {
+              "$concatArrays": [
+                "$rubric",
+                [
+                  "$dadosPA.root.rubric"
+                ]
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubric",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "amountUsedFinal": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$dadosPA.root.rubricId",
+                    "$rubric._id"
+                  ]
+                },
+                "then": {
+                  "$cond": {
+                    "if": {
+                      "$ne": [
+                        "$regimeTax.taxRegimeType._id",
+                        "p:646d2faf0c6ae3bd9fdaa44c"
+                      ]
+                    },
+                    "then": "$valorPA",
+                    "else": "$valorPaRegr"
+                  }
+                }
+              }
+            ],
+            "default": "$valorIR"
+          }
+        },
+        "judicialPension": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$dadosPA.root.rubricId",
+                    "$rubric._id"
+                  ]
+                },
+                "then": {
+                  "_id": "$dadosPA.root.judicialPension._id",
+                  "recipient": "$dadosPA.root.judicialPension.recipient"
+                }
+              }
+            ],
+            "default": []
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$judicialPension",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$group": {
+        "_id": {
+          "benefit": "$_id",
+          "rubric": "$rubric._id"
+        },
+        "root": {
+          "$first": "$$ROOT"
+        },
+        "listRubricsIr": {
+          "$push": {
+            "$cond": {
+              "if": {
+                "$in": [
+                  "$rubric._id",
+                  [
+                    "$dadosPA.root.idRubricIRProgr",
+                    "$dadosPA.root.idRubricIRRegr"
+                  ]
+                ]
+              },
+              "then": "$listRubrics",
+              "else": []
+            }
+          }
+        },
+        "listRubricsPA": {
+          "$push": "$dadosPA.root.payroll.payrollItems"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$listRubricsIr",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "listRubricsIr": {
+          "$concatArrays": [
+            "$listRubricsIr",
+            [
+              {
+                "rubric": "$root.dadosPA.root.rubric",
+                "finalAmount": {
+                  "$cond": {
+                    "if": {
+                      "$eq": [
+                        "$root.rubric.configurations.isDiscount",
+                        true
+                      ]
+                    },
+                    "then": {
+                      "$multiply": [
+                        "$root.valorPA",
+                        -1
+                      ]
+                    },
+                    "else": "$root.valorPA"
+                  }
+                },
+                "amount": {
+                  "$cond": {
+                    "if": {
+                      "$eq": [
+                        "$root.rubric.configurations.isDiscount",
+                        true
+                      ]
+                    },
+                    "then": {
+                      "$multiply": [
+                        "$root.valorPA",
+                        -1
+                      ]
+                    },
+                    "else": "$root.valorPA"
+                  }
+                },
+                "exceptionAmount": {
+                  "$toInt": 0
+                }
+              }
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payroll": "$root.dadosPA.root.payroll._id",
+        "rubric": "$root.rubric",
+        "finalAmount": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$root.rubric.configurations.isDiscount",
+                true
+              ]
+            },
+            "then": {
+              "$multiply": [
+                "$root.amountUsedFinal",
+                -1
+              ]
+            },
+            "else": "$root.amountUsedFinal"
+          }
+        },
+        "amount": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$root.rubric.configurations.isDiscount",
+                true
+              ]
+            },
+            "then": {
+              "$multiply": [
+                "$root.amountUsedFinal",
+                -1
+              ]
+            },
+            "else": "$root.amountUsedFinal"
+          }
+        },
+        "exceptionAmount": {
+          "$toInt": 0
+        },
+        "competenceDate": "$root.dadosPA.root.competenceDate",
+        "type": "$root.dadosPA.root.type",
+        "status": "$root.dadosPA.root.status",
+        "quota": "$root.dadosPA.root.quota",
+        "judicialPension": "$root.judicialPension",
+        "payrollReferenceBases": {
+          "percentage": {
+            "$switch": {
+              "branches": [
+                {
+                  "case": {
+                    "$in": [
+                      "$root.rubric._id",
+                      [
+                        "$root.dadosPA.root.idRubricIRProgr",
+                        "$root.dadosPA.root.idRubricIRRegr"
+                      ]
+                    ]
+                  },
+                  "then": "$root.percentage_aliquot.track.aliquot"
+                }
+              ],
+              "default": "$root.dadosPA.root.judicialPension.calculationSeries.value"
+            }
+          },
+          "deduction": {
+            "$switch": {
+              "branches": [
+                {
+                  "case": {
+                    "$in": [
+                      "$root.rubric._id",
+                      [
+                        "$root.dadosPA.root.idRubricIRProgr",
+                        "$root.dadosPA.root.idRubricIRRegr"
+                      ]
+                    ]
+                  },
+                  "then": "$root.percentage_aliquot.track.deduction"
+                }
+              ],
+              "default": 0
+            }
+          },
+          "rubricList": {
+            "$switch": {
+              "branches": [
+                {
+                  "case": {
+                    "$in": [
+                      "$root.rubric._id",
+                      [
+                        "$root.dadosPA.root.idRubricIRProgr",
+                        "$root.dadosPA.root.idRubricIRRegr"
+                      ]
+                    ]
+                  },
+                  "then": "$listRubricsIr"
+                }
+              ],
+              "default": "$listRubricsPA"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -5,25 +5,19 @@
   "isDefault": false,
   "actions": [
     {
-      "ref": "6695446c639a160ead88a544",
+      "ref": "68502ed10f986c22ae6d7aa1",
       "type": "tasks",
       "order": 1,
       "status": "63754b1939630e4bf49ab514"
     },
     {
-      "ref": "66954b18463c51cd1913e4fb",
-      "type": "tasks",
-      "order": 2,
-      "status": "63754b1939630e4bf49ab514"
-    },
-    {
       "ref": "6695587bbdd73be24d7ebfaf",
       "type": "tasks",
-      "order": 3,
+      "order": 2,
       "status": "63754b1939630e4bf49ab514"
     }
   ],
   "createdAt": "2024-07-15T14:46:45.000Z",
-  "updatedAt": "2025-04-09T19:27:59.774Z",
+  "updatedAt": "2025-06-16T14:56:24.097Z",
   "__v": 0
 }

@@ -1,0 +1,258 @@
+{
+  "_id": "66e37059dc46a2e2c2a40fb3",
+  "type": {
+    "_id": "66e37058a7f12fa65ab58674",
+    "name": "queries"
+  },
+  "name": "exemptDeductionBaseIncomeTax",
+  "description": "Calcula a  IN1343-Dedução Base Tributável (informativo)",
+  "main_collection": "benefits_in_payroll_process",
+  "output_name": "otpExemptDeductionBaseIncomeTax",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_rubrica_beneficio_aposentadoria",
+      "type": "Parameter",
+      "description": "Id que identifica o provento de aposentadoria.",
+      "value": "674e6e04519c6b3b81a2d234"
+    },
+    {
+      "name": "regressiveRubricBenefitId",
+      "type": "Parameter",
+      "description": "id da rubrica de provento de beneficio regressivo",
+      "value": "674e6d67519c6b3b81a2d0d0"
+    },
+    {
+      "name": "_id",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC",
+    "exempt_balances",
+    "rubrics"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payload.benefit._id": "$.opt_trf_buscar_beneficios_ativos._id"
+      }
+    },
+    {
+      "$addFields": {
+        "rubricId": "$._id",
+        "payrollPlanningId": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "payload.benefit._id",
+        "foreignField": "benefit._id",
+        "as": "payroll",
+        "let": {
+          "payrollPlanning": "$payrollPlanningId"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payrollItems"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$payrollPlanning._id",
+                      "$$payrollPlanning"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$payrollItems.rubric._id",
+                          "p:6418be2e6dcafc9b25c1679d"
+                        ]
+                      },
+                      {
+                        "$eq": [
+                          "$payrollItems.rubric._id",
+                          "p:66eb7ceff772590b47bef18f"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "payrollPlanning": 1,
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "exempt_balances",
+        "localField": "payload.person.participations._id",
+        "foreignField": "person.participation._id",
+        "as": "exempBalance",
+        "let": {
+          "competenceDate": "$payroll.payrollPlanning.competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$competenceDate",
+                      "$$competenceDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "competenceDate": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$exempBalance",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "amountValueFinal": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$lte": [
+                    "$exempBalance.value",
+                    "$payroll.payrollItems.finalAmount"
+                  ]
+                },
+                "then": {
+                  "$toDouble": {
+                    "$round": [
+                      "$exempBalance.value",
+                      2
+                    ]
+                  }
+                }
+              }
+            ],
+            "default": {
+              "$toDouble": {
+                "$round": [
+                  "$payroll.payrollItems.finalAmount",
+                  2
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubricId",
+        "foreignField": "_id",
+        "as": "rubricId",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricId",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payroll": "$payroll._id",
+        "rubric": "$rubricId",
+        "finalAmount": {
+          "$toDouble": {
+            "$multiply": [
+              "$amountValueFinal",
+              -1
+            ]
+          }
+        },
+        "amount": {
+          "$toDouble": {
+            "$multiply": [
+              "$amountValueFinal",
+              -1
+            ]
+          }
+        },
+        "exceptionAmount": {
+          "$toDouble": "0"
+        },
+        "status": "CALCULATED",
+        "type": "CALCULATED",
+        "reason": " ",
+        "competenceDate": "$payroll.competenceDate",
+        "createdAt": "$getdate",
+        "updatedAt": "$getdate"
+      }
+    }
+  ]
+}

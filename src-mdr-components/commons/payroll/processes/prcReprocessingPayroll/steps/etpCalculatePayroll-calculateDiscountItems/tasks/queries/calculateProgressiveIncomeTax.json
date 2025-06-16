@@ -1,0 +1,805 @@
+{
+  "_id": "66588d1f7978ddcc3f646870",
+  "type": {
+    "_id": "63bdbc02f9607d0008034487",
+    "name": "queries"
+  },
+  "name": "calculateProgressiveIncomeTax",
+  "description": "calcular_ir_progressivo",
+  "main_collection": "benefits",
+  "output_name": "otp_calcular_ir_progressivo",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "rubrica_deducao_molestia_grave",
+      "type": "Parameter",
+      "description": "Parâmetro que define a rubrica de dedução por moléstia grave.",
+      "value": "674e6db4519c6b3b81a2d192"
+    },
+    {
+      "name": "rubrica_deducao_65_anos",
+      "type": "Parameter",
+      "description": "Parâmetro que define a rubrica de dedução por 65 anos.",
+      "value": "674e6d67519c6b3b81a2d10c"
+    },
+    {
+      "name": "id_tipo_ir_progressivo",
+      "type": "Parameter",
+      "description": "Id do tipo de ir progressivo",
+      "value": "66bd44764eb4534a4f834c3c"
+    },
+    {
+      "name": "simplifiedDeductionRubricId",
+      "type": "Parameter",
+      "description": "parâmetro que guarda o id da rubrica de dedução simplificada ",
+      "value": "674e6d8e519c6b3b81a2d152"
+    },
+    {
+      "name": "exemptRubricIn1343",
+      "type": "Parameter",
+      "description": "id da rubrica IN1343-Dedução Base Tributável (informativo)\n",
+      "value": "674e6db5519c6b3b81a2d1bd"
+    },
+    {
+      "name": "_id",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "people",
+    "income_tax",
+    "calculation_series",
+    "payrolls_RMDRC",
+    "rubrics"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.opt_trf_buscar_beneficios_ativos._id"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "participation": 1,
+        "taxRegimeTypes": 1
+      }
+    },
+    {
+      "$addFields": {
+        "rubricId": "$._id",
+        "payrollPlanningId": "$.opt_trf_buscar_beneficios_ativos.payrollPlanning",
+        "simplifiedDeductioRubric": "p:66e08c7a2cea870a922172cf",
+        "competenceDate": {
+          "$toDate": "$.opt_trf_buscar_beneficios_ativos.planejamento_folha.referenceDate"
+        },
+        "exceptionAmount": 0
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$taxRegimeTypes",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "participation",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participationId": "$participation",
+          "taxRegime": "p:6418c40ee89a5fcee1d873c3"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations.taxRegimeType._id",
+                  "$$taxRegime"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "participations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$cond": {
+            "if": {
+              "$gt": [
+                {
+                  "$type": "$taxRegimeTypes.type._id"
+                },
+                "missing"
+              ]
+            },
+            "then": {
+              "$eq": [
+                "$taxRegimeTypes.type._id",
+                "p:6418c40ee89a5fcee1d873c3"
+              ]
+            },
+            "else": {
+              "$eq": [
+                1,
+                1
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "income_tax",
+        "localField": "person.participations.taxRegimeType._id",
+        "foreignField": "taxRegimeType",
+        "as": "incomeTax",
+        "let": {
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$or": [
+                  {
+                    "$gte": [
+                      "$effectiveDate.endedAt",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$effectiveDate.endedAt",
+                      null
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "effectiveDate.startedAt": 1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$incomeTax",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "calculation_series",
+        "localField": "rubricId",
+        "foreignField": "referenceRubric._id",
+        "as": "base_calculo"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$base_calculo",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "base_calculo.simpleCalculationSerie.rubric._id",
+        "foreignField": "payrollItems.rubric._id",
+        "as": "payrolls_RMDRC",
+        "let": {
+          "benefitId": "$_id",
+          "payrollPlanningId": "$payrollPlanningId",
+          "rubrics": "$base_calculo.simpleCalculationSerie.rubric._id",
+          "simplifiedDiscountDeduction": {
+            "$multiply": [
+              "$incomeTax.simplifiedDiscountDeduction",
+              -1
+            ]
+          }
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "temMolestia": {
+                "$cond": {
+                  "if": {
+                    "$in": [
+                      "p:63d7b74efc21e000082e026e",
+                      "$payrollItems.rubric._id"
+                    ]
+                  },
+                  "then": true,
+                  "else": false
+                }
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$payrollItems",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$benefit._id",
+                      "$$benefitId"
+                    ]
+                  },
+                  {
+                    "$in": [
+                      "$payrollItems.rubric._id",
+                      "$$rubrics"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$payrollPlanning._id",
+                      "$$payrollPlanningId"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$cond": {
+                  "if": {
+                    "$eq": [
+                      "$temMolestia",
+                      true
+                    ]
+                  },
+                  "then": {
+                    "$ne": [
+                      "$payrollItems.rubric._id",
+                      "p:66e44ba2137b1d08405e2f77"
+                    ]
+                  },
+                  "else": {
+                    "$ne": [
+                      "$payrollItems.rubric._id",
+                      null
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "benefit": 1,
+              "payrollPlanning": 1,
+              "temMolestia": 1,
+              "status": 1,
+              "payrollItems": {
+                "rubric": "$payrollItems.rubric",
+                "amount": "$payrollItems.amount",
+                "exceptionAmount": "$payrollItems.exceptionAmount",
+                "finalAmount": "$payrollItems.finalAmount"
+              }
+            }
+          },
+          {
+            "$addFields": {
+              "payrollItems.usedDiscounts": {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$and": [
+                          {
+                            "$ne": [
+                              "p:63d7b78afc21e000082e0275",
+                              "$payrollItems.rubric._id"
+                            ]
+                          },
+                          {
+                            "$eq": [
+                              "$payrollItems.rubric.configurations.isDiscount",
+                              true
+                            ]
+                          }
+                        ]
+                      },
+                      "then": "$payrollItems.finalAmount"
+                    }
+                  ],
+                  "default": null
+                }
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$or": [
+                  {
+                    "$lte": [
+                      "$payrollItems.usedDiscounts",
+                      "$$simplifiedDiscountDeduction"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$payrollItems.usedDiscounts",
+                      null
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "payrollItem": "$payrolls_RMDRC.payrollItems"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "payrollItem.rubric._id",
+        "foreignField": "_id",
+        "as": "rubric"
+      }
+    },
+    {
+      "$addFields": {
+        "payrollItemsNotDiscount": {
+          "$filter": {
+            "input": "$payrollItem",
+            "as": "item",
+            "cond": {
+              "$or": [
+                {
+                  "$eq": [
+                    "$$item.rubric.configurations.isDiscount",
+                    false
+                  ]
+                },
+                {
+                  "$eq": [
+                    "$$item.rubric._id",
+                    "p:63d7b78afc21e000082e0275"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "rubricNotDiscount": {
+          "$filter": {
+            "input": "$rubric",
+            "as": "item",
+            "cond": {
+              "$or": [
+                {
+                  "$eq": [
+                    "$$item.configurations.isDiscount",
+                    false
+                  ]
+                },
+                {
+                  "$eq": [
+                    "$$item._id",
+                    "p:63d7b78afc21e000082e0275"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "base_calculation": "$payrollItem",
+        "amountCalculate": {
+          "$function": {
+            "body": "function (payrollItem, rubrics) {  let result = 0;   if (rubrics.length > 0) {    payrollItem.forEach(  (x) => {  const res = rubrics.find( (y) =>  y._id.toString() === x.rubric.toString());   if (res && res.configurations.isDiscount) result -= parseFloat(x.finalAmount); else result += parseFloat(x.finalAmount); } ); }  return result; }",
+            "args": [
+              "$payrollItem",
+              "$rubric"
+            ],
+            "lang": "js"
+          }
+        },
+        "amountCalculateSimplify": {
+          "$function": {
+            "body": "function (payrollItem, rubrics, incometax) {  let result = 0;   if (rubrics.length > 0) {    payrollItem.forEach(  (x) => {  const res = rubrics.find( (y) =>  y._id.toString() === x.rubric.toString());   if (res && !res.configurations.isDiscount) result += parseFloat(x.finalAmount); else result += x.finalAmount   } ); }  return result; }",
+            "args": [
+              "$payrollItemsNotDiscount",
+              "$rubricNotDiscount"
+            ],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "percentage_aliquot": {
+          "$function": {
+            "body": "function (incomeTax, amount_base_calculation) {  if (!incomeTax) return {};  if (!incomeTax.tracks || incomeTax.tracks.length === 0) return {};  incomeTax.track = incomeTax.tracks[0];  for (const curr of incomeTax.tracks) {    if (amount_base_calculation < curr.track) {      return incomeTax;    } else {      incomeTax.track = curr;    }  } return incomeTax;}",
+            "args": [
+              "$incomeTax",
+              "$amountCalculate"
+            ],
+            "lang": "js"
+          }
+        },
+        "percentageAliquotSimplify": {
+          "$function": {
+            "body": "function (incomeTax, amount_base_calculation) {  if (!incomeTax) return {};  if (!incomeTax.tracks || incomeTax.tracks.length === 0) return {};  incomeTax.track = incomeTax.tracks[0];  for (const curr of incomeTax.tracks) {    if ((amount_base_calculation-incomeTax.simplifiedDiscountDeduction) < curr.track) {      return incomeTax;    } else {      incomeTax.track = curr;    }  } return incomeTax;}",
+            "args": [
+              "$incomeTax",
+              "$amountCalculateSimplify"
+            ],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "amount": {
+          "$toDouble": {
+            "$round": [
+              {
+                "$subtract": [
+                  {
+                    "$multiply": [
+                      "$amountCalculate",
+                      {
+                        "$divide": [
+                          "$percentage_aliquot.track.aliquot",
+                          100
+                        ]
+                      }
+                    ]
+                  },
+                  "$percentage_aliquot.track.deduction"
+                ]
+              },
+              2
+            ]
+          }
+        },
+        "amountSimplify": {
+          "$toDouble": {
+            "$round": [
+              {
+                "$subtract": [
+                  {
+                    "$multiply": [
+                      {
+                        "$subtract": [
+                          "$amountCalculateSimplify",
+                          "$percentageAliquotSimplify.simplifiedDiscountDeduction"
+                        ]
+                      },
+                      {
+                        "$divide": [
+                          "$percentageAliquotSimplify.track.aliquot",
+                          100
+                        ]
+                      }
+                    ]
+                  },
+                  "$percentageAliquotSimplify.track.deduction"
+                ]
+              },
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "simplifiedDeductioRubric",
+        "foreignField": "_id",
+        "as": "simplifiedDeductioRubric",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$simplifiedDeductioRubric",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "amountUsed": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$gt": [
+                    "$amount",
+                    "$amountSimplify"
+                  ]
+                },
+                "then": "$amountSimplify"
+              }
+            ],
+            "default": "$amount"
+          }
+        },
+        "percentageUsed": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$gt": [
+                    "$percentage_aliquot.track.aliquot",
+                    "$percentageAliquotSimplify.track.aliquot"
+                  ]
+                },
+                "then": {
+                  "aliquot": "$percentageAliquotSimplify.track.aliquot",
+                  "deduction": "$percentageAliquotSimplify.track.deduction"
+                }
+              }
+            ],
+            "default": {
+              "aliquot": "$percentage_aliquot.track.aliquot",
+              "deduction": "$percentage_aliquot.track.deduction"
+            }
+          }
+        },
+        "payrollItem": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$gt": [
+                    "$amount",
+                    "$amountSimplify"
+                  ]
+                },
+                "then": {
+                  "$concatArrays": [
+                    "$payrollItem",
+                    [
+                      {
+                        "rubric": "$simplifiedDeductioRubric",
+                        "amount": {
+                          "$multiply": [
+                            "$incomeTax.simplifiedDiscountDeduction",
+                            -1
+                          ]
+                        },
+                        "exceptionAmount": {
+                          "$toDouble": 0
+                        },
+                        "finalAmount": {
+                          "$multiply": [
+                            "$incomeTax.simplifiedDiscountDeduction",
+                            -1
+                          ]
+                        }
+                      }
+                    ]
+                  ]
+                }
+              }
+            ],
+            "default": "$payrollItem"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "payrolls_RMDRC._id",
+        "foreignField": "_id",
+        "as": "payrollItemMolestia",
+        "let": {
+          "rubricaMolestia": "p:63d7b74efc21e000082e026e"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payrollItems",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollItems.rubric._id",
+                  "$$rubricaMolestia"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "amountUsedFinal": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$gt": [
+                    {
+                      "$size": "$payrollItemMolestia"
+                    },
+                    0
+                  ]
+                },
+                "then": 0
+              }
+            ],
+            "default": "$amountUsed"
+          }
+        },
+        "payroll": "$payrolls_RMDRC._id"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$limit": 1
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubricId",
+        "foreignField": "_id",
+        "as": "rubricId",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricId",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItem",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$group": {
+        "_id": "$_id",
+        "rubricList": {
+          "$push": "$payrollItem"
+        },
+        "root": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payroll": "$root.payroll",
+        "rubric": "$root.rubricId",
+        "finalAmount": {
+          "$toDouble": {
+            "$multiply": [
+              "$root.amountUsedFinal",
+              -1
+            ]
+          }
+        },
+        "amount": {
+          "$toDouble": {
+            "$multiply": [
+              "$root.amountUsedFinal",
+              -1
+            ]
+          }
+        },
+        "exceptionAmount": "$root.exceptionAmount",
+        "status": "CALCULATED",
+        "type": "CALCULATED",
+        "competenceDate": "$root.competenceDate",
+        "payrollReferenceBases": {
+          "percentage": "$root.percentageUsed.aliquot",
+          "deduction": "$root.percentageUsed.deduction",
+          "rubricList": "$rubricList"
+        },
+        "createdAt": "$root.getdate"
+      }
+    }
+  ]
+}

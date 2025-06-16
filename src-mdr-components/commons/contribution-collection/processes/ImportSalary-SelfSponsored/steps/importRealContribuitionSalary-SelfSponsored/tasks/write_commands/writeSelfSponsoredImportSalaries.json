@@ -9,7 +9,7 @@
   "main_collection": "salary_import_temp",
   "Command": {
     "insertOne": {
-      "document": "$.$$.otp_applyReadjustmentsSalarySelfSponsored[0]"
+      "document": "$.$$.otpReadjustmentsSalary"
     }
   }
 }
