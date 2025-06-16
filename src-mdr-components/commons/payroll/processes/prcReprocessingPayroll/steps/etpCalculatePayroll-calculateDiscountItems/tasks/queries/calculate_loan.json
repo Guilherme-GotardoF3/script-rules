@@ -1,0 +1,390 @@
+{
+  "_id": "668dd192534ea32fef59bf17",
+  "type": {
+    "_id": "668dd1920693602a224faff0",
+    "name": "queries"
+  },
+  "name": "calculate_loan",
+  "description": "Buscar o valor do emprestimo por meio de API",
+  "main_collection": "benefits_in_payroll_process",
+  "output_name": "otp_calculate_loan",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "_id",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "payrolls_RMDRC",
+    "rubrics",
+    "exclusion_payroll_items"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payload.benefit._id": "$.opt_trf_buscar_beneficios_ativos._id",
+        "payload.loans.contract": {
+          "$exists": true
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "rubricId": "$._id"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "payload.benefit.payrollPlannings._id",
+        "foreignField": "payrollPlanning._id",
+        "as": "payrollExists",
+        "let": {
+          "benefitId": "$payload.benefit._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$benefit._id",
+                  "$$benefitId"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollExists",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "payload.benefit.payrollPlannings._id",
+        "foreignField": "payrollPlanning._id",
+        "as": "payroll",
+        "let": {
+          "benefitId": "$payload.benefit._id",
+          "rubricId": "$rubricId"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payrollItems",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$benefit._id",
+                  "$$benefitId"
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollItems.rubric._id",
+                  "$$rubricId"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$match": {
+        "payroll": {
+          "$eq": []
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payload.loans.contract.installments",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubricId",
+        "foreignField": "_id",
+        "as": "rubrics",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubrics",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "payroll.payrollItems.exceptionAmount": {
+          "$ifNull": [
+            "$payroll.payrollItems.exceptionAmount",
+            0
+          ]
+        },
+        "payroll.payrollItems.amount": {
+          "$ifNull": [
+            "$payroll.payrollItems.amount",
+            0
+          ]
+        },
+        "payroll.payrollItems.finalAmount": {
+          "$ifNull": [
+            "$payroll.payrollItems.finalAmount",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "payroll.payrollItems.rubric._id",
+        "foreignField": "payrollItems.rubric._id",
+        "as": "payrollException",
+        "let": {
+          "benefit": "$payload.benefit._id",
+          "payrollPlanningId": "$payroll.payrollPlanning._id",
+          "rubric": "$payrollItems.rubric"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payrollItems",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$benefit._id",
+                      "$$benefit"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$payrollItems.rubric._id",
+                      "$$rubric"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$payrollPlanning._id",
+                      "$$payrollPlanningId"
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$payrollItems.exceptionAmount",
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "benefit": 1,
+              "payrollPlanning": 1,
+              "status": 1,
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "exclusion_payroll_items",
+        "localField": "payload.benefit._id",
+        "foreignField": "benefit",
+        "as": "payrollItemExclusion",
+        "let": {
+          "rubric": "$rubrics._id",
+          "payrollPlanning": "$payload.benefit.payrollPlannings._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$rubric._id",
+                      "$$rubric"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$payrollPlanning._id",
+                      "$$payrollPlanning"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "exceptionSize": {
+          "$size": "$payrollException"
+        },
+        "exclusionSize": {
+          "$size": "$payrollItemExclusion"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$eq": [
+                "$exceptionSize",
+                0
+              ]
+            },
+            {
+              "$eq": [
+                "$exclusionSize",
+                0
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "amount": {
+          "$round": [
+            {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$payroll.payrollItems.exceptionAmount",
+                    0
+                  ]
+                },
+                "then": {
+                  "$multiply": [
+                    "$payload.loans.contract.installments.amount",
+                    -1
+                  ]
+                },
+                "else": "$payroll.payrollItems.amount"
+              }
+            },
+            2
+          ]
+        },
+        "exceptionAmount": {
+          "$round": [
+            {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$payroll.payrollItems.exceptionAmount",
+                    0
+                  ]
+                },
+                "then": 0,
+                "else": "$payroll.payrollItems.exceptionAmount"
+              }
+            },
+            2
+          ]
+        },
+        "finalAmount": {
+          "$round": [
+            {
+              "$cond": {
+                "if": {
+                  "$eq": [
+                    "$payroll.payrollItems.exceptionAmount",
+                    0
+                  ]
+                },
+                "then": {
+                  "$multiply": [
+                    "$payload.loans.contract.installments.amount",
+                    -1
+                  ]
+                },
+                "else": "$payroll.payrollItems.finalAmount"
+              }
+            },
+            2
+          ]
+        },
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payroll": "$payrollExists._id",
+        "rubric": "$rubrics",
+        "finalAmount": {
+          "$toDouble": "$finalAmount"
+        },
+        "amount": {
+          "$toDouble": "$amount"
+        },
+        "exceptionAmount": "$exceptionAmount",
+        "status": "CALCULATED",
+        "type": "CALCULATED",
+        "competenceDate": "$payrollExists.payrollPlanning.competenceDate",
+        "createdAt": "$getdate"
+      }
+    }
+  ]
+}

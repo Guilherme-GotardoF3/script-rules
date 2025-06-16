@@ -1,0 +1,1597 @@
+{
+  "_id": "664be25d2b56e676328d8e38",
+  "type": {
+    "_id": "63b881068726d021423f3015",
+    "name": "queries"
+  },
+  "name": "calculateDeathPensionValue",
+  "description": "Calcular o valor do benefício de pensão por morte para um benefício gerado.",
+  "main_collection": "benefits_in_payroll_process",
+  "output_name": "otp_calculateDeathPensionValue",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_rubrica_pensao_por_morte",
+      "type": "Parameter",
+      "description": "Id da rubrica do provento da pensão por morte",
+      "value": "674e6d8e519c6b3b81a2d136"
+    },
+    {
+      "name": "id_beneficio_pensao_por_morte",
+      "type": "Parameter",
+      "description": "Id do benefício de pensão por morte",
+      "value": "6732672311e1d84832e0ad35"
+    },
+    {
+      "name": "id_tipo_ir_progressivo",
+      "type": "Parameter",
+      "description": "Id do tipo de ir progressivo",
+      "value": "66bd44764eb4534a4f834c3c"
+    },
+    {
+      "name": "previsaoPlanId",
+      "type": "Parameter",
+      "description": "Parâmetro que guarda o id do plano PreVisão",
+      "value": "665cd426d11b2a523e4708b8"
+    },
+    {
+      "name": "telefonicaBdPlanId",
+      "type": "Parameter",
+      "description": "parâmetro que guarda o id do plano Telefônica BD",
+      "value": "665cd426d11b2a523e4708b5"
+    },
+    {
+      "name": "regressiveRubricDeathPension",
+      "type": "Parameter",
+      "description": "id da rubrica de provento do beneficio de pensão por morte regressivo",
+      "value": "674e6d67519c6b3b81a2d10e"
+    },
+    {
+      "name": "rubricResidualBalance",
+      "type": "Parameter",
+      "description": "id da rubrica de resíduo - quando acontece o pagamento residual do saldo de conta",
+      "value": "674e6e9f519c6b3b81a2d31e"
+    },
+    {
+      "name": "exemptRubric",
+      "type": "Parameter",
+      "description": "id da rubrica do Benefício Isento (exigibilidade suspensa)",
+      "value": "674e6db6519c6b3b81a2d1f9"
+    },
+    {
+      "name": "paymentMethodId",
+      "type": "Parameter",
+      "description": "id do método de pagamento \"Prazo certo em reais\"",
+      "value": "66bd4cdd4eb4534a4f853c6c"
+    },
+    {
+      "name": "deathPensionPeculioId",
+      "type": "Parameter",
+      "description": "Id da rubrica do Pecúlio da Pensão por Morte",
+      "value": "674e6e71519c6b3b81a2d2b3"
+    },
+    {
+      "name": "payrollPlanningId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "benefit_types",
+    "payrolls_RMDRC",
+    "plans",
+    "people",
+    "benefits",
+    "plan_readjustments",
+    "exclusion_payroll_items",
+    "rubrics",
+    "judicial_income_taxes"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payload.benefit._id": "$.otp_getBenefitsInPayrollProcess.payload.benefit._id",
+        "payload.benefit.payrollPlannings._id": "$.payrollPlanningId"
+      }
+    },
+    {
+      "$addFields": {
+        "payload.accountBalance": {
+          "$ifNull": [
+            "$payload.accountBalance",
+            [
+              []
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefit_types",
+        "as": "benefitTypes",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$pensionDeath",
+                  true
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$in": [
+            "$payload.benefit.type._id",
+            "$benefitTypes._id"
+          ]
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payload.benefit.paymentMethods",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payload.accountBalance"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payload.benefit.history",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "payload.benefit.history.expirationDate": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$payload.benefit.history.expirationDate",
+                    ""
+                  ]
+                },
+                "then": null
+              }
+            ],
+            "default": {
+              "$toDate": "$payload.benefit.history.expirationDate"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$or": [
+            {
+              "$gte": [
+                "$payload.benefit.history.expirationDate",
+                {
+                  "$toDate": "$payload.benefit.payrollPlannings.competenceDate"
+                }
+              ]
+            },
+            {
+              "$eq": [
+                null,
+                "$payload.benefit.history.expirationDate"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$sort": {
+        "payload.history.effectiveDate": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "payload.benefit._id",
+        "foreignField": "benefit._id",
+        "as": "payroll",
+        "let": {
+          "payrollPlanningId": "$payload.benefit.payrollPlannings._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollPlanning._id",
+                  "$$payrollPlanningId"
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "judicialPension": {
+                "$exists": false
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "payrollItems": 1,
+              "payrollPlanning": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "actualPayrollItem": "$payroll.payrollItems",
+        "payrollItems.rubric": "p:6418be6a6dcafc9b25c167a4",
+        "payrollItems.competenceDate": "$payload.benefit.payrollPlannings.competenceDate",
+        "payrollItems.type": "CALCULATED",
+        "payrollItems.status": "CALCULATED",
+        "payrollItems.quota": {
+          "_id": "$payload.benefit.payrollPlannings.monetaryUnitValues._id",
+          "value": "$payload.benefit.payrollPlannings.monetaryUnitValues.value",
+          "referenceDate": "$payload.benefit.payrollPlannings.monetaryUnitValues.referenceDate"
+        },
+        "payrollItems.preQuota": {
+          "_id": "$payload.benefit.payrollPlannings.preMonetaryUnitValues._id",
+          "value": "$payload.benefit.payrollPlannings.preMonetaryUnitValues.value",
+          "referenceDate": "$payload.benefit.payrollPlannings.preMonetaryUnitValues.referenceDate"
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$actualPayrollItem",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$payrollItems.rubric",
+            "p:6418be6a6dcafc9b25c167a4"
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$or": [
+            {
+              "$eq": [
+                "$actualPayrollItem.rubric._id",
+                "$payrollItems.rubric"
+              ]
+            },
+            {
+              "$eq": [
+                null,
+                null
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "payrollItems.amount": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$payroll.payrollItems.rubric._id",
+                "$payrollItems.rubric"
+              ]
+            },
+            "then": {
+              "$ifNull": [
+                "$actualPayrollItem.amount",
+                0
+              ]
+            },
+            "else": 0
+          }
+        },
+        "payrollItems.exceptionAmount": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$payroll.payrollItems.rubric._id",
+                "$payrollItems.rubric"
+              ]
+            },
+            "then": {
+              "$ifNull": [
+                "$actualPayrollItem.exceptionAmount",
+                0
+              ]
+            },
+            "else": 0
+          }
+        },
+        "payrollItems.finalAmount": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$payroll.payrollItems.rubric._id",
+                "$payrollItems.rubric"
+              ]
+            },
+            "then": {
+              "$ifNull": [
+                "$actualPayrollItem.finalAmount",
+                0
+              ]
+            },
+            "else": 0
+          }
+        },
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "plans",
+        "localField": "payload.person.participations.participationClass.plan._id",
+        "foreignField": "_id",
+        "as": "plan"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$plan",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "payload.person._id",
+        "foreignField": "_id",
+        "as": "participationSource",
+        "let": {
+          "participationId": "$payload.person.participations._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations"
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$$participationId",
+                  "$participations._id"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": "$participations.participationSource._id"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$participationSource",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "participationSource._id",
+        "foreignField": "participation",
+        "as": "benefitSource",
+        "pipeline": [
+          {
+            "$project": {
+              "benefitStartDate": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$benefitSource",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$lookup": {
+        "from": "plan_readjustments",
+        "localField": "payload.person.participations.participationClass.plan._id",
+        "foreignField": "plan._id",
+        "as": "reajuste_anual",
+        "let": {
+          "benefitStartDate": {
+            "$toDate": "$benefitSource.benefitStartDate"
+          },
+          "competenceDatePayrollPlanning": {
+            "$toDate": "$payload.benefit.payrollPlannings.competenceDate"
+          },
+          "adjustmentPeriod": "$plan.adjustmentPeriod"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "benefitStartDate": "$$benefitStartDate",
+              "competenceDatePayrollPlanning": "$$competenceDatePayrollPlanning"
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$readjustmentIndex.readjustmentDate",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$readjustmentIndex.readjustmentDate.reference",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$readjustmentMonth",
+                      "$$adjustmentPeriod"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      {
+                        "$add": [
+                          {
+                            "$multiply": [
+                              {
+                                "$year": "$competenceDatePayrollPlanning"
+                              },
+                              100
+                            ]
+                          },
+                          {
+                            "$month": "$competenceDatePayrollPlanning"
+                          }
+                        ]
+                      },
+                      {
+                        "$add": [
+                          {
+                            "$multiply": [
+                              {
+                                "$year": "$readjustmentIndex.readjustmentDate.date"
+                              },
+                              100
+                            ]
+                          },
+                          {
+                            "$month": "$readjustmentIndex.readjustmentDate.date"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$group": {
+              "_id": null,
+              "root": {
+                "$push": "$$ROOT"
+              },
+              "menorCompetenceDate": {
+                "$min": {
+                  "$add": [
+                    {
+                      "$multiply": [
+                        {
+                          "$year": "$readjustmentIndex.readjustmentDate.reference.competenceDate"
+                        },
+                        100
+                      ]
+                    },
+                    {
+                      "$month": "$readjustmentIndex.readjustmentDate.reference.competenceDate"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$root",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$addFields": {
+              "dibFindIndex": {
+                "$cond": {
+                  "if": {
+                    "$lte": [
+                      {
+                        "$add": [
+                          {
+                            "$multiply": [
+                              {
+                                "$year": {
+                                  "$toDate": "$root.benefitStartDate"
+                                }
+                              },
+                              100
+                            ]
+                          },
+                          {
+                            "$month": {
+                              "$toDate": "$root.benefitStartDate"
+                            }
+                          }
+                        ]
+                      },
+                      "$menorCompetenceDate"
+                    ]
+                  },
+                  "then": "$menorCompetenceDate",
+                  "else": {
+                    "$add": [
+                      {
+                        "$multiply": [
+                          {
+                            "$year": {
+                              "$toDate": "$root.benefitStartDate"
+                            }
+                          },
+                          100
+                        ]
+                      },
+                      {
+                        "$month": {
+                          "$toDate": "$root.benefitStartDate"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  {
+                    "$add": [
+                      {
+                        "$multiply": [
+                          {
+                            "$year": {
+                              "$toDate": "$root.readjustmentIndex.readjustmentDate.reference.competenceDate"
+                            }
+                          },
+                          100
+                        ]
+                      },
+                      {
+                        "$month": {
+                          "$toDate": "$root.readjustmentIndex.readjustmentDate.reference.competenceDate"
+                        }
+                      }
+                    ]
+                  },
+                  "$dibFindIndex"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$reajuste_anual",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "benefitValue": {
+          "$multiply": [
+            "$payload.benefit.paymentMethods.value",
+            {
+              "$ifNull": [
+                "$reajuste_anual.root.readjustmentIndex.readjustmentDate.reference.cumulativeIndexValue",
+                1
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "payrollItems.rubric",
+        "foreignField": "payrollItems.rubric._id",
+        "as": "payrollException",
+        "let": {
+          "benefit": "$payload.benefit._id",
+          "payrollPlanningId": "$payroll.payrollPlanning._id",
+          "rubric": "$payrollItems.rubric"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payrollItems",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$benefit._id",
+                      "$$benefit"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$payrollItems.rubric._id",
+                      "$$rubric"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$payrollPlanning._id",
+                      "$$payrollPlanningId"
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$payrollItems.exceptionAmount",
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "benefit": 1,
+              "payrollPlanning": 1,
+              "status": 1,
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$lookup": {
+        "from": "exclusion_payroll_items",
+        "localField": "payload.benefit._id",
+        "foreignField": "benefit",
+        "as": "payrollItemExclusion",
+        "let": {
+          "rubric": "$actualPayrollItem.rubric._id",
+          "payrollPlanning": "$payroll.payrollPlanning._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$rubric._id",
+                      "$$rubric"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$payrollPlanning._id",
+                      "$$payrollPlanning"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "exceptionSize": {
+          "$size": "$payrollException"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$exceptionSize",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "amountBenefitValue": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$payrollItems.exceptionAmount",
+                0
+              ]
+            },
+            "then": "$benefitValue",
+            "else": {
+              "$add": [
+                "$payrollItems.amount",
+                "$payrollItems.exceptionAmount"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "amountBenefitValue": {
+          "$toDouble": {
+            "$round": [
+              {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$in": [
+                          "$plan._id",
+                          [
+                            "p:66e039d3d0e7f4f32d0bf530",
+                            "p:66e03abdd0e7f4f32d0bf537"
+                          ]
+                        ]
+                      },
+                      "then": "$amountBenefitValue"
+                    },
+                    {
+                      "case": {
+                        "$and": [
+                          {
+                            "$eq": [
+                              "$payload.benefit.paymentMethods.method.name",
+                              "Percentual"
+                            ]
+                          }
+                        ]
+                      },
+                      "then": {
+                        "$multiply": [
+                          {
+                            "$multiply": [
+                              "$payload.accountBalance.totalQuotas",
+                              {
+                                "$divide": [
+                                  "$payload.benefit.paymentMethods.parcelsQuantity",
+                                  100
+                                ]
+                              }
+                            ]
+                          },
+                          "$payrollItems.quota.value"
+                        ]
+                      }
+                    },
+                    {
+                      "case": {
+                        "$eq": [
+                          "$payload.benefit.paymentMethods.method.name",
+                          "Prazo certo"
+                        ]
+                      },
+                      "then": {
+                        "$multiply": [
+                          {
+                            "$divide": [
+                              "$payload.accountBalance.totalQuotas",
+                              {
+                                "$multiply": [
+                                  "$payload.benefit.paymentMethods.parcelsQuantity",
+                                  12
+                                ]
+                              }
+                            ]
+                          },
+                          "$payrollItems.quota.value"
+                        ]
+                      }
+                    },
+                    {
+                      "case": {
+                        "$eq": [
+                          "$payload.benefit.paymentMethods.method.name",
+                          "Pagamento único"
+                        ]
+                      },
+                      "then": {
+                        "$multiply": [
+                          "$payload.accountBalance.totalQuotas",
+                          "$payrollItems.quota.value"
+                        ]
+                      }
+                    }
+                  ],
+                  "default": 0
+                }
+              },
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "amountResidueValue": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$or": [
+                    {
+                      "$lte": [
+                        "$payload.accountBalance.value",
+                        {
+                          "$multiply": [
+                            "$amountBenefitValue",
+                            2
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "$and": [
+                        {
+                          "$eq": [
+                            "$payload.benefit.paymentMethods.parcelsQuantity",
+                            {
+                              "$sum": [
+                                "$payload.benefit.lastParcel",
+                                1
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "$eq": [
+                            "$payload.benefit.paymentMethods.method._id",
+                            "p:671fc8208df790b126e59bec"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "then": {
+                  "$toDouble": {
+                    "$round": [
+                      {
+                        "$subtract": [
+                          "$payload.accountBalance.value",
+                          "$amountBenefitValue"
+                        ]
+                      },
+                      2
+                    ]
+                  }
+                }
+              }
+            ],
+            "default": 0
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "payrollItems.finalAmount": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$lt": [
+                    "$amountBenefitValue",
+                    0
+                  ]
+                },
+                "then": 0
+              }
+            ],
+            "default": {
+              "$toDouble": {
+                "$round": [
+                  "$amountBenefitValue",
+                  2
+                ]
+              }
+            }
+          }
+        },
+        "payrollItems.amount": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$lt": [
+                    "$amountBenefitValue",
+                    0
+                  ]
+                },
+                "then": 0
+              }
+            ],
+            "default": {
+              "$toDouble": {
+                "$round": [
+                  "$amountBenefitValue",
+                  2
+                ]
+              }
+            }
+          }
+        },
+        "payrollItems.createdAt": "$getdate"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "benefits",
+        "localField": "payload.benefit._id",
+        "foreignField": "_id",
+        "as": "taxRegimeTypes",
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$taxRegimeTypes"
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "type": "$taxRegimeTypes.type",
+              "percentage": {
+                "$divide": [
+                  "$taxRegimeTypes.percentage",
+                  100
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$taxRegimeTypes",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "payrollItems.rubric": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$and": [
+                    {
+                      "$eq": [
+                        "$payrollItems.rubric",
+                        "p:6418be6a6dcafc9b25c167a4"
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        "$taxRegimeTypes.type._id",
+                        "p:6418c40ee89a5fcee1d873c3"
+                      ]
+                    }
+                  ]
+                },
+                "then": {
+                  "$switch": {
+                    "branches": [
+                      {
+                        "case": {
+                          "$eq": [
+                            "$payload.benefit.type._id",
+                            "p:6418becf6dcafc9b25c167ab"
+                          ]
+                        },
+                        "then": "p:6418be6a6dcafc9b25c167a4"
+                      }
+                    ],
+                    "default": "$payrollItems.rubric"
+                  }
+                }
+              }
+            ],
+            "default": "p:66eb925d10685a5a03d38e7c"
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "payrollItems.rubric",
+        "foreignField": "_id",
+        "as": "rubric",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubric",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "judicial_income_taxes",
+        "localField": "payload.person.participations._id",
+        "foreignField": "process.mainClaimant.participation._id",
+        "as": "isentoExigSusp",
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$process.judicialIncomeTaxType",
+                  "judicial"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "process": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$isentoExigSusp",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "rubricResidueId": {
+          "$cond": {
+            "if": {
+              "$gt": [
+                "$amountResidueValue",
+                0
+              ]
+            },
+            "then": "p:66feefcf3a27cebc4c998760",
+            "else": null
+          }
+        },
+        "rubricExemptId": {
+          "$cond": {
+            "if": {
+              "$gt": [
+                "$isentoExigSusp.process.mainClaimant.retentionPercentage",
+                0
+              ]
+            },
+            "then": "p:671abc3294fdb65603771749",
+            "else": null
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubricResidueId",
+        "foreignField": "_id",
+        "as": "rubricResidue",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricResidue",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "rubricResidue": {
+          "$ifNull": [
+            "$rubricResidue",
+            null
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubricExemptId",
+        "foreignField": "_id",
+        "as": "rubricExempt",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricExempt",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "rubricExempt": {
+          "$ifNull": [
+            "$rubricExempt",
+            null
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "rubric": {
+          "$cond": {
+            "if": {
+              "$and": [
+                {
+                  "$eq": [
+                    "$rubricResidueId",
+                    null
+                  ]
+                },
+                {
+                  "$eq": [
+                    "$rubricExemptId",
+                    null
+                  ]
+                }
+              ]
+            },
+            "then": [
+              "$rubric"
+            ],
+            "else": {
+              "$cond": {
+                "if": {
+                  "$and": [
+                    {
+                      "$ne": [
+                        "$rubricResidueId",
+                        null
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        "$rubricExemptId",
+                        null
+                      ]
+                    }
+                  ]
+                },
+                "then": {
+                  "$concatArrays": [
+                    [
+                      "$rubric"
+                    ],
+                    [
+                      "$rubricResidue"
+                    ]
+                  ]
+                },
+                "else": {
+                  "$cond": {
+                    "if": {
+                      "$and": [
+                        {
+                          "$eq": [
+                            "$rubricResidueId",
+                            null
+                          ]
+                        },
+                        {
+                          "$ne": [
+                            "$rubricExemptId",
+                            null
+                          ]
+                        }
+                      ]
+                    },
+                    "then": {
+                      "$concatArrays": [
+                        [
+                          "$rubric"
+                        ],
+                        [
+                          "$rubricExempt"
+                        ]
+                      ]
+                    },
+                    "else": {
+                      "$concatArrays": [
+                        [
+                          "$rubric"
+                        ],
+                        [
+                          "$rubricResidue"
+                        ],
+                        [
+                          "$rubricExempt"
+                        ]
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubric",
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      "$addFields": {
+        "amount": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$rubric._id",
+                    "p:66feefcf3a27cebc4c998760"
+                  ]
+                },
+                "then": "$amountResidueValue"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$rubric._id",
+                    "p:671abc3294fdb65603771749"
+                  ]
+                },
+                "then": {
+                  "$multiply": [
+                    "$amountBenefitValue",
+                    {
+                      "$divide": [
+                        "$isentoExigSusp.process.mainClaimant.retentionPercentage",
+                        100
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$rubric._id",
+                    "p:681cebfd294664c28097463c"
+                  ]
+                },
+                "then": "$amountBenefitValue"
+              }
+            ],
+            "default": {
+              "$cond": {
+                "if": {
+                  "$gt": [
+                    "$isentoExigSusp.process.mainClaimant.retentionPercentage",
+                    0
+                  ]
+                },
+                "then": {
+                  "$subtract": [
+                    "$amountBenefitValue",
+                    {
+                      "$multiply": [
+                        "$amountBenefitValue",
+                        {
+                          "$divide": [
+                            "$isentoExigSusp.process.mainClaimant.retentionPercentage",
+                            100
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "else": "$amountBenefitValue"
+              }
+            }
+          }
+        },
+        "finalAmount": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$eq": [
+                    "$rubric._id",
+                    "p:66feefcf3a27cebc4c998760"
+                  ]
+                },
+                "then": "$amountResidueValue"
+              },
+              {
+                "case": {
+                  "$eq": [
+                    "$rubric._id",
+                    "p:671abc3294fdb65603771749"
+                  ]
+                },
+                "then": {
+                  "$multiply": [
+                    "$amountBenefitValue",
+                    {
+                      "$divide": [
+                        "$isentoExigSusp.process.mainClaimant.retentionPercentage",
+                        100
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "default": {
+              "$cond": {
+                "if": {
+                  "$gt": [
+                    "$isentoExigSusp.process.mainClaimant.retentionPercentage",
+                    0
+                  ]
+                },
+                "then": {
+                  "$subtract": [
+                    "$amountBenefitValue",
+                    {
+                      "$multiply": [
+                        "$amountBenefitValue",
+                        {
+                          "$divide": [
+                            "$isentoExigSusp.process.mainClaimant.retentionPercentage",
+                            100
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "else": "$amountBenefitValue"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "exclusion_payroll_items",
+        "localField": "payload.benefit._id",
+        "foreignField": "benefit",
+        "as": "payrollItemExclusion",
+        "let": {
+          "rubric": "$rubric._id",
+          "payrollPlanning": "$payroll.payrollPlanning._id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$rubric._id",
+                      "$$rubric"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$payrollPlanning._id",
+                      "$$payrollPlanning"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "exclusionSize": {
+          "$size": "$payrollItemExclusion"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$exclusionSize",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payroll": "$payroll._id",
+        "rubric": "$rubric",
+        "competenceDate": "$payrollItems.competenceDate",
+        "type": "$payrollItems.type",
+        "status": "$payrollItems.status",
+        "quota": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$ne": [
+                    "$rubricResidue",
+                    null
+                  ]
+                },
+                "then": "$payrollItems.preQuota"
+              }
+            ],
+            "default": "$payrollItems.quota"
+          }
+        },
+        "amount": {
+          "$round": [
+            {
+              "$toDouble": {
+                "$multiply": [
+                  "$benefitValue",
+                  "$taxRegimeTypes.percentage"
+                ]
+              }
+            },
+            2
+          ]
+        },
+        "exceptionAmount": {
+          "$toDouble": "$payrollItems.exceptionAmount"
+        },
+        "finalAmount": {
+          "$round": [
+            {
+              "$toDouble": {
+                "$multiply": [
+                  "$finalAmount",
+                  "$taxRegimeTypes.percentage"
+                ]
+              }
+            },
+            2
+          ]
+        },
+        "reason": "$payrollItems.reason",
+        "createdAt": "$payrollItems.createdAt",
+        "updatedAt": "$payrollItems.updatedAt"
+      }
+    },
+    {
+      "$group": {
+        "_id": "$rubric._id",
+        "item": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$replaceRoot": {
+        "newRoot": "$item"
+      }
+    }
+  ]
+}

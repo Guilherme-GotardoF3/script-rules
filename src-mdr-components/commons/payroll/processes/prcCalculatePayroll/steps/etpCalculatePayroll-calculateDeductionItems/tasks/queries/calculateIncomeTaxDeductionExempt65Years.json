@@ -1,0 +1,336 @@
+{
+  "_id": "665e039c005257287d2c0738",
+  "type": {
+    "_id": "6419afcf936b6c9b06d64989",
+    "name": "queries"
+  },
+  "name": "calculateIncomeTaxDeductionExempt65Years",
+  "description": "Calculando a deducao para isentos com mais de 65 anos",
+  "main_collection": "benefits",
+  "output_name": "otp_calculateIncomeTaxDeductionExempt65Years",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "id_tipo_ir_progressivo",
+      "type": "Parameter",
+      "description": "Id do tipo de ir progressivo",
+      "value": "66bd44764eb4534a4f834c3c"
+    },
+    {
+      "name": "_id",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "people",
+    "income_tax",
+    "payrolls_RMDRC",
+    "rubrics"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "_id": "$.opt_trf_buscar_beneficios_ativos.generatedBenefit"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "participation": 1
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "participation",
+        "foreignField": "participations._id",
+        "as": "people",
+        "let": {
+          "taxRegime": "p:6418c40ee89a5fcee1d873c3",
+          "participationId": "$participation"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations._id",
+                  "$$participationId"
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$participations.taxRegimeType._id",
+                  "$$taxRegime"
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$isTaxFreeAtSixtyFive",
+                  true
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "participations": 1,
+              "birthDate": 1,
+              "disablement": 1,
+              "isTaxFreeAtSixtyFive": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$people",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "income_tax",
+        "localField": "people.participations.taxRegimeType._id",
+        "foreignField": "taxRegimeType",
+        "as": "incomeTax"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$incomeTax",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "rubricId": "$._id",
+        "payrollPlanningId": "$.opt_trf_buscar_beneficios_ativos.payrollPlanning"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "_id",
+        "foreignField": "benefit._id",
+        "as": "payroll",
+        "let": {
+          "payrollPlanningId": "$payrollPlanningId"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$payrollPlanning._id",
+                  "$$payrollPlanningId"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "competenceDate": {
+                "$toDate": "$payrollPlanning.competenceDate"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payroll",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "idade": {
+          "$round": [
+            {
+              "$divide": [
+                {
+                  "$subtract": [
+                    {
+                      "$toDate": "$payroll.competenceDate"
+                    },
+                    {
+                      "$toDate": "$people.birthDate"
+                    }
+                  ]
+                },
+                {
+                  "$multiply": [
+                    365,
+                    24,
+                    60,
+                    60,
+                    1000
+                  ]
+                }
+              ]
+            },
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$match": {
+        "idade": {
+          "$gte": 65
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "amount": {
+          "$toDouble": {
+            "$round": [
+              {
+                "$multiply": [
+                  1,
+                  "$incomeTax.ageDeduction"
+                ]
+              },
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "amountValueFinal": {
+          "$toDouble": {
+            "$switch": {
+              "branches": [
+                {
+                  "case": {
+                    "$and": [
+                      {
+                        "$lte": [
+                          "$people.disablement.effectiveDate.startedAt",
+                          "$payroll.competenceDate"
+                        ]
+                      },
+                      {
+                        "$or": [
+                          {
+                            "$eq": [
+                              "$people.disablement.effectiveDate.endedAt",
+                              null
+                            ]
+                          },
+                          {
+                            "$gte": [
+                              "$people.disablement.effectiveDate.endedAt",
+                              "$payroll.competenceDate"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "then": 0
+                }
+              ],
+              "default": "$amount"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "amountValueFinal": {
+          "$gt": 0
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubricId",
+        "foreignField": "_id",
+        "as": "rubricId",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricId",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payroll": "$payroll._id",
+        "rubric": "$rubricId",
+        "finalAmount": {
+          "$toDouble": {
+            "$multiply": [
+              "$amountValueFinal",
+              -1
+            ]
+          }
+        },
+        "amount": {
+          "$toDouble": {
+            "$multiply": [
+              "$amountValueFinal",
+              -1
+            ]
+          }
+        },
+        "exceptionAmount": {
+          "$toDouble": "0"
+        },
+        "status": "CALCULATED",
+        "type": "CALCULATED",
+        "competenceDate": "$payroll.competenceDate",
+        "createdAt": "$getdate"
+      }
+    }
+  ]
+}

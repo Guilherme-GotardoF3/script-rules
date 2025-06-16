@@ -9,7 +9,14 @@
   "main_collection": "benefit_rubrics",
   "output_name": "opt_trf_buscar_rubricas_proventos",
   "fixed_value": false,
-  "input_parameters": [],
+  "input_parameters": [
+    {
+      "name": "rubricGroupIncomeId",
+      "type": "Parameter",
+      "description": "id do grupo das rubricas de provento",
+      "value": "66bd71b54eb4534a4f87eee5"
+    }
+  ],
   "collections": [
     "rubrics"
   ],
@@ -68,6 +75,12 @@
             "$match": {
               "$expr": {
                 "$and": [
+                  {
+                    "$eq": [
+                      "$support.group._id",
+                      "p:680bdcee92e9a251fd25e8cf"
+                    ]
+                  },
                   {
                     "$eq": [
                       "$configurations.isDiscount",

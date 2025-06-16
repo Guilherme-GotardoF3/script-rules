@@ -35,7 +35,8 @@ export async function exportProcess(processName, area) {
 
         const exportedParentTasks = new Set();
 
-        let rubricMode = false;
+        let rubricMode = tasks.some(t => t.rule?.type === "ordered_reference_lists");
+
         for (const task of tasks) {
             const rule = task.rule;
             const ruleId = rule?.ref;
@@ -75,8 +76,6 @@ export async function exportProcess(processName, area) {
                     console.warn(`Task "${task.name}" é do tipo "child" mas não possui parentTask._id`);
                 }
             }
-
-            if (ruleType === "ordered_reference_lists") rubricMode = true;
 
             await exportRuleWithFormat(ruleDoc, ruleType, task, path.join(stepDir, "tasks", ruleType), baseDir, db, rubricMode)
         }
@@ -127,33 +126,62 @@ async function exportRuleWithFormat(ruleDoc, ruleType, task, outputDir, baseDir,
         await saveJson(`${baseDir}/${outputDir}`, enriched.name, enriched);
 
         if (rubricMode) {
-            console.log("Possui ordered reference List")
+            console.log("Possui ordered reference List");
 
-            const aggregation = typeof ruleDoc.query === "string" ? JSON.parse(ruleDoc.query) : ruleDoc.query;
-            const groupIds = await extractRubricsGroupIds(aggregation, db);
+            const aggObj = typeof ruleDoc.query === "string"
+                ? JSON.parse(ruleDoc.query)
+                : ruleDoc.query;
 
-            console.log("Ids extraídos: ", groupIds);
-            const saved = new Set();
+            const groupIds = await extractRubricsGroupIds(aggObj, db);
+            console.log("Ids extraídos:", groupIds);
+
+            const exportedQueries = new Set();
 
             for (const gid of groupIds) {
                 const rubrics = await db.collection("rubrics").find({
-                    "support.group_id": new ObjectId(gid),
-                    rule: { $ne: null }
+                    "support.group._id": gid,
+                    "rule.ref": { $ne: null }
                 }).toArray();
 
-
                 for (const rub of rubrics) {
-                    const qName = rub?.rule?.name;
+                    const qId = rub.rule.ref;
+                    if (exportedQueries.has(qId.toString())) continue;
 
-                    if (!qName || saved.has(qName)) continue;
+                    const linkedQuery = await db.collection("queries").findOne({ _id: qId });
+                    if (!linkedQuery) {
+                        console.warn("Query não encontrada com Id:", qId);
+                        continue;
+                    }
 
-                    await saveJson(
-                        `${baseDir}/${outputDir}`,
-                        linked.name,
-                        linked
-                    );
-                    saved.add(qName);
-                    console.log("Queries salvas", qName);
+                    const queryTasks = await db.collection("tasks")
+                        .find({ "rule.ref": qId })
+                        .toArray();
+
+                    if (queryTasks.length === 0) {
+                        console.warn(`Nenhuma task referencia a query ${linkedQuery.name}; gerando stub.`);
+                        const stubTask = {
+                            _id: "TASK NÃO ENCONTRADA NO BANCO DE DADOS",
+                            name: linkedQuery.name,
+                            description: linkedQuery.description,
+                            outputName: "",
+                            rule: { ref: linkedQuery._id, type: "queries" },
+                            type: "common"
+                        };
+                        await exportRuleWithFormat(
+                            linkedQuery, "queries", stubTask,
+                            outputDir, baseDir, db, /*rubricMode*/ false
+                        );
+                    } else {
+                        for (const realTask of queryTasks) {
+                            await exportRuleWithFormat(
+                                linkedQuery, "queries", realTask,
+                                outputDir, baseDir, db, /*rubricMode*/ false
+                            );
+                        }
+                    }
+
+                    exportedQueries.add(qId.toString());
+                    console.log("Query exportada:", linkedQuery.name);
                 }
             }
         }

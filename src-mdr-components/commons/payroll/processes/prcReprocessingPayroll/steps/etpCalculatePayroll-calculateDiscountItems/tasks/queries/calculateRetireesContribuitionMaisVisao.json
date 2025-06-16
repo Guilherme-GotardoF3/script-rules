@@ -1,0 +1,416 @@
+{
+  "_id": "66e414987111380e02c3f97a",
+  "type": {
+    "_id": "66e414974533f7f87865b68c",
+    "name": "queries"
+  },
+  "name": "calculateRetireesContribuitionMaisVisao",
+  "description": "Calcula a contribuição do Mais Visão dentro do plano PreVisão",
+  "main_collection": "benefits_in_payroll_process",
+  "output_name": "otp_calculateRetireesContribuitionMaisVisao",
+  "fixed_value": true,
+  "input_parameters": [
+    {
+      "name": "_id",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    }
+  ],
+  "collections": [
+    "calculation_series",
+    "payrolls_RMDRC",
+    "rubrics"
+  ],
+  "output": {},
+  "Aggregation": [
+    {
+      "$match": {
+        "payload.benefit._id": "$.otp_getBenefitsInPayrollProcess.payload.benefit._id"
+      }
+    },
+    {
+      "$match": {
+        "payload.benefit._id": {
+          "$in": [
+            "66bfaa454e2a7953bbd2a187",
+            "66bfaa1f4e2a7953bbd2a0a8",
+            "66bfaa454e2a7953bbd2a1ae",
+            "66bfaa454e2a7953bbd2a1cb"
+          ]
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "rubricId": "$._id",
+        "payrollPlanningId": "$.opt_trf_buscar_beneficios_ativos.payrollPlanning",
+        "competenceDate": {
+          "$toDate": "$.opt_trf_buscar_beneficios_ativos.planejamento_folha.referenceDate"
+        },
+        "exceptionAmount": 0
+      }
+    },
+    {
+      "$lookup": {
+        "from": "calculation_series",
+        "localField": "rubricId",
+        "foreignField": "referenceRubric._id",
+        "as": "base_calculo"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$base_calculo",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "base_calculo.simpleCalculationSerie.rubric._id",
+        "foreignField": "payrollItems.rubric._id",
+        "as": "payrolls_RMDRC",
+        "let": {
+          "benefit": "$payload.benefit._id",
+          "payrollPlanningId": "$payrollPlanningId",
+          "rubrics": "$base_calculo.simpleCalculationSerie.rubric._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payrollItems",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$benefit._id",
+                      "$$benefit"
+                    ]
+                  },
+                  {
+                    "$in": [
+                      "$payrollItems.rubric._id",
+                      "$$rubrics"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$payrollPlanning._id",
+                      "$$payrollPlanningId"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "benefit": 1,
+              "payrollPlanning": 1,
+              "status": 1,
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "payrollItem": "$payrolls_RMDRC.payrollItems"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubricId",
+        "foreignField": "_id",
+        "as": "rubric"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrollItem",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "base_calculation": "$payrollItem",
+        "amount": {
+          "$toDouble": {
+            "$round": [
+              {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$eq": [
+                          "$payload.benefit._id",
+                          "66bfaa454e2a7953bbd2a187"
+                        ]
+                      },
+                      "then": 3000
+                    },
+                    {
+                      "case": {
+                        "$eq": [
+                          "$payload.benefit._id",
+                          "66bfaa1f4e2a7953bbd2a0a8"
+                        ]
+                      },
+                      "then": 332.65
+                    },
+                    {
+                      "case": {
+                        "$eq": [
+                          "$payload.benefit._id",
+                          "66bfaa454e2a7953bbd2a1ae"
+                        ]
+                      },
+                      "then": 150
+                    },
+                    {
+                      "case": {
+                        "$eq": [
+                          "$payload.benefit._id",
+                          "66bfaa454e2a7953bbd2a1cb"
+                        ]
+                      },
+                      "then": 108.99
+                    }
+                  ],
+                  "default": 0
+                }
+              },
+              2
+            ]
+          }
+        },
+        "finalAmount": {
+          "$toDouble": {
+            "$round": [
+              {
+                "$switch": {
+                  "branches": [
+                    {
+                      "case": {
+                        "$eq": [
+                          "$payload.benefit._id",
+                          "66bfaa454e2a7953bbd2a187"
+                        ]
+                      },
+                      "then": 3000
+                    },
+                    {
+                      "case": {
+                        "$eq": [
+                          "$payload.benefit._id",
+                          "66bfaa1f4e2a7953bbd2a0a8"
+                        ]
+                      },
+                      "then": 332.65
+                    },
+                    {
+                      "case": {
+                        "$eq": [
+                          "$payload.benefit._id",
+                          "66bfaa454e2a7953bbd2a1ae"
+                        ]
+                      },
+                      "then": 150
+                    },
+                    {
+                      "case": {
+                        "$eq": [
+                          "$payload.benefit._id",
+                          "66bfaa454e2a7953bbd2a1cb"
+                        ]
+                      },
+                      "then": 108.99
+                    }
+                  ],
+                  "default": 0
+                }
+              },
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$match": {
+        "amount": {
+          "$gt": 0
+        }
+      }
+    },
+    {
+      "$addFields": {
+        "getdate": {
+          "$function": {
+            "body": "function () { return new Date() }",
+            "args": [],
+            "lang": "js"
+          }
+        }
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$payrolls_RMDRC",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
+        "from": "payrolls_RMDRC",
+        "localField": "rubricId",
+        "foreignField": "payrollItems.rubric._id",
+        "as": "payrollException",
+        "let": {
+          "benefit": "$payload.benefit._id",
+          "payrollPlanningId": "$payrollPlanningId",
+          "rubric": "$rubricId"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$payrollItems",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$benefit._id",
+                      "$$benefit"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$payrollItems.rubric._id",
+                      "$$rubric"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      "$payrollPlanning._id",
+                      "$$payrollPlanningId"
+                    ]
+                  },
+                  {
+                    "$ne": [
+                      "$payrollItems.exceptionAmount",
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 1,
+              "benefit": 1,
+              "payrollPlanning": 1,
+              "status": 1,
+              "payrollItems": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$addFields": {
+        "qtde": {
+          "$size": "$payrollException"
+        }
+      }
+    },
+    {
+      "$match": {
+        "$expr": {
+          "$eq": [
+            "$qtde",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "$lookup": {
+        "from": "rubrics",
+        "localField": "rubricId",
+        "foreignField": "_id",
+        "as": "rubricId",
+        "pipeline": [
+          {
+            "$project": {
+              "_id": 1,
+              "name": 1,
+              "number": 1,
+              "configurations.isDiscount": "$configurations.isDiscount"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$rubricId",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "payroll": "$payrolls_RMDRC._id",
+        "rubric": "$rubricId",
+        "finalAmount": {
+          "$toDouble": {
+            "$multiply": [
+              "$amount",
+              -1
+            ]
+          }
+        },
+        "amount": {
+          "$toDouble": {
+            "$multiply": [
+              "$finalAmount",
+              -1
+            ]
+          }
+        },
+        "exceptionAmount": 1,
+        "status": "CALCULATED",
+        "type": "CALCULATED",
+        "competenceDate": 1,
+        "createdAt": "$getdate"
+      }
+    },
+    {
+      "$group": {
+        "_id": "$rubric._id",
+        "root": {
+          "$first": "$$ROOT"
+        }
+      }
+    },
+    {
+      "$replaceRoot": {
+        "newRoot": "$root"
+      }
+    }
+  ]
+}
