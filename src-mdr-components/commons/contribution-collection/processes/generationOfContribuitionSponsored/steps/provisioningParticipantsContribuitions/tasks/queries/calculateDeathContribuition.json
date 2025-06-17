@@ -4,7 +4,7 @@
     "_id": "67e808cadcc300eb829944f3",
     "name": "queries"
   },
-  "name": "Copy_calculateDeathContribuitionNew_2",
+  "name": "calculateDeathContribuition",
   "description": "Calcula valor da contribuição de morte - risco",
   "main_collection": "costing_plans",
   "output_name": "otp_calculateDeathContribuitionNew",

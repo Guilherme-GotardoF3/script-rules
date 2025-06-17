@@ -1,13 +1,13 @@
 {
-  "_id": "67e808dfdcc300eb829945b8",
+  "_id": "67e808cadcc300eb82994495",
   "type": {
-    "_id": "67e808dfdcc300eb829945b9",
+    "_id": "67e808cadcc300eb82994496",
     "name": "queries"
   },
-  "name": "Copy_calculateNormalSelfSponsorContributionNew_2",
-  "description": "Calcula valor da contribuição normal da patrocinadora para o auto-patrocinado.",
+  "name": "calculateNormalParticipantContribution",
+  "description": "Calcula valor da contribuição normal do participante ativo",
   "main_collection": "costing_plans",
-  "output_name": "otp_calculateNormalSelfSponsorContribuitionNew",
+  "output_name": "otp_calculateNormalParticipantContributionNew",
   "fixed_value": true,
   "input_parameters": [
     {
@@ -17,6 +17,11 @@
     },
     {
       "name": "rubricId",
+      "type": "Action System",
+      "description": "Variável do sistema usada na agregação"
+    },
+    {
+      "name": "upId",
       "type": "Action System",
       "description": "Variável do sistema usada na agregação"
     },
@@ -41,16 +46,6 @@
       "description": "Variável do sistema usada na agregação"
     },
     {
-      "name": "statusParticipationClass",
-      "type": "Action System",
-      "description": "Variável do sistema usada na agregação"
-    },
-    {
-      "name": "typeParticipationClass",
-      "type": "Action System",
-      "description": "Variável do sistema usada na agregação"
-    },
-    {
       "name": "contributionType",
       "type": "Action System",
       "description": "Variável do sistema usada na agregação"
@@ -62,10 +57,13 @@
     }
   ],
   "collections": [
+    "individual_collections_parameters",
+    "people",
     "salary_imports",
+    "recovery_temporal_indexes",
+    "recovery_temporal_series",
     "employment_history",
     "base_salaries",
-    "people",
     "plans",
     "competence_managements",
     "contribution_provisioning_temp"
@@ -86,10 +84,8 @@
         "pensionAccount": 1,
         "rangeItems": 1,
         "effectiveDate": 1,
+        "UP_code": "$.upId",
         "competenceDate": {
-          "$toDate": "$.competenceDate"
-        },
-        "referenceDate": {
           "$toDate": "$.competenceDate"
         },
         "directContributionCalculation": "$.directContributionCalculationId",
@@ -140,51 +136,146 @@
       }
     },
     {
+      "$addFields": {
+        "dueDateProcess": {
+          "$dateAdd": {
+            "startDate": "$dataMesSeguinte",
+            "unit": "day",
+            "amount": 7
+          }
+        }
+      }
+    },
+    {
       "$unwind": {
         "path": "$rangeItems"
       }
     },
     {
       "$lookup": {
+        "from": "individual_collections_parameters",
+        "localField": "rubric._id",
+        "foreignField": "rubric._id",
+        "as": "individualContribuition",
+        "let": {
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$addFields": {
+              "effectiveDate.endedAt": {
+                "$ifNull": [
+                  "$effectiveDate.endedAt",
+                  null
+                ]
+              }
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$effectiveDate.startedAt",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          null
+                        ]
+                      },
+                      {
+                        "$gte": [
+                          "$effectiveDate.endedAt",
+                          "$$competenceDate"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "participation": 1,
+              "effectiveDate": 1,
+              "value": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$individualContribuition"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "people",
+        "localField": "individualContribuition.participation._id",
+        "foreignField": "participations._id",
+        "as": "person",
+        "let": {
+          "participation": "$individualContribuition.participation._id"
+        },
+        "pipeline": [
+          {
+            "$unwind": {
+              "path": "$participations",
+              "preserveNullAndEmptyArrays": false
+            }
+          },
+          {
+            "$match": {
+              "$expr": {
+                "$eq": [
+                  "$$participation",
+                  "$participations._id"
+                ]
+              }
+            }
+          },
+          {
+            "$project": {
+              "name": 1,
+              "participations": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$person",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$lookup": {
         "from": "salary_imports",
-        "localField": "competenceDate",
-        "foreignField": "competenceDate",
+        "localField": "individualContribuition.participation._id",
+        "foreignField": "person.participation._id",
         "as": "salary",
+        "let": {
+          "competenceDate": "$competenceDate"
+        },
         "pipeline": [
           {
             "$match": {
               "$expr": {
-                "$or": [
+                "$and": [
                   {
-                    "$and": [
-                      {
-                        "$eq": [
-                          "$person.participation.participationClass.status.name",
-                          "$.statusParticipationClass"
-                        ]
-                      },
-                      {
-                        "$eq": [
-                          "$person.participation.participationClass.type.name",
-                          "$.typeParticipationClass"
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "$and": [
-                      {
-                        "$eq": [
-                          "$person.participation.participationClass.status.name",
-                          "$.typeParticipationClass"
-                        ]
-                      },
-                      {
-                        "$eq": [
-                          "$person.participation.participationClass.type.name",
-                          "$.statusParticipationClass"
-                        ]
-                      }
+                    "$eq": [
+                      "$competenceDate",
+                      "$$competenceDate"
                     ]
                   }
                 ]
@@ -210,7 +301,8 @@
             "$project": {
               "_id": 0,
               "person": 1,
-              "salaries": 1
+              "salaries": 1,
+              "competenceDate": 1
             }
           }
         ]
@@ -242,17 +334,154 @@
       }
     },
     {
+      "$lookup": {
+        "from": "recovery_temporal_indexes",
+        "localField": "UP_code",
+        "foreignField": "code",
+        "as": "UP_index",
+        "let": {
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$effectiveDate.startedAt",
+                      "$$competenceDate"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          null
+                        ]
+                      },
+                      {
+                        "$gte": [
+                          "$effectiveDate.endedAt",
+                          "$$competenceDate"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$UP_index"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "recovery_temporal_series",
+        "localField": "UP_index._id",
+        "foreignField": "index._id",
+        "as": "UP_series",
+        "let": {
+          "competenceDate": "$competenceDate"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$date",
+                      "$$competenceDate"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$sort": {
+              "date": -1
+            }
+          },
+          {
+            "$limit": 1
+          }
+        ]
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$UP_series",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
       "$addFields": {
-        "amount": {
+        "firstParcel": {
           "$multiply": [
             "$salary.salaries.amount",
+            "$individualContribuition.value"
+          ]
+        },
+        "secondParcel": {
+          "$multiply": [
             {
               "$divide": [
                 "$rangeItems.initial",
                 100
               ]
+            },
+            {
+              "$subtract": [
+                "$salary.salaries.amount",
+                {
+                  "$divide": [
+                    "$UP_series.value",
+                    2
+                  ]
+                }
+              ]
             }
           ]
+        },
+        "thirdParcel": {
+          "$cond": {
+            "if": {
+              "$gt": [
+                {
+                  "$subtract": [
+                    "$salary.salaries.amount",
+                    "$UP_series.value"
+                  ]
+                },
+                0
+              ]
+            },
+            "then": {
+              "$multiply": [
+                {
+                  "$divide": [
+                    "$rangeItems.final",
+                    100
+                  ]
+                },
+                {
+                  "$subtract": [
+                    "$salary.salaries.amount",
+                    "$UP_series.value"
+                  ]
+                }
+              ]
+            },
+            "else": 0
+          }
         }
       }
     },
@@ -300,47 +529,6 @@
     {
       "$unwind": {
         "path": "$rubricSalary",
-        "preserveNullAndEmptyArrays": true
-      }
-    },
-    {
-      "$lookup": {
-        "from": "people",
-        "localField": "salary.person.participation._id",
-        "foreignField": "participations._id",
-        "as": "person",
-        "let": {
-          "participation": "$salary.person.participation._id"
-        },
-        "pipeline": [
-          {
-            "$unwind": {
-              "path": "$participations",
-              "preserveNullAndEmptyArrays": false
-            }
-          },
-          {
-            "$match": {
-              "$expr": {
-                "$eq": [
-                  "$$participation",
-                  "$participations._id"
-                ]
-              }
-            }
-          },
-          {
-            "$project": {
-              "name": 1,
-              "participations": 1
-            }
-          }
-        ]
-      }
-    },
-    {
-      "$unwind": {
-        "path": "$person",
         "preserveNullAndEmptyArrays": true
       }
     },
@@ -555,7 +743,13 @@
                 "rubric": "$rubric",
                 "amount": {
                   "$round": [
-                    "$amount",
+                    {
+                      "$sum": [
+                        "$firstParcel",
+                        "$secondParcel",
+                        "$thirdParcel"
+                      ]
+                    },
                     2
                   ]
                 },

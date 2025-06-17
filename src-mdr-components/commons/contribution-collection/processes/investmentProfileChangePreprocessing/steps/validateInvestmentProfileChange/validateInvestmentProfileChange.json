@@ -1,23 +1,23 @@
 {
-  "_id": "683075d88592e53ad627da1a",
+  "_id": "68502edf0f986c22ae6d7ae2",
   "name": "validateInvestmentProfileChange",
   "description": "Realizar o depara com o perfil de investimento atual e o novo perfil solicitado",
   "isDefault": false,
   "actions": [
     {
-      "ref": "683075d88592e53ad627d9c7",
+      "ref": "68502edf0f986c22ae6d7adb",
       "type": "tasks",
       "order": 1,
       "status": "63754b1939630e4bf49ab514"
     },
     {
-      "ref": "683075d88592e53ad627da03",
+      "ref": "68502edf0f986c22ae6d7adf",
       "type": "tasks",
       "order": 2,
       "status": "63754b1939630e4bf49ab514"
     }
   ],
   "__v": 0,
-  "createdAt": "2025-05-23T13:19:20.954Z",
-  "updatedAt": "2025-05-23T14:32:06.806Z"
+  "createdAt": "2025-06-16T14:49:03.315Z",
+  "updatedAt": "2025-06-16T14:49:03.315Z"
 }

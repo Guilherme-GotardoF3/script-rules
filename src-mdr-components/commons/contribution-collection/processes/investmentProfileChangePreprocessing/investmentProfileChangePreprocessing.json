@@ -1,25 +1,25 @@
 {
-  "_id": "683075d98592e53ad627da28",
+  "_id": "68502edf0f986c22ae6d7ae5",
   "name": "investmentProfileChangePreprocessing",
   "description": "Processo de geração de registros da solicitação do usuário em mudanças no perfil de investimento.",
   "context": "benefit",
   "steps": [
     {
-      "step": "683075d88592e53ad627da1a",
+      "step": "68502edf0f986c22ae6d7ae2",
       "order": 1,
       "status": "63754b1939630e4bf49ab514"
     }
   ],
   "createdBy": {
-    "keycloakId": "7c8e55a6-7048-4a40-b944-3d9e2b0d27aa",
+    "keycloakId": "92b47e43-4d2a-4522-8341-92cd31cd40ed",
     "username": "gsantos@f3capital.com.br"
   },
   "updatedBy": {
-    "keycloakId": "7c8e55a6-7048-4a40-b944-3d9e2b0d27aa",
+    "keycloakId": "92b47e43-4d2a-4522-8341-92cd31cd40ed",
     "username": "gsantos@f3capital.com.br"
   },
   "isSync": false,
   "__v": 0,
-  "createdAt": "2025-05-23T13:19:21.016Z",
-  "updatedAt": "2025-05-23T14:32:06.849Z"
+  "createdAt": "2025-06-16T14:49:03.341Z",
+  "updatedAt": "2025-06-16T14:49:03.341Z"
 }

@@ -1,17 +1,17 @@
 {
-  "_id": "681cc3cfec46d916413cd5af",
+  "_id": "68502ef60f986c22ae6d7b1a",
   "name": "getRetirementDataPortal",
   "description": "Consultas realizadas para fornecer dados para simulação de aposentadoria no portal.",
   "isDefault": false,
   "actions": [
     {
-      "ref": "681cc3cfec46d916413cd574",
+      "ref": "68502ef60f986c22ae6d7b17",
       "type": "tasks",
       "order": 1,
       "status": "63754b1939630e4bf49ab514"
     }
   ],
   "__v": 0,
-  "createdAt": "2025-05-08T14:46:39.946Z",
-  "updatedAt": "2025-05-08T14:46:39.946Z"
+  "createdAt": "2025-06-16T14:49:26.295Z",
+  "updatedAt": "2025-06-16T14:49:26.295Z"
 }

@@ -4,7 +4,7 @@
     "_id": "67e808cadcc300eb8299450b",
     "name": "queries"
   },
-  "name": "Copy_calculateDisabilityContributionNew_2",
+  "name": "calculateDisabilityContribution",
   "description": "Calcula valor da contribuição invalidez do participante",
   "main_collection": "costing_plans",
   "output_name": "otp_calculateDisabilityContributionNew",

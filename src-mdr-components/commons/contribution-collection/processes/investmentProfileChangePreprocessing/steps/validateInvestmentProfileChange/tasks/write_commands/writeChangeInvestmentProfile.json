@@ -1,7 +1,7 @@
 {
-  "_id": "683075d88592e53ad627da03",
+  "_id": "68502edf0f986c22ae6d7adf",
   "type": {
-    "_id": "683075d88592e53ad627d9f0",
+    "_id": "68502edf0f986c22ae6d7add",
     "name": "write_commands"
   },
   "name": "writeChangeInvestmentProfile",

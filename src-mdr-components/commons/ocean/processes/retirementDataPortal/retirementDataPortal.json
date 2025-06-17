@@ -1,25 +1,25 @@
 {
-  "_id": "681cc3d0ec46d916413cd5c3",
+  "_id": "68502ef60f986c22ae6d7b1d",
   "name": "retirementDataPortal",
   "description": "Fornecer dados necessários para simulação de aposentadoria solicitada pelo participante no portal Oceano.",
   "context": "people",
   "steps": [
     {
-      "step": "681cc3cfec46d916413cd5af",
+      "step": "68502ef60f986c22ae6d7b1a",
       "order": 1,
       "status": "63754b1939630e4bf49ab514"
     }
   ],
   "createdBy": {
-    "keycloakId": "7c8e55a6-7048-4a40-b944-3d9e2b0d27aa",
+    "keycloakId": "92b47e43-4d2a-4522-8341-92cd31cd40ed",
     "username": "gsantos@f3capital.com.br"
   },
   "updatedBy": {
-    "keycloakId": "7c8e55a6-7048-4a40-b944-3d9e2b0d27aa",
+    "keycloakId": "92b47e43-4d2a-4522-8341-92cd31cd40ed",
     "username": "gsantos@f3capital.com.br"
   },
-  "isSync": true,
+  "isSync": false,
   "__v": 0,
-  "createdAt": "2025-05-08T14:46:40.067Z",
-  "updatedAt": "2025-05-29T14:10:38.556Z"
+  "createdAt": "2025-06-16T14:49:26.306Z",
+  "updatedAt": "2025-06-16T14:49:26.306Z"
 }

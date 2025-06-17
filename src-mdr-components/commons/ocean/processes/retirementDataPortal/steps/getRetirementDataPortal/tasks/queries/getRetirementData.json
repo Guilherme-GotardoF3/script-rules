@@ -1,7 +1,7 @@
 {
-  "_id": "681cc3cfec46d916413cd574",
+  "_id": "68502ef60f986c22ae6d7b17",
   "type": {
-    "_id": "681cc3ceec46d916413cd527",
+    "_id": "68502ef60f986c22ae6d7b15",
     "name": "queries"
   },
   "name": "getRetirementData",
@@ -10,24 +10,6 @@
   "output_name": "otpRetirementData",
   "fixed_value": true,
   "input_parameters": [
-    {
-      "name": "idRubricContributionDeath",
-      "type": "Parameter",
-      "description": "Id da rubrica referente a contribuição de risco (morte).\n",
-      "value": "674e6d67519c6b3b81a2d0f0"
-    },
-    {
-      "name": "idRubricContributionDisability",
-      "type": "Parameter",
-      "description": "Id da rubrica referente a contribuição de risco (invalidez).",
-      "value": "674e6db5519c6b3b81a2d1d3"
-    },
-    {
-      "name": "idRubricNormalSponsoredContribution",
-      "type": "Parameter",
-      "description": "Id da rubrica referente a contribuição normal da patrocinadora.",
-      "value": "674e6d67519c6b3b81a2d0d6"
-    },
     {
       "name": "participationId",
       "type": "Action System",

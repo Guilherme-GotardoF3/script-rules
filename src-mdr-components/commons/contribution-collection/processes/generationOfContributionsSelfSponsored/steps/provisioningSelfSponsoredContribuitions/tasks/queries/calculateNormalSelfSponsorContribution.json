@@ -1,13 +1,13 @@
 {
-  "_id": "67e808e0dcc300eb829945d1",
+  "_id": "67e808dfdcc300eb829945b8",
   "type": {
-    "_id": "67e808e0dcc300eb829945d2",
+    "_id": "67e808dfdcc300eb829945b9",
     "name": "queries"
   },
-  "name": "Copy_calculateDeathSelfSponsoredContributionNew_2",
-  "description": "Calcula valor da contribuição de morte autopatrocinado- risco",
+  "name": "calculateNormalSelfSponsorContribution",
+  "description": "Calcula valor da contribuição normal da patrocinadora para o auto-patrocinado.",
   "main_collection": "costing_plans",
-  "output_name": "otp_calculateDeathSelfSponsoredContribuitionNew",
+  "output_name": "otp_calculateNormalSelfSponsorContribuitionNew",
   "fixed_value": true,
   "input_parameters": [
     {
@@ -87,6 +87,9 @@
         "rangeItems": 1,
         "effectiveDate": 1,
         "competenceDate": {
+          "$toDate": "$.competenceDate"
+        },
+        "referenceDate": {
           "$toDate": "$.competenceDate"
         },
         "directContributionCalculation": "$.directContributionCalculationId",
