@@ -14,13 +14,13 @@ export async function getDb () {
   const dbName  = process.env.DB_NAME;
 
   if (!uri || !dbName)
-    throw new Error("MONGO_URI / DB_NAME não definidos – escolha um ambiente antes de usar getDb().");
+    throw new Error("MONGO_URI / DB_NAME não definidos");
 
   client = new MongoClient(uri, { maxPoolSize: 10 });
   await client.connect();
 
   db = client.db(dbName);
-  console.log(`✔ Conectado a ${dbName}`);
+  console.log(`Conectado a ${dbName}`);
   return db;
 }
 

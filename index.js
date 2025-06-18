@@ -14,22 +14,22 @@ const ENV_CHOICES = Object.entries(ENVIRONMENTS).map(([k, v]) => ({
 
 const MENU_CHOICES = [
   new inquirer.Separator("── Exportação ──"),
-  { name: "1 - contribution-collection", value: "contribution-collection" },
-  { name: "2 - payroll", value: "payroll" },
-  { name: "3 - ocean", value: "ocean" },
-  { name: "4 - institutes", value: "institutes" },
-  { name: "5 - billing", value: "billing" },
-  { name: "6 - patrimony", value: "patrimony" },
-  { name: "7 - benefit-granting", value: "benefit-granting" },
-  { name: "8 - registration", value: "registration" },
-  { name: "9 - legal-obligations", value: "legal-obligations" },
+  { name: "1 - contribution-collection",         value: "contribution-collection" },
+  { name: "2 - payroll",                         value: "payroll" },
+  { name: "3 - ocean",                           value: "ocean" },
+  { name: "4 - institutes",                      value: "institutes" },
+  { name: "5 - billing",                         value: "billing" },
+  { name: "6 - patrimony",                       value: "patrimony" },
+  { name: "7 - benefit-granting",                value: "benefit-granting" },
+  { name: "8 - registration",                    value: "registration" },
+  { name: "9 - legal-obligations",               value: "legal-obligations" },
   new inquirer.Separator("── Utilidades ──"),
-  { name: "p - Update Parameters", value: "updateParameters" },
-  { name: "v - Verification Processes", value: "verifyProcesses" },
-  { name: "b - Verification Database", value: "verifyDatabase" },
-  { name: "m - Migrate Processes", value: "migrate" },
+  { name: "p - Update Parameters",               value: "updateParameters" },
+  { name: "v - Verification Processes",          value: "verifyProcesses" },
+  { name: "b - Verification Database",           value: "verifyDatabase" },
+  { name: "m - Migrate Processes",               value: "migrate" },
   new inquirer.Separator(),
-  { name: "x - Sair", value: "exit" }
+  { name: "x - Sair",                            value: "exit" }
 ];
 
 (async () => {

@@ -17,7 +17,7 @@ export async function migrateProcess(processName, srcKey, dstKey) {
     const { client: dstCli, db: dstDb } = await openConnection(dstEnv);
 
     try {
-        // 2. busca todo o “grafo” de documentos no ambiente fonte
+        // 2. busca todo o “grafo” de documentos no ambiente fonte (srcDb)
         const {
             process,
             steps,
@@ -31,7 +31,7 @@ export async function migrateProcess(processName, srcKey, dstKey) {
             return;
         }
 
-        // Tratativa caso houver processo já existente
+        // Tratativa caso houver processo já existente (nome igual, porém ID diferente)
         const existing = await dstDb.collection("processes").findOne({ name: process.name });
 
         if (existing && existing._id.toString() !== process._id.toString()) {
@@ -102,7 +102,7 @@ export async function migrateProcess(processName, srcKey, dstKey) {
             }
         }
 
-        // 3. upsert helper
+        // 3. upsert helper (Fazer bulks de inserção para o mongoDB)
         const upsertMany = async (colName, docs) => {
             if (!docs.length) return;
             const bulk = dstDb.collection(colName).initializeUnorderedBulkOp();
@@ -112,7 +112,7 @@ export async function migrateProcess(processName, srcKey, dstKey) {
             await bulk.execute();
         };
 
-        // 4. grava no destino (ordem de dependência: parâmetros → regras → tasks → steps → process)
+        // 4. grava no destino escolhido (ordem de dependência: parâmetros → regras → tasks → steps → process)
         await upsertMany("parameters", parameters);
         for (const [type, docs] of Object.entries(rulesByType)) {
             await upsertMany(type, docs);
