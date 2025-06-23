@@ -3,11 +3,11 @@ import { saveJson, clearDirIfExistis, extractRubricsGroupIds } from "./utils.js"
 import { ObjectId } from "mongodb";
 import path from "path";
 
-export async function exportProcess(processName, area) {
+export async function exportProcess(processName, area, envKey) {
     console.log(`Procurando processo "${processName}"`);
 
     const baseDir = `src-mdr-components/commons/${area}`;
-    const db = await getDb();
+    const db = await getDb(envKey);
 
     const process = await db.collection("processes").findOne({ name: processName });
     if (!process) throw new Error(`Processo "${processName}" não encontrado`);
@@ -315,8 +315,8 @@ function extractSystemActions(aggregation) {
     }));
 }
 
-export async function updateParameters() {
-    const db = await getDb();
+export async function updateParameters(envKey) {
+    const db = await getDb(envKey);
 
     const parameters = await db.collection("parameters").find().toArray();
     const parametersMap = new Map(parameters.map(p => [String(p._id), p]));

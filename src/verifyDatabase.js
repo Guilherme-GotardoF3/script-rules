@@ -4,8 +4,8 @@ import { getDb } from "./mongo.js";
 
 const BASE_DIR = "src-mdr-components/commons";
 
-export async function verifyDatabase() {
-  const db = await getDb();
+export async function verifyDatabase(envKey) {
+  const db = await getDb(envKey);
   const dbProcesses = await db.collection("processes").find().toArray();
   const dbProcessNames = dbProcesses.map(p => p.name);
 

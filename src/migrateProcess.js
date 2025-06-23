@@ -8,13 +8,14 @@ import inquirer from "inquirer";
  * Copia um processo, preservando os mesmos _id, para outro ambiente.
  */
 export async function migrateProcess(processName, srcKey, dstKey) {
+
     const srcEnv = ENVIRONMENTS[srcKey];
     const dstEnv = ENVIRONMENTS[dstKey];
     if (!srcEnv || !dstEnv) throw new Error("Ambiente inválido");
 
     // 1. abre conexões
-    const { client: srcCli, db: srcDb } = await openConnection(srcEnv);
-    const { client: dstCli, db: dstDb } = await openConnection(dstEnv);
+    const { client: srcCli, db: srcDb } = await openConnection(srcKey);
+    const { client: dstCli, db: dstDb } = await openConnection(dstKey);
 
     try {
         // 2. busca todo o “grafo” de documentos no ambiente fonte (srcDb)

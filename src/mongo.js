@@ -4,23 +4,22 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-let client;
-let db;
+const pools = new Map();
 
-export async function getDb () {
-  if (db) return db;
+export async function getDb(envKey) {
+  if (pools.has(envKey)) return pools.get(envKey).db;
 
-  const uri     = process.env.MONGO_URI;
-  const dbName  = process.env.DB_NAME;
+  const env = ENVIRONMENTS[envKey];
+  if (!env?.uri || !env?.db) {
+    throw new Error(`Ambiente “${envKey}” sem uri/db configurados`);
+  }
 
-  if (!uri || !dbName)
-    throw new Error("MONGO_URI / DB_NAME não definidos");
-
-  client = new MongoClient(uri, { maxPoolSize: 10 });
+  const client = new MongoClient(env.uri, { maxPoolSize: 10 });
   await client.connect();
 
-  db = client.db(dbName);
-  console.log(`Conectado a ${dbName}`);
+  const db = client.db(env.db);
+  pools.set(envKey, { client, db });
+  console.log(`Conectado a ${env.label} (${env.db})`);
   return db;
 }
 
