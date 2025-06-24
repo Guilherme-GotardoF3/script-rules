@@ -1,7 +1,7 @@
 {
-  "_id": "68502ef60f986c22ae6d7b17",
+  "_id": "681cc0d1396ccaaaa11d0b23",
   "type": {
-    "_id": "68502ef60f986c22ae6d7b15",
+    "_id": "681cc0d1723faf6f2c3285aa",
     "name": "queries"
   },
   "name": "getRetirementData",
@@ -23,7 +23,8 @@
     "costing_plans",
     "account_balances_rmdrc",
     "participation_investment_profiles",
-    "monetary_unit_values"
+    "monetary_unit_values",
+    "plans"
   ],
   "output": {},
   "Aggregation": [
@@ -33,14 +34,20 @@
       }
     },
     {
+      "$unwind": {
+        "path": "$participations",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$match": {
+        "participations._id": "$.participationId"
+      }
+    },
+    {
       "$addFields": {
         "bundle": {
           "participationId": "$.participationId"
-        },
-        "paramaters": {
-          "idRubricContributionDeath": "p:681cc464697966641611330d",
-          "idRubricContributionDisability": "p:681cc4a56979666416113310",
-          "idRubricNormalSponsoredContribution": "p:681cc4e06979666416113313"
         }
       }
     },
@@ -71,8 +78,8 @@
     {
       "$lookup": {
         "from": "salary_imports",
-        "localField": "_id",
-        "foreignField": "person._id",
+        "localField": "participations._id",
+        "foreignField": "person.participation._id",
         "as": "salaries",
         "pipeline": [
           {
@@ -110,63 +117,97 @@
       }
     },
     {
-      "$facet": {
-        "individualParameters": [
+      "$lookup": {
+        "from": "individual_collections_parameters",
+        "localField": "bundle.participationId",
+        "foreignField": "participation._id",
+        "let": {
+          "planId": "$participations.participationClass.plan._id"
+        },
+        "as": "contributions",
+        "pipeline": [
           {
-            "$lookup": {
-              "from": "individual_collections_parameters",
-              "localField": "bundle.bundle.participationId",
-              "foreignField": "participation._id",
-              "as": "contributionsIC",
-              "pipeline": [
-                {
-                  "$sort": {
-                    "effectiveDate.startedAt": -1
+            "$match": {
+              "$expr": {
+                "$and": [
+                  {
+                    "$lte": [
+                      "$effectiveDate.startedAt",
+                      "$$NOW"
+                    ]
+                  },
+                  {
+                    "$or": [
+                      {
+                        "$eq": [
+                          "$effectiveDate.endedAt",
+                          null
+                        ]
+                      },
+                      {
+                        "$gte": [
+                          "$effectiveDate.endedAt",
+                          "$$NOW"
+                        ]
+                      }
+                    ]
                   }
-                },
-                {
-                  "$limit": 1
-                },
-                {
-                  "$project": {
-                    "rubric": {
-                      "_id": 1,
-                      "name": 1
-                    },
-                    "value": 1,
-                    "dataType": {
-                      "$toUpper": "$dataType"
-                    }
-                  }
-                }
-              ]
+                ]
+              }
             }
-          }
-        ],
-        "costingPlans": [
+          },
           {
             "$lookup": {
               "from": "costing_plans",
-              "as": "contributionsCP",
+              "localField": "rubric._id",
+              "foreignField": "rubric._id",
+              "let": {
+                "planId": "$$planId"
+              },
+              "as": "costingPlan",
               "pipeline": [
                 {
                   "$match": {
-                    "effectiveDate.endedAt": null
+                    "$expr": {
+                      "$and": [
+                        {
+                          "$lte": [
+                            "$effectiveDate.startedAt",
+                            "$$NOW"
+                          ]
+                        },
+                        {
+                          "$or": [
+                            {
+                              "$eq": [
+                                "$effectiveDate.endedAt",
+                                null
+                              ]
+                            },
+                            {
+                              "$gte": [
+                                "$effectiveDate.endedAt",
+                                "$$NOW"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
                   }
                 },
                 {
                   "$match": {
-                    "$or": [
-                      {
-                        "rubric._id": "$parameters.idRubricContributionDeath"
-                      },
-                      {
-                        "rubric._id": "$parameters.idRubricContributionDisability"
-                      },
-                      {
-                        "rubric._id": "$parameters.idRubricNormalSponsoredContribution"
-                      }
-                    ]
+                    "$expr": {
+                      "$and": [
+                        {
+                          "$eq": [
+                            "$$planId",
+                            "$plan"
+                          ]
+                        }
+                      ]
+                    }
                   }
                 },
                 {
@@ -176,70 +217,44 @@
                 },
                 {
                   "$project": {
-                    "rubric": {
-                      "_id": 1,
-                      "name": 1
-                    },
-                    "value": "$rangeItems.value",
-                    "dataType": "$rangeItems.type"
+                    "pensionAccount": 1,
+                    "rangeItem": {
+                      "final": "$rangeItems.final",
+                      "initial": "$rangeItems.initial",
+                      "type": "$rangeItems.type"
+                    }
                   }
                 }
               ]
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$costingPlan"
+            }
+          },
+          {
+            "$project": {
+              "_id": 0,
+              "rubric": {
+                "_id": 1,
+                "name": 1
+              },
+              "value": 1,
+              "dataType": {
+                "$toUpper": "$dataType"
+              },
+              "rangeItem": "$costingPlan.rangeItem",
+              "contributionOwner": "$costingPlan.pensionAccount.type.name"
             }
           }
         ]
       }
     },
     {
-      "$project": {
-        "root": "$$ROOT.individualParameters",
-        "combinedContributions": {
-          "$concatArrays": [
-            {
-              "$ifNull": [
-                {
-                  "$arrayElemAt": [
-                    "$individualParameters.contributionsIC",
-                    0
-                  ]
-                },
-                []
-              ]
-            },
-            {
-              "$ifNull": [
-                {
-                  "$arrayElemAt": [
-                    "$costingPlans.contributionsCP",
-                    0
-                  ]
-                },
-                []
-              ]
-            }
-          ]
-        }
-      }
-    },
-    {
-      "$unwind": "$root"
-    },
-    {
-      "$replaceRoot": {
-        "newRoot": {
-          "$mergeObjects": [
-            "$root",
-            {
-              "combinedContributions": "$combinedContributions"
-            }
-          ]
-        }
-      }
-    },
-    {
       "$lookup": {
         "from": "account_balances_rmdrc",
-        "localField": "bundle.participationId",
+        "localField": "participations._id",
         "foreignField": "person.participation._id",
         "as": "accountBalance",
         "pipeline": [
@@ -257,14 +272,14 @@
     {
       "$unwind": {
         "path": "$accountBalance",
-        "preserveNullAndEmptyArrays": false
+        "preserveNullAndEmptyArrays": true
       }
     },
     {
       "$lookup": {
         "from": "participation_investment_profiles",
-        "localField": "_id",
-        "foreignField": "person._id",
+        "localField": "participations._id",
+        "foreignField": "person.participation._id",
         "as": "investmentProfile",
         "pipeline": [
           {
@@ -319,45 +334,57 @@
       }
     },
     {
-      "$project": {
-        "_id": 1,
-        "birthDate": 1,
-        "employmentAdmission": {
-          "effectiveDate": 1
-        },
-        "participation": {
-          "effectiveDate": {
-            "$first": {
-              "$map": {
-                "input": {
-                  "$filter": {
-                    "input": "$participations",
-                    "as": "p",
-                    "cond": {
-                      "$eq": [
-                        "$$p._id",
-                        "$.participationId"
-                      ]
-                    }
+      "$lookup": {
+        "from": "plans",
+        "localField": "participations.participationClass.plan._id",
+        "foreignField": "_id",
+        "as": "includeThirteenthSalary"
+      }
+    },
+    {
+      "$unwind": {
+        "path": "$includeThirteenthSalary",
+        "preserveNullAndEmptyArrays": false
+      }
+    },
+    {
+      "$addFields": {
+        "enrollmentDate": {
+          "$cond": [
+            {
+              "$eq": [
+                {
+                  "$size": {
+                    "$ifNull": [
+                      "$participations.history",
+                      []
+                    ]
                   }
                 },
-                "as": "p",
-                "in": "$$p.effectiveDate"
-              }
+                0
+              ]
+            },
+            "$participations.effectiveDate.startedAt",
+            {
+              "$min": "$participations.history.effectiveDate.startedAt"
             }
-          }
-        },
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "_id": 0,
+        "birthDate": 1,
+        "contributions": 1,
+        "participationId": "$participations._id",
+        "employmentAdmission": "$effectiveDate",
+        "enrollmentDate": 1,
         "salaryAmount": "$salaries.salaryAmount",
         "currentTotalBalance": "$accountBalance.value",
-        "contributions": "$combinedContributions",
-        "person": {
-          "_id": "$_id",
-          "name": "$name",
-          "documents": "$documents",
-          "investmentProfile": "$investmentProfile.investmentProfile",
-          "monetaryUnit": "$investmentProfile.monetaryUnits",
-          "monetaryUnitValue": "$monetaryUnitValue"
-        }
+        "investmentProfile": "$investmentProfile.investmentProfile",
+        "monetaryUnitValue": "$monetaryUnitValue.value",
+        "includeThirteenthSalary": "$includeThirteenthSalary.operationalCollection.isAnnualAllowance"
       }
     }
   ]
